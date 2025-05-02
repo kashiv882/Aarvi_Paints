@@ -206,6 +206,17 @@ class AdditionalInfoAdmin(admin.ModelAdmin):
 class HomeAdmin(admin.ModelAdmin):
     form = HomeForm
 
+    def get_image_preview(self, obj):
+        try:
+            category_img = next(iter(obj.category_images.values()), None)
+            type_img = next(iter(obj.type_images.values()), None)
+            image_url = category_img or type_img
+            if image_url:
+                return mark_safe(f'<img src="{image_url}" style="max-height: 100px; border: 1px solid #ccc;" />')
+        except Exception:
+            pass
+        return "No image available"
+
     list_display = [
         'title',
         'type',
@@ -216,24 +227,25 @@ class HomeAdmin(admin.ModelAdmin):
         'get_banner_type',
         'get_banner_placement_location',
         'get_banner_short_description',
-        'get_category_images',
-        'get_type_images',
+        'get_category_images',   # Display methods in list_display
+        'get_type_images',       # Display methods in list_display
         'type_description',
+        'get_image_preview',     # Display image preview
     ]
 
-    # Readonly fields to prevent editing in the admin panel
+
+
     readonly_fields = [f.name for f in Home._meta.fields] + [
+
         'get_banner_title',
         'get_banner_type',
         'get_banner_placement_location',
         'get_banner_short_description',
-        'get_category_images',
-        'get_type_images'
     ]
 
     actions = None
 
-
+    # Define methods for displaying related data in the admin
     def get_banner_title(self, obj):
         return obj.banners.title
     get_banner_title.short_description = "Banner Title"
@@ -250,23 +262,15 @@ class HomeAdmin(admin.ModelAdmin):
         return obj.banners.short_description
     get_banner_short_description.short_description = "Banner Short Description"
 
-
+    # Display the category images in the admin
     def get_category_images(self, obj):
         return mark_safe("<br>".join([f'<img src="{img}" style="max-height: 100px;" />' for img in obj.category_images.values()]))
     get_category_images.short_description = "Category Images"
 
+    # Display the type images in the admin
     def get_type_images(self, obj):
         return mark_safe("<br>".join([f'<img src="{img}" style="max-height: 100px;" />' for img in obj.type_images.values()]))
     get_type_images.short_description = "Type Images"
-
-    def has_add_permission(self, request):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
 
 @admin.register(AdminContactDetails)
 class AdminContactDetailsAdmin(admin.ModelAdmin):
@@ -289,11 +293,19 @@ class ProductAdmin(admin.ModelAdmin):
         'get_category_name',
         'get_subcategory_name',
         'description',
-        'url',
+        'get_image_preview',
         'keyfeature',
     ]
     search_fields = ['title', 'description', 'keyfeature']
     list_filter = ['category']
+
+    def get_image_preview(self, obj):
+        image_url = obj.url.get('image') if obj.url else None
+        if image_url:
+            return mark_safe(f'<img src="{image_url}" style="max-height: 100px;" />')
+        return "No image available"
+
+    get_image_preview.short_description = "Image Preview"
 
     # Related Category fields
     def get_category_name(self, obj):

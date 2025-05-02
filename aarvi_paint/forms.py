@@ -200,11 +200,10 @@ class CategoryForm(forms.ModelForm):
 
 
 
-class ProductForm(forms.ModelForm):
+class ProductForm(BaseImageForm):
     class Meta:
         model = Product
-        fields = ['title', 'keyfeature', 'description', 'category','url']
-
+        fields = ['title', 'keyfeature', 'description', 'category']
 
 class HomeForm(forms.ModelForm):
     category_image_field = forms.ImageField(required=False, label="Category Image")
@@ -212,7 +211,20 @@ class HomeForm(forms.ModelForm):
 
     class Meta:
         model = Home
-        fields = '__all__'
+        fields = [
+            'title',
+            'type',
+            'category_name',
+            'subcategory_name',
+            'title_type',
+            'category_images',  # Include model fields here
+            'type_images',      # Include model fields here
+            'type_description',
+            'banners',
+        ]
+
+    # Exclude unwanted fields from the form display
+    exclude = ['id', 'created_on', 'updated_on']
 
     def save(self, commit=True):
         instance = super().save(commit=False)
@@ -240,3 +252,4 @@ class HomeForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
+

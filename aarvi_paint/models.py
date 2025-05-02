@@ -122,6 +122,9 @@ class Banner(TimeStampedModel):
     short_description = models.TextField(null=True, blank=True)
     url = models.JSONField(default=dict, blank=True)
 
+    def __str__(self):
+        return f"{self.title} ({self.type})"
+
     def save(self, *args, **kwargs):
         if not self.type:
             self.type = self.__class__.__name__
