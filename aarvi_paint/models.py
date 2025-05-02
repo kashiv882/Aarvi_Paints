@@ -28,6 +28,9 @@ class Category(TimeStampedModel):
     name = models.CharField(max_length=100)
     subcategory_name = models.CharField(max_length=100)
 
+    def __str__(self):
+        return f"{self.name} - {self.subcategory_name}"
+
 
 class Product(TimeStampedModel):
 
@@ -38,15 +41,6 @@ class Product(TimeStampedModel):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, to_field='id', related_name='category')
     url = models.JSONField()
 
-
-class Banner(TimeStampedModel):
-
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    title = models.CharField(max_length=200)
-    type = models.CharField(max_length=200)
-    placement_location = models.CharField(max_length=200)
-    short_description = models.TextField()
-    url = models.JSONField(default=dict, blank=True)
 
 
 class UserInfo(TimeStampedModel):
@@ -99,19 +93,6 @@ class AdditionalInfo(TimeStampedModel):
     details = models.JSONField(default=dict, blank=True)
 
 
-class Home(TimeStampedModel):
-
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    title = models.CharField(max_length=200)
-    type = models.CharField(max_length=200 , choices=Home_Type_CHOICES)
-    banners = models.ForeignKey(Banner,on_delete=models.CASCADE,related_name="homes")
-    category_name = models.CharField(max_length=100)
-    subcategory_name = models.CharField(max_length=100)
-    category_images = models.JSONField(default=dict, blank=True)
-    type_images = models.JSONField(default=dict, blank=True)
-    type_description = models.TextField()
-    title_type = models.CharField(max_length=200)
-
 
 class AdminContactDetails(TimeStampedModel):
 
@@ -132,6 +113,51 @@ class WaterProofCalculator(TimeStampedModel):
     userinfo = models.ForeignKey('UserInfo', on_delete=models.CASCADE, related_name='waterproof_calculations')
     description = models.TextField()
 
+
+class Banner(TimeStampedModel):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    title = models.CharField(max_length=200, null=True, blank=True)
+    type = models.CharField(max_length=200, editable=False, null=True, blank=True)
+    placement_location = models.CharField(max_length=200, null=True, blank=True)
+    short_description = models.TextField(null=True, blank=True)
+    url = models.JSONField(default=dict, blank=True)
+
+    def save(self, *args, **kwargs):
+        if not self.type:
+            self.type = self.__class__.__name__
+        super().save(*args, **kwargs)
+
+class HomepageBanner(Banner):
+    class Meta:
+        proxy = True
+        verbose_name = "Homepage Banner"
+        verbose_name_plural = "Homepage Banners"
+
+class HomeInteriorBanner(Banner):
+    class Meta:
+        proxy = True
+        verbose_name = "HomeInteriorBanner"
+        verbose_name_plural = "HomeInteriorBanner"
+
+class HomeExteriorBanner(Banner):
+    class Meta:
+        proxy = True
+        verbose_name = "HomeExteriorBanner"
+        verbose_name_plural = "HomeExteriorBanner"
+
+
+class Home(TimeStampedModel):
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    title = models.CharField(max_length=200)
+    type = models.CharField(max_length=200 , choices=Home_Type_CHOICES)
+    banners = models.ForeignKey(Banner,on_delete=models.CASCADE,related_name="homes")
+    category_name = models.CharField(max_length=100)
+    subcategory_name = models.CharField(max_length=100)
+    category_images = models.JSONField(default=dict, blank=True)
+    type_images = models.JSONField(default=dict, blank=True)
+    type_description = models.TextField()
+    title_type = models.CharField(max_length=200)
 
 
 

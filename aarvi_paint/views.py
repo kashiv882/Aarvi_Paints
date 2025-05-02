@@ -6,7 +6,7 @@ from rest_framework . response import Response
 from rest_framework import status
 from django_filters.rest_framework import DjangoFilterBackend
 
-from .common import validate_request_data, create_user_info
+from .common import create_user_info, validate_request_data
 from .models import PaintBudgetCalculator, Category, ColourPalette, Parallax, Brochure, AdditionalInfo, \
     UserInfo, Product, Banner, Home, AdminContactDetails, WaterProofCalculator  # CustomInfo ,Navbar,  AboutUs
 from .choices import ADDITIONAL_INFO_TYPE_CHOICES, SOURCE_CHOICES, ALLOWED_SOURCES
@@ -15,6 +15,7 @@ from .serializers import PaintBudgetCalculatorSerializer, ProductSerializer, Cat
     AdditionalInfoSerializer, BannerSerializer, UserInfoSerializer, \
     HomeSerializer, AdminContactDetailsSerializer, \
     WaterProofCalculatorSerializer  # CustomSerializer ,NavbarSerializer ,AboutUsSerializer
+
 
 logger = logging.getLogger(__name__)
 

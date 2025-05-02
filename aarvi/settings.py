@@ -33,6 +33,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -146,3 +147,55 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+JAZZMIN_SETTINGS = {
+    "site_title": "Aarvi Paints Admin",
+    "site_header": "Aarvi Paints",
+    "site_brand": "Aarvi Paints",
+    "welcome_sign": "Welcome to Aarvi Paints Admin Panel",
+    "copyright": "Aarvi Paints",
+
+    # Optional: top menu and sidebar tweaks
+    "show_sidebar": True,
+    "navigation_expanded": True,
+    "hide_apps": [],
+    "hide_models": [],
+    "order_with_respect_to": [],
+
+
+    "icons": {
+        "auth.User": "fas fa-user",
+        "auth.Group": "fas fa-users",
+
+    },
+}
+JAZZMIN_UI_TWEAKS = {
+    "theme": "minty",
+    "accent": "accent-teal",
+    "navbar": "navbar-light",
+    "sidebar": "sidebar-light-info",
+    "brand_colour": "navbar-success",
+    "sidebar_nav_compact_style": False,
+    "sidebar_fixed": True,
+    "layout_boxed": False,
+    "theme_switcher": True,
+    "body_bg": "#fff2e6",
+    "dark_mode_theme": "slate",
+    "text_size": "text-base",
+    "actions_sticky_top": True,
+
+    "table_bg": "#f1f9ff",
+    "table_header_bg": "#b3e0ff",
+    "table_border_color": "#80bfff",
+    "table_row_hover_color": "#e6f7ff",
+    "table_text_color": "#333333",
+    "table_stripe_color": "#ffebcc",
+    "table_stripe_hover_color": "#ffdd99",
+}
+
+
+
+# settings.py
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
