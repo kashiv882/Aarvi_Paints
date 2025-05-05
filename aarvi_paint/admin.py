@@ -1,16 +1,17 @@
 from django.contrib import admin
 from django.contrib.admin import AdminSite
-
+from django.utils.html import format_html
 from django.utils.safestring import mark_safe
+from django import forms
 from django.contrib.auth.models import User, Group
-from .forms import HomeBannerForm, HomeInteriorBannerForm, HomeExteriorBannerForm, ColourPaletteForm, ParallaxForm, \
+from .forms import  HomeInteriorBannerForm, HomeExteriorBannerForm, ColourPaletteForm, ParallaxForm, \
     BrochureForm, AdditionalInfoForm, AdminContactDetailsForm, CategoryForm, ProductForm, HomeForm, GalleryBannerForm, \
     AboutUsTopBannerForm, ColorPalletsBannerForm, ProductBannerForm, ContactUsBannerForm, HomeWaterproofingBannerForm, \
-    AboutUsBottomVideoBannerForm
+    AboutUsBottomVideoBannerForm,  BaseBannerForm, BannerImageForm
 from .models import HomeExteriorBanner, HomeInteriorBanner,  PaintBudgetCalculator, ColourPalette, \
     Parallax, Brochure, AdditionalInfo, AdminContactDetails, WaterProofCalculator, Category, Product, UserInfo, Home, \
     Banner, GalleryBanner, AboutUsTopBanner, ColorPalletsBanner, ProductBanner, ContactUsBanner, \
-    HomeWaterproofingBanner, AboutUsBottomVideoBanner, HomeBanner
+    HomeWaterproofingBanner, AboutUsBottomVideoBanner, HomeBanner,BannerImage
 
 # Unregister default auth models (optional if you only want superuser access)
 admin.site.unregister(User)
@@ -46,6 +47,9 @@ except admin.sites.NotRegistered:
 
 
 def display_media_urls(self, obj):
+
+    
+# ======================================================================================
     if not obj.url:
         return "No media uploaded."
 
@@ -70,18 +74,97 @@ def display_media_urls(self, obj):
 
 display_media_urls.short_description = "Media URLs"
 
+class BannerImageInline(admin.StackedInline):
+    model = BannerImage
+    extra = 1
+    form = BannerImageForm  # Use the custom form for the inline
+    readonly_fields = ['image_preview']
 
-@admin.register(HomeBanner)
+    # Display the preview of the uploaded image
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html(
+                '<img src="{}" style="max-height: 100px;" />',
+                obj.image.url
+            )
+        return "No image uploaded"
+
+    image_preview.short_description = "Preview"
+
+
+# Admin for HomeBanner
 class HomeBannerAdmin(admin.ModelAdmin):
-    form = HomeBannerForm
-    list_display = ['type', 'display_image_urls']
-    exclude = ['short_description']
-    readonly_fields = ['display_image_urls']
+    form = BannerImageForm  # Link to the custom form
 
-    def get_queryset(self, request):
-        return super().get_queryset(request).filter(type='home-banner')
+    list_display = ['type', 'get_image_preview']
+    search_fields = ['type']
+    list_filter = ['type']
+    readonly_fields = ['get_image_preview']
 
-    display_image_urls = display_media_urls
+    def get_image_preview(self, obj):
+        image_url = obj.url.get('image') if obj.url else None
+        if image_url:
+            return mark_safe(f'<img src="{image_url}" style="max-height: 100px;" />')
+        return "No image available"
+
+    get_image_preview.short_description = "Image Preview"
+
+
+
+
+#     inlines = [BannerImageInline]
+#     fields = ['type', 'image_preview']  # Show type and image preview fields
+#     readonly_fields = ['type', 'image_preview']
+
+#     # Display type of the banner (for proxy models)
+#     def get_type(self, obj):
+#         return obj.type
+
+#     # Optionally, show the first image as a preview for the banner
+#     def image_preview(self, obj):
+#         if obj.images.exists():
+#             return format_html(
+#                 '<img src="{}" style="max-height: 100px;" />',
+#                 obj.images.first().image.url
+#             )
+#         return "No images uploaded"
+
+#     image_preview.short_description = "Banner Image Preview"
+
+#     # Ensure the type is set correctly for the proxy model
+#     def save_model(self, request, obj, form, change):
+        
+#         obj.type = 'home-banner'  # Make sure the type is always set correctly
+#         super().save_model(request, obj, form, change)
+
+#     # Permissions for admin
+#     def has_add_permission(self, request):
+#         return True
+
+#     def has_change_permission(self, request, obj=None):
+#         return True
+
+
+# # Register HomeBanner model in admin
+# admin.site.register(HomeBanner, HomeBannerAdmin)
+
+# class HomeBannerAdmin(admin.ModelAdmin):
+#     inlines = [BannerImageInline]
+#     list_display = ['type']
+#     readonly_fields = ['type']  # Optional: so type can't be changed manually
+
+# admin.site.register(HomeBanner, HomeBannerAdmin)
+# @admin.register(HomeBanner)
+# class HomeBannerAdmin(admin.ModelAdmin):
+#     form = HomeBannerForm
+#     list_display = ['type', 'display_image_urls']
+#     exclude = ['short_description']
+#     readonly_fields = ['display_image_urls']
+
+#     def get_queryset(self, request):
+#         return super().get_queryset(request).filter(type='home-banner')
+
+#     display_image_urls = display_media_urls
 
 
 @admin.register(GalleryBanner)

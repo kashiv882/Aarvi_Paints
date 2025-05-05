@@ -1,6 +1,5 @@
 from django import forms
-from .models import Banner, Parallax, ColourPalette, Brochure, AdditionalInfo, AdminContactDetails, Category, Product, \
-    Home
+from .models import Banner, Parallax, ColourPalette, Brochure, AdditionalInfo, AdminContactDetails, Category, Product, Home,BannerImage,HomeBanner
 from django.core.files.storage import default_storage
 from django.utils.safestring import mark_safe
 
@@ -326,9 +325,26 @@ class BaseBannerForm(forms.ModelForm):
         return instance
 
 
-class HomeBannerForm(BaseBannerForm):
-    class Meta(BaseBannerForm.Meta):
-        fields = ['banner_image']
+# ===============================================================================Snkalp=========================
+
+
+
+
+class BannerImageForm(BaseImageForm):
+    class Meta:
+        model = HomeBanner
+        fields = [ 'image_field']
+
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
+    #     if self.instance.pk and self.instance.image:
+    #         self.fields['image'].widget = forms.ClearableFileInput()
+
+
+
+# class HomeBannerForm(BaseBannerForm):
+#     class Meta(BaseBannerForm.Meta):
+#         fields = ['banner_image']
 
 
 class GalleryBannerForm(BaseBannerForm):

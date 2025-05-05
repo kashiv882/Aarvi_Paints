@@ -123,6 +123,15 @@ class Banner(TimeStampedModel):
     url = models.JSONField(default=dict, blank=True)
 
 
+class BannerImage(models.Model):
+    banner = models.ForeignKey(Banner, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='banners/images/')
+    # alt_text = models.CharField(max_length=255, blank=True)
+
+    # def __str__(self):
+    #     return f"Image for {self.banner.title or self.banner.id}"
+
+
 
 class Home(TimeStampedModel):
 
