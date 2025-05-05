@@ -122,31 +122,6 @@ class Banner(TimeStampedModel):
     short_description = models.TextField(null=True, blank=True)
     url = models.JSONField(default=dict, blank=True)
 
-    def __str__(self):
-        return f"{self.title} ({self.type})"
-
-    def save(self, *args, **kwargs):
-        if not self.type:
-            self.type = self.__class__.__name__
-        super().save(*args, **kwargs)
-
-class HomepageBanner(Banner):
-    class Meta:
-        proxy = True
-        verbose_name = "Homepage Banner"
-        verbose_name_plural = "Homepage Banners"
-
-class HomeInteriorBanner(Banner):
-    class Meta:
-        proxy = True
-        verbose_name = "HomeInteriorBanner"
-        verbose_name_plural = "HomeInteriorBanner"
-
-class HomeExteriorBanner(Banner):
-    class Meta:
-        proxy = True
-        verbose_name = "HomeExteriorBanner"
-        verbose_name_plural = "HomeExteriorBanner"
 
 
 class Home(TimeStampedModel):
@@ -196,4 +171,117 @@ class Home(TimeStampedModel):
 
 
 
+# Proxy models
+
+class GalleryBanner(Banner):
+    class Meta:
+        proxy = True
+        verbose_name = 'Gallery Banner'
+        verbose_name_plural = 'Gallery Banners'
+
+    def save(self, *args, **kwargs):
+        self.type = 'gallery-banner'
+        super().save(*args, **kwargs)
+
+
+class HomeBanner(Banner):
+    class Meta:
+        proxy = True
+        verbose_name = 'Home Banner'
+        verbose_name_plural = 'Home Banners'
+
+    def save(self, *args, **kwargs):
+        self.type = 'home-banner'
+        super().save(*args, **kwargs)
+
+
+class HomeInteriorBanner(Banner):
+    class Meta:
+        proxy = True
+        verbose_name = 'Home Interior Banner'
+        verbose_name_plural = 'Home Interior Banners'
+
+    def save(self, *args, **kwargs):
+        self.type = 'home-interior-banner'
+        super().save(*args, **kwargs)
+
+
+class HomeExteriorBanner(Banner):
+    class Meta:
+        proxy = True
+        verbose_name = 'Home Exterior Banner'
+        verbose_name_plural = 'Home Exterior Banners'
+
+    def save(self, *args, **kwargs):
+        self.type = 'home-exterior-banner'
+        super().save(*args, **kwargs)
+
+
+# more proxy models
+
+
+class HomeWaterproofingBanner(Banner):
+    class Meta:
+        proxy = True
+        verbose_name = 'Home Waterproofing Banner'
+        verbose_name_plural = 'Home Waterproofing Banners'
+
+    def save(self, *args, **kwargs):
+        self.type = 'home-waterproofing-banner'
+        super().save(*args, **kwargs)
+
+
+class AboutUsTopBanner(Banner):
+    class Meta:
+        proxy = True
+        verbose_name = 'About Us Top Banner'
+        verbose_name_plural = 'About Us Top Banners'
+
+    def save(self, *args, **kwargs):
+        self.type = 'about-us-top-banner'
+        super().save(*args, **kwargs)
+
+
+class AboutUsBottomVideoBanner(Banner):
+    class Meta:
+        proxy = True
+        verbose_name = 'About Us Bottom Video Banner'
+        verbose_name_plural = 'About Us Bottom Video Banners'
+
+    def save(self, *args, **kwargs):
+        self.type = 'about-us-bottom-video-banner'
+        super().save(*args, **kwargs)
+
+
+class ColorPalletsBanner(Banner):
+    class Meta:
+        proxy = True
+        verbose_name = 'Color Pallets Banner'
+        verbose_name_plural = 'Color Pallets Banners'
+
+    def save(self, *args, **kwargs):
+        self.type = 'color-pallets-banner'
+        super().save(*args, **kwargs)
+
+
+class ProductBanner(Banner):
+    class Meta:
+        proxy = True
+        verbose_name = 'Product Banner'
+        verbose_name_plural = 'Product Banners'
+
+    def save(self, *args, **kwargs):
+        self.type = 'product-banner'
+        super().save(*args, **kwargs)
+
+
+class ContactUsBanner(Banner):
+    class Meta:
+        proxy = True
+        verbose_name = 'Contact Us Banner'
+        verbose_name_plural = 'Contact Us Banners'
+
+    def save(self, *args, **kwargs):
+        self.type = 'contact-us-banner'
+        super().save(*args, **kwargs)
 

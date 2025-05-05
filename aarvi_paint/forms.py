@@ -7,78 +7,78 @@ from django.utils.safestring import mark_safe
 from .utils.base_image_handler import BaseImageForm
 
 
-class BaseBannerForm(forms.ModelForm):
-    desktop_image = forms.ImageField(required=False)
-    mobile_image = forms.ImageField(required=False)
-    delete_desktop = forms.BooleanField(required=False, label='Delete Desktop Image')
-    delete_mobile = forms.BooleanField(required=False, label='Delete Mobile Image')
-
-    class Meta:
-        model = Banner
-        fields = ['title', 'short_description', 'placement_location']
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        url = self.instance.url or {}
-
-        desktop_url = url.get('desktop')
-        mobile_url = url.get('mobile')
-
-        if desktop_url:
-            self.fields['desktop_image'].help_text = mark_safe(
-                f'<br><strong>Desktop Preview:</strong><br>'
-                f'<img src="{desktop_url}" style="max-height: 100px;" /><br>'
-                f'<strong>URL:</strong> <a href="{desktop_url}" target="_blank">{desktop_url}</a>'
-            )
-
-        if mobile_url:
-            self.fields['mobile_image'].help_text = mark_safe(
-                f'<br><strong>Mobile Preview:</strong><br>'
-                f'<img src="{mobile_url}" style="max-height: 100px;" /><br>'
-                f'<strong>URL:</strong> <a href="{mobile_url}" target="_blank">{mobile_url}</a>'
-            )
-
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-        url_data = instance.url or {}
-
-        if self.cleaned_data.get('delete_desktop'):
-            url_data.pop('desktop', None)
-        if self.cleaned_data.get('delete_mobile'):
-            url_data.pop('mobile', None)
-
-        if self.cleaned_data.get('desktop_image'):
-            path = default_storage.save(
-                f'banners/desktop/{self.cleaned_data["desktop_image"].name}',
-                self.cleaned_data["desktop_image"]
-            )
-            url_data['desktop'] = default_storage.url(path)
-
-        if self.cleaned_data.get('mobile_image'):
-            path = default_storage.save(
-                f'banners/mobile/{self.cleaned_data["mobile_image"].name}',
-                self.cleaned_data["mobile_image"]
-            )
-            url_data['mobile'] = default_storage.url(path)
-
-        instance.url = url_data
-
-        if commit:
-            instance.save()
-        return instance
-
-# Specialized Forms
-class HomeBannerForm(BaseBannerForm):
-    class Meta(BaseBannerForm.Meta):
-        fields = ['title', 'placement_location', 'desktop_image', 'mobile_image', 'delete_desktop', 'delete_mobile']
-
-class HomeInteriorBannerForm(BaseBannerForm):
-    class Meta(BaseBannerForm.Meta):
-        fields = ['title', 'short_description', 'desktop_image', 'delete_desktop']
-
-class HomeExteriorBannerForm(BaseBannerForm):
-    class Meta(BaseBannerForm.Meta):
-        fields = ['title', 'short_description', 'desktop_image', 'delete_desktop']
+# class BaseBannerForm(forms.ModelForm):
+#     desktop_image = forms.ImageField(required=False)
+#     mobile_image = forms.ImageField(required=False)
+#     delete_desktop = forms.BooleanField(required=False, label='Delete Desktop Image')
+#     delete_mobile = forms.BooleanField(required=False, label='Delete Mobile Image')
+#
+#     class Meta:
+#         model = Banner
+#         fields = ['title', 'short_description', 'placement_location']
+#
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         url = self.instance.url or {}
+#
+#         desktop_url = url.get('desktop')
+#         mobile_url = url.get('mobile')
+#
+#         if desktop_url:
+#             self.fields['desktop_image'].help_text = mark_safe(
+#                 f'<br><strong>Desktop Preview:</strong><br>'
+#                 f'<img src="{desktop_url}" style="max-height: 100px;" /><br>'
+#                 f'<strong>URL:</strong> <a href="{desktop_url}" target="_blank">{desktop_url}</a>'
+#             )
+#
+#         if mobile_url:
+#             self.fields['mobile_image'].help_text = mark_safe(
+#                 f'<br><strong>Mobile Preview:</strong><br>'
+#                 f'<img src="{mobile_url}" style="max-height: 100px;" /><br>'
+#                 f'<strong>URL:</strong> <a href="{mobile_url}" target="_blank">{mobile_url}</a>'
+#             )
+#
+#     def save(self, commit=True):
+#         instance = super().save(commit=False)
+#         url_data = instance.url or {}
+#
+#         if self.cleaned_data.get('delete_desktop'):
+#             url_data.pop('desktop', None)
+#         if self.cleaned_data.get('delete_mobile'):
+#             url_data.pop('mobile', None)
+#
+#         if self.cleaned_data.get('desktop_image'):
+#             path = default_storage.save(
+#                 f'banners/desktop/{self.cleaned_data["desktop_image"].name}',
+#                 self.cleaned_data["desktop_image"]
+#             )
+#             url_data['desktop'] = default_storage.url(path)
+#
+#         if self.cleaned_data.get('mobile_image'):
+#             path = default_storage.save(
+#                 f'banners/mobile/{self.cleaned_data["mobile_image"].name}',
+#                 self.cleaned_data["mobile_image"]
+#             )
+#             url_data['mobile'] = default_storage.url(path)
+#
+#         instance.url = url_data
+#
+#         if commit:
+#             instance.save()
+#         return instance
+#
+# # Specialized Forms
+# class HomeBannerForm(BaseBannerForm):
+#     class Meta(BaseBannerForm.Meta):
+#         fields = ['title', 'placement_location', 'desktop_image', 'mobile_image', 'delete_desktop', 'delete_mobile']
+#
+# class HomeInteriorBannerForm(BaseBannerForm):
+#     class Meta(BaseBannerForm.Meta):
+#         fields = ['title', 'short_description', 'desktop_image', 'delete_desktop']
+#
+# class HomeExteriorBannerForm(BaseBannerForm):
+#     class Meta(BaseBannerForm.Meta):
+#         fields = ['title', 'short_description', 'desktop_image', 'delete_desktop']
 
 
 
@@ -253,3 +253,165 @@ class HomeForm(forms.ModelForm):
             instance.save()
         return instance
 
+
+
+
+class BaseBannerForm(forms.ModelForm):
+    banner_image = forms.ImageField(required=False)
+    delete_image = forms.BooleanField(required=False, label='Delete banner Image')
+
+    # banner_video = forms.FileField(required=False)
+    # delete_video = forms.BooleanField(required=False, label='Delete Banner Video')
+
+    class Meta:
+        model = Banner
+        fields = ['title', 'short_description']
+
+    def _init_(self, *args, **kwargs):
+        super()._init_(*args, **kwargs)
+
+        from django.utils.safestring import mark_safe  # ensure it's imported
+
+        url = self.instance.url or {}
+        banner_image_url = url.get('image')
+        # video_url = url.get('video')
+
+        if banner_image_url:
+            self.fields['banner_image'].help_text = mark_safe(
+                f'<br><strong>Banner Image Preview:</strong><br>'
+                f'<img src="{banner_image_url}" style="max-height: 100px;" /><br>'
+                f'<strong>URL:</strong> <a href="{banner_image_url}" target="_blank">{banner_image_url}</a>'
+            )
+        # if video_url:
+        #     self.fields['banner_video'].help_text = mark_safe(
+        #         f'<br><strong>Video Preview:</strong><br>'
+        #         f'<video width="320" height="240" controls>'
+        #         f'<source src="{video_url}" type="video/mp4">'
+        #         f'Your browser does not support the video tag.'
+        #         f'</video><br>'
+        #         f'<strong>URL:</strong> <a href="{video_url}" target="_blank">{video_url}</a>'
+        #     )
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+
+        url_data = instance.url or {}
+
+        # Delete logic
+        if self.cleaned_data.get('delete_image'):
+            url_data.pop('image', None)
+
+        # if self.cleaned_data.get('delete_video'):
+        #     url_data.pop('video', None)
+
+        # Upload logic
+        if self.cleaned_data.get('banner_image'):
+            path = default_storage.save(
+                f'banners/image/{self.cleaned_data["banner_image"].name}',
+                self.cleaned_data["banner_image"]
+            )
+            url_data['image'] = default_storage.url(path)
+
+        # if self.cleaned_data.get('banner_video'):
+        #     path = default_storage.save(
+        #         f'banners/videos/{self.cleaned_data["banner_video"].name}',
+        #         self.cleaned_data["banner_video"]
+        # )
+        #     url_data['video'] = default_storage.url(path)
+
+        instance.url = url_data
+
+        if commit:
+            instance.save()
+        return instance
+
+
+class HomeBannerForm(BaseBannerForm):
+    class Meta(BaseBannerForm.Meta):
+        fields = ['banner_image']
+
+
+class GalleryBannerForm(BaseBannerForm):
+    class Meta(BaseBannerForm.Meta):
+        fields = ['banner_image']
+
+
+class HomeInteriorBannerForm(BaseBannerForm):
+    class Meta(BaseBannerForm.Meta):
+        fields = ['title', 'short_description', 'banner_image']
+
+
+class HomeExteriorBannerForm(BaseBannerForm):
+    class Meta(BaseBannerForm.Meta):
+        fields = ['title', 'short_description', 'banner_image']
+
+
+class HomeWaterproofingBannerForm(BaseBannerForm):
+    class Meta(BaseBannerForm.Meta):
+        fields = ['title', 'short_description', 'banner_image']
+
+
+class AboutUsTopBannerForm(BaseBannerForm):
+    class Meta(BaseBannerForm.Meta):
+        fields = ['title', 'short_description', 'banner_image']
+
+
+class ColorPalletsBannerForm(BaseBannerForm):
+    class Meta(BaseBannerForm.Meta):
+        fields = ['title', 'short_description', 'banner_image']
+
+
+class ProductBannerForm(BaseBannerForm):
+    class Meta(BaseBannerForm.Meta):
+        fields = ['title', 'short_description', 'banner_image']
+
+
+class ContactUsBannerForm(BaseBannerForm):
+    class Meta(BaseBannerForm.Meta):
+        fields = ['title', 'short_description', 'banner_image']
+
+
+# class AboutUsBottomVideoBannerForm(BaseBannerForm):
+#     class Meta(BaseBannerForm.Meta):
+#         fields = ['banner_video']
+
+
+class AboutUsBottomVideoBannerForm(BaseBannerForm):
+    video_file = forms.FileField(required=False, label='Upload Video')
+
+    class Meta(BaseBannerForm.Meta):
+        fields = ['title', 'short_description', 'video_file']
+
+    def _init_(self, *args, **kwargs):
+        super()._init_(*args, **kwargs)
+
+        url = self.instance.url or {}
+        video_url = url.get('video')
+
+        if video_url:
+            self.fields['video_file'].help_text = mark_safe(
+                f'<br><strong>Video Preview:</strong><br>'
+                f'<video width="320" height="240" controls>'
+                f'<source src="{video_url}" type="video/mp4">'
+                f'Your browser does not support the video tag.'
+                f'</video><br>'
+                f'<strong>URL:</strong> <a href="{video_url}" target="_blank">{video_url}</a>'
+            )
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        url_data = instance.url or {}
+
+        # Upload logic for video
+        if self.cleaned_data.get('video_file'):
+            path = default_storage.save(
+                f'banners/video/{self.cleaned_data["video_file"].name}',
+                self.cleaned_data["video_file"]
+            )
+            url_data['video'] = default_storage.url(path)
+
+        instance.url = url_data
+        if commit:
+            instance.save()
+
+        return  instance

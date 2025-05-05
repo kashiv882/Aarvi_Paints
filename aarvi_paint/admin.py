@@ -1,74 +1,203 @@
 from django.contrib import admin
+from django.contrib.admin import AdminSite
+
 from django.utils.safestring import mark_safe
 from django.contrib.auth.models import User, Group
 from .forms import HomeBannerForm, HomeInteriorBannerForm, HomeExteriorBannerForm, ColourPaletteForm, ParallaxForm, \
-    BrochureForm, AdditionalInfoForm, AdminContactDetailsForm, CategoryForm, ProductForm, HomeForm
-from .models import HomeExteriorBanner, HomeInteriorBanner, HomepageBanner, PaintBudgetCalculator, ColourPalette, \
-    Parallax, Brochure, AdditionalInfo, AdminContactDetails, WaterProofCalculator, Category, Product, UserInfo, Home
+    BrochureForm, AdditionalInfoForm, AdminContactDetailsForm, CategoryForm, ProductForm, HomeForm, GalleryBannerForm, \
+    AboutUsTopBannerForm, ColorPalletsBannerForm, ProductBannerForm, ContactUsBannerForm, HomeWaterproofingBannerForm, \
+    AboutUsBottomVideoBannerForm
+from .models import HomeExteriorBanner, HomeInteriorBanner,  PaintBudgetCalculator, ColourPalette, \
+    Parallax, Brochure, AdditionalInfo, AdminContactDetails, WaterProofCalculator, Category, Product, UserInfo, Home, \
+    Banner, GalleryBanner, AboutUsTopBanner, ColorPalletsBanner, ProductBanner, ContactUsBanner, \
+    HomeWaterproofingBanner, AboutUsBottomVideoBanner, HomeBanner
 
 # Unregister default auth models (optional if you only want superuser access)
 admin.site.unregister(User)
 admin.site.unregister(Group)
 
-# Shared base admin class for banners
-class BaseBannerAdmin(admin.ModelAdmin):
-    readonly_fields = ['display_image_urls']
 
-    def display_image_urls(self, obj):
-        if not obj.url:
-            return "No images uploaded."
-        html = ""
-        if isinstance(obj.url, dict):
-            if 'desktop' in obj.url:
-                html += f"<strong>Desktop:</strong> <a href='{obj.url['desktop']}' target='_blank'>{obj.url['desktop']}</a><br>"
-            if 'mobile' in obj.url:
-                html += f"<strong>Mobile:</strong> <a href='{obj.url['mobile']}' target='_blank'>{obj.url['mobile']}</a><br>"
-            if 'images' in obj.url and isinstance(obj.url['images'], list):
-                html += "<strong>Images:</strong><br>"
-                for img_url in obj.url['images']:
-                    html += f"<img src='{img_url}' style='height:60px; margin:5px 5px 5px 0;' />"
-        return mark_safe(html)
+class CustomAdminSite(AdminSite):
+    site_header = None
+    site_title = None
+    index_title = None
 
-    display_image_urls.short_description = "Image URLs"
 
-# Admin for HomepageBanner
-@admin.register(HomepageBanner)
-class HomeBannerAdmin(BaseBannerAdmin):
+admin_site = CustomAdminSite(name='customadmin')
+
+# =========================================================================================================================================================================
+
+try:
+    admin.site.unregister(Banner)
+except admin.sites.NotRegistered:
+    pass
+
+
+# Shared method to display image URLs
+# def display_image_urls(self, obj):
+#     if not obj.url:
+#         return "No images uploaded."
+#     html = ''
+#     if 'image' in obj.url:
+#         html += f"<strong>Image:</strong> <a href='{obj.url['image']}' target='_blank'>{obj.url['image']}</a><br>"
+#     return mark_safe(html)
+
+# display_image_urls.short_description = "Image URLs"
+
+
+def display_media_urls(self, obj):
+    if not obj.url:
+        return "No media uploaded."
+
+    html = ''
+    if 'image' in obj.url:
+        html += (
+            f"<strong>Image:</strong><br>"
+            f"<a href='{obj.url['image']}' target='_blank'>"
+            f"<img src='{obj.url['image']}' style='max-height: 100px;' /></a><br>"
+        )
+    if 'video' in obj.url:
+        html += (
+            f"<strong>Video:</strong><br>"
+            f"<video width='320' height='240' controls>"
+            f"<source src='{obj.url['video']}' type='video/mp4'>"
+            f"Your browser does not support the video tag.</video><br>"
+            f"<a href='{obj.url['video']}' target='_blank'>{obj.url['video']}</a><br>"
+        )
+
+    return mark_safe(html)
+
+
+display_media_urls.short_description = "Media URLs"
+
+
+@admin.register(HomeBanner)
+class HomeBannerAdmin(admin.ModelAdmin):
     form = HomeBannerForm
-    list_display = ['title', 'type', 'display_image_urls']
+    list_display = ['type', 'display_image_urls']
+    exclude = ['short_description']
+    readonly_fields = ['display_image_urls']
 
     def get_queryset(self, request):
         return super().get_queryset(request).filter(type='home-banner')
 
-    def save_model(self, request, obj, form, change):
-        obj.type = 'home-banner'
-        super().save_model(request, obj, form, change)
+    display_image_urls = display_media_urls
 
-# Admin for HomeInteriorBanner
+
+@admin.register(GalleryBanner)
+class GalleryBannerAdmin(admin.ModelAdmin):
+    form = GalleryBannerForm
+    list_display = ['type', 'display_video_urls']
+    exclude = ['url']
+    readonly_fields = ['display_video_urls']
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(type='gallery-banner')
+
+    display_video_urls = display_media_urls
+
+
 @admin.register(HomeInteriorBanner)
-class HomeInteriorBannerAdmin(BaseBannerAdmin):
+class HomeInteriorBannerAdmin(admin.ModelAdmin):
     form = HomeInteriorBannerForm
-    list_display = ['title', 'type', 'display_image_urls']
+    list_display = ['title', 'type', 'short_description', 'display_image_urls']
+    readonly_fields = ['display_image_urls']
 
     def get_queryset(self, request):
         return super().get_queryset(request).filter(type='home-interior-banner')
 
-    def save_model(self, request, obj, form, change):
-        obj.type = 'home-interior-banner'
-        super().save_model(request, obj, form, change)
+    display_image_urls = display_media_urls
 
-# Admin for HomeExteriorBanner
+
 @admin.register(HomeExteriorBanner)
-class HomeExteriorBannerAdmin(BaseBannerAdmin):
+class HomeExteriorBannerAdmin(admin.ModelAdmin):
     form = HomeExteriorBannerForm
-    list_display = ['title', 'type', 'display_image_urls']
+    list_display = ['title', 'type', 'short_description', 'display_image_urls']
+    exclude = ['url']
+    readonly_fields = ['display_image_urls']
 
     def get_queryset(self, request):
         return super().get_queryset(request).filter(type='home-exterior-banner')
 
-    def save_model(self, request, obj, form, change):
-        obj.type = 'home-exterior-banner'
-        super().save_model(request, obj, form, change)
+    display_image_urls = display_media_urls
+
+
+@admin.register(HomeWaterproofingBanner)
+class HomeWaterproofingBannerAdmin(admin.ModelAdmin):
+    form = HomeWaterproofingBannerForm
+    list_display = ['title', 'type', 'short_description', 'display_image_urls']
+    exclude = ['url']
+    readonly_fields = ['display_image_urls']
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(type='home-waterproofing-banner')
+
+    display_image_urls = display_media_urls
+
+
+@admin.register(AboutUsTopBanner)
+class AboutUsTopBannerAdmin(admin.ModelAdmin):
+    form = AboutUsTopBannerForm
+    list_display = ['title', 'type', 'short_description', 'display_image_urls']
+    exclude = ['url']
+    readonly_fields = ['display_image_urls']
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(type='about-us-top-banner')
+
+    display_image_urls = display_media_urls
+
+
+@admin.register(ColorPalletsBanner)
+class ColorPalletsBannerAdmin(admin.ModelAdmin):
+    form = ColorPalletsBannerForm
+    list_display = ['title', 'type', 'short_description', 'display_image_urls']
+    exclude = ['url']
+    readonly_fields = ['display_image_urls']
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(type='color-pallets-banner')
+
+    display_image_urls = display_media_urls
+
+
+@admin.register(ProductBanner)
+class ProductBannerAdmin(admin.ModelAdmin):
+    form = ProductBannerForm
+    list_display = ['title', 'type', 'short_description', 'display_image_urls']
+    exclude = ['url']
+    readonly_fields = ['display_image_urls']
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(type='product-banner')
+
+    display_image_urls = display_media_urls
+
+
+@admin.register(ContactUsBanner)
+class ContactUsBannerAdmin(admin.ModelAdmin):
+    form = ContactUsBannerForm
+    list_display = ['title', 'type', 'short_description', 'display_image_urls']
+    exclude = ['url']
+    readonly_fields = ['display_image_urls']
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(type='contact-us-banner')
+
+    display_image_urls = display_media_urls
+
+
+@admin.register(AboutUsBottomVideoBanner)
+class AboutUsBottomVideoBannerAdmin(admin.ModelAdmin):
+    form = AboutUsBottomVideoBannerForm
+    list_display = ['type', 'display_video_urls']
+    exclude = ['url']
+    readonly_fields = ['display_video_urls']
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(type='about-us-bottom-video-banner')
+
+    display_video_urls = display_media_urls
 
 @admin.register(PaintBudgetCalculator)
 class PaintBudgetCalculatorAdmin(admin.ModelAdmin):
