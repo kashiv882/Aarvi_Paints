@@ -7,11 +7,11 @@ from django.contrib.auth.models import User, Group
 from .forms import  HomeInteriorBannerForm, HomeExteriorBannerForm, ColourPaletteForm, ParallaxForm, \
     BrochureForm, AdditionalInfoForm, AdminContactDetailsForm, CategoryForm, ProductForm, HomeForm, GalleryBannerForm, \
     AboutUsTopBannerForm, ColorPalletsBannerForm, ProductBannerForm, ContactUsBannerForm, HomeWaterproofingBannerForm, \
-    AboutUsBottomVideoBannerForm,  BaseBannerForm, BannerImageForm
+    AboutUsBottomVideoBannerForm,  BaseBannerForm, BannerImageForm,HomeInteriorForm, BaseHomeInteriorForm, HomeInteriorDifferentRoomForm,HomeExteriordataForm,BaseBannerMultipleImageForm,BannerImageInline
 from .models import HomeExteriorBanner, HomeInteriorBanner,  PaintBudgetCalculator, ColourPalette, \
     Parallax, Brochure, AdditionalInfo, AdminContactDetails, WaterProofCalculator, Category, Product, UserInfo, Home, \
     Banner, GalleryBanner, AboutUsTopBanner, ColorPalletsBanner, ProductBanner, ContactUsBanner, \
-    HomeWaterproofingBanner, AboutUsBottomVideoBanner, HomeBanner,BannerImage
+    HomeWaterproofingBanner, AboutUsBottomVideoBanner, HomeBanner,BannerImage, HomeInterior,HomeInteriorDifferentRoom,HomeExteriorData,HomeInteriorColorCategory, CategoryImage
 
 # Unregister default auth models (optional if you only want superuser access)
 admin.site.unregister(User)
@@ -74,40 +74,40 @@ def display_media_urls(self, obj):
 
 display_media_urls.short_description = "Media URLs"
 
-class BannerImageInline(admin.StackedInline):
-    model = BannerImage
-    extra = 1
-    form = BannerImageForm  # Use the custom form for the inline
-    readonly_fields = ['image_preview']
+# class BannerImageInline(admin.StackedInline):
+#     model = BannerImage
+#     extra = 1
+#     form = BannerImageForm  # Use the custom form for the inline
+#     readonly_fields = ['image_preview']
 
-    # Display the preview of the uploaded image
-    def image_preview(self, obj):
-        if obj.image:
-            return format_html(
-                '<img src="{}" style="max-height: 100px;" />',
-                obj.image.url
-            )
-        return "No image uploaded"
+#     # Display the preview of the uploaded image
+#     def image_preview(self, obj):
+#         if obj.image:
+#             return format_html(
+#                 '<img src="{}" style="max-height: 100px;" />',
+#                 obj.image.url
+#             )
+#         return "No image uploaded"
 
-    image_preview.short_description = "Preview"
+#     image_preview.short_description = "Preview"
 
 
-# Admin for HomeBanner
-class HomeBannerAdmin(admin.ModelAdmin):
-    form = BannerImageForm  # Link to the custom form
+# # Admin for HomeBanner
+# class HomeBannerAdmin(admin.ModelAdmin):
+#     form = BannerImageForm  # Link to the custom form
 
-    list_display = ['type', 'get_image_preview']
-    search_fields = ['type']
-    list_filter = ['type']
-    readonly_fields = ['get_image_preview']
+#     list_display = ['type', 'get_image_preview']
+#     search_fields = ['type']
+#     list_filter = ['type']
+#     readonly_fields = ['get_image_preview']
 
-    def get_image_preview(self, obj):
-        image_url = obj.url.get('image') if obj.url else None
-        if image_url:
-            return mark_safe(f'<img src="{image_url}" style="max-height: 100px;" />')
-        return "No image available"
+#     def get_image_preview(self, obj):
+#         image_url = obj.url.get('image') if obj.url else None
+#         if image_url:
+#             return mark_safe(f'<img src="{image_url}" style="max-height: 100px;" />')
+#         return "No image available"
 
-    get_image_preview.short_description = "Image Preview"
+#     get_image_preview.short_description = "Image Preview"
 
 
 
@@ -165,6 +165,136 @@ class HomeBannerAdmin(admin.ModelAdmin):
 #         return super().get_queryset(request).filter(type='home-banner')
 
 #     display_image_urls = display_media_urls
+
+
+
+# class CategoryImageInline(admin.TabularInline):
+#     model = CategoryImage
+#     extra = 1
+#     readonly_fields = ['image_preview']
+
+#     def image_preview(self, obj):
+#         if obj.image:
+#             return format_html('<img src="{}" style="height:100px;"/>', obj.image.url)
+#         return ""
+
+#     image_preview.short_description = "Preview"
+
+# @admin.register(HomeInteriorColorCategory)
+# class HomeInteriorAdmin(admin.ModelAdmin):
+#     inlines = [CategoryImageInline]
+#     fields = ['title', 'category_name', 'subcategory_name', 'type_description', 'title_type', 'banners']
+#     readonly_fields = ['type']
+
+#     def get_queryset(self, request):
+#         return super().get_queryset(request).filter(type='home-interior-color-category')
+
+#     def save_model(self, request, obj, form, change):
+#         obj.type = 'home-interior-color-category'
+#         super().save_model(request, obj, form, change)
+
+
+
+
+
+
+
+
+
+
+
+
+
+@admin.register(HomeBanner)
+class HomeBannerAdmin(admin.ModelAdmin):
+    form = BaseBannerMultipleImageForm  # Use the form that excludes 'type'
+    inlines = [BannerImageInline]
+    list_display = ['type']  # Display 'type' in the list view
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(type='home-banner')
+
+    def save_model(self, request, obj, form, change):
+        # Set 'type' automatically to 'home-banner' when saving
+        obj.type = 'home-banner'
+        super().save_model(request, obj, form, change)
+
+
+
+
+@admin.register(HomeInterior)
+class HomeInteriorAdmin(admin.ModelAdmin):
+    form = HomeInteriorForm
+    list_display = ['title', 'type_description']
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(type='home-interior')
+
+
+@admin.register(HomeExteriorData)
+class HomeExteriorDataAdmin(admin.ModelAdmin):
+    form = HomeExteriordataForm
+    list_display = ['title', 'type_description']
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(type='home-exterior-data')
+
+
+# @admin.register(HomeInteriorDifferentRoom)
+# class HomeInteriorDifferentRoomAdmin(admin.ModelAdmin):
+#     form = HomeInteriorDifferentRoomForm
+#     list_display = ['title', 'type_description','type', 'image_preview']
+
+#     def get_queryset(self, request):
+#         return super().get_queryset(request).filter(type='home-interior-different-room')
+
+#     def save_model(self, request, obj, form, change):
+#         obj.type = 'home-interior-different-room'
+#         super().save_model(request, obj, form, change)
+
+#     def image_preview(self, obj):
+#         image_url = obj.category_images.get('image') if obj.category_images else None
+#         if image_url:
+#             return format_html('<img src="{}" width="100" height="auto" />', image_url)
+#         return "No image"
+
+#     image_preview.short_description = "Image"
+
+@admin.register(HomeInteriorDifferentRoom)
+class HomeInteriorDifferentRoomAdmin(admin.ModelAdmin):
+    form = HomeInteriorDifferentRoomForm
+    list_display = ['title', 'type_description', 'type', 'image_preview']
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(type='home-interior-different-room')
+
+    def save_model(self, request, obj, form, change):
+        obj.type = 'home-interior-different-room'
+        super().save_model(request, obj, form, change)
+
+    def image_preview(self, obj):
+        image_url = obj.category_images.get('image') if obj.category_images else None
+        if image_url:
+            return format_html('<img src="{}" width="100" height="auto" />', image_url)
+        return "No image"
+
+    image_preview.short_description = "Image"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 @admin.register(GalleryBanner)

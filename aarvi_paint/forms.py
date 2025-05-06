@@ -2,7 +2,8 @@ from django import forms
 from .models import Banner, Parallax, ColourPalette, Brochure, AdditionalInfo, AdminContactDetails, Category, Product, Home,BannerImage,HomeBanner
 from django.core.files.storage import default_storage
 from django.utils.safestring import mark_safe
-
+from django.contrib import admin
+from django.utils.html import format_html
 from .utils.base_image_handler import BaseImageForm
 
 
@@ -328,8 +329,212 @@ class BaseBannerForm(forms.ModelForm):
 # ===============================================================================Snkalp=========================
 
 
+# class BaseHomeForm(forms.ModelForm):
+#     home_image = forms.ImageField(required=False)
+#     delete_image = forms.BooleanField(required=False, label='Delete Image')
+
+#     # banner_video = forms.FileField(required=False)
+#     # delete_video = forms.BooleanField(required=False, label='Delete Banner Video')
+
+#     class Meta:
+#         model = Home
+#         fields = [
+#             'title', 'banners', 'category_name', 'subcategory_name',
+#             'category_images', 'type_description', 'title_type'
+#         ]
+
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+
+#         image_data = self.instance.category_images or {}
+
+#         home_image_url = image_data.get('image')
+
+#         if home_image_url:
+#             self.fields['home_image'].help_text = mark_safe(
+#                 f'<br><strong>Home Image Preview:</strong><br>'
+#                 f'<img src="{home_image_url}" style="max-height: 100px;" /><br>'
+#                 f'<strong>URL:</strong> <a href="{home_image_url}" target="_blank">{home_image_url}</a>'
+#             )
+#         # if video_url:
+#         #     self.fields['banner_video'].help_text = mark_safe(
+#         #         f'<br><strong>Video Preview:</strong><br>'
+#         #         f'<video width="320" height="240" controls>'
+#         #         f'<source src="{video_url}" type="video/mp4">'
+#         #         f'Your browser does not support the video tag.'
+#         #         f'</video><br>'
+#         #         f'<strong>URL:</strong> <a href="{video_url}" target="_blank">{video_url}</a>'
+#         #     )
+
+#     def save(self, commit=True):
+#         instance = super().save(commit=False)
+
+#         image_data = instance.category_images or {}
+
+#         # Delete logic
+#         if self.cleaned_data.get('delete_image'):
+#             image_data.pop('image', None)
+
+#         # Upload logic
+#         if self.cleaned_data.get('home_image'):
+#             path = default_storage.save(
+#                 f'home/image/{self.cleaned_data["home_image"].name}',
+#                 self.cleaned_data["home_image"]
+#             )
+#             image_data['image'] = default_storage.url(path)
+
+#         instance.category_images = image_data
+
+#         if commit:
+#             instance.save()
+#         return instance
+
+class BaseHomeInteriorForm(forms.ModelForm):
+    class Meta:
+        model = Home
+        fields = ['title', 'type_description']
+
+class HomeInteriorForm(BaseHomeInteriorForm):
+    class Meta(BaseHomeInteriorForm.Meta):
+        fields = ['title', 'type_description']
+
+#home exterior data
+class BaseHomeExteriordataForm(forms.ModelForm):
+    class Meta:
+        model = Home
+        fields = ['title', 'type_description']
+
+class HomeExteriordataForm(BaseHomeExteriordataForm):
+    class Meta(BaseHomeExteriordataForm.Meta):
+        fields = ['title', 'type_description']
 
 
+
+#Working
+# class BaseHomeInteriorDifferentRoomForm(forms.ModelForm):
+#     image = forms.ImageField(required=False)
+
+#     class Meta:
+#         model = Home
+#         fields = ['title', 'type_description', 'image']
+
+#     def save(self, commit=True):
+#         instance = super().save(commit=False)
+
+#         # If an image is uploaded, store its URL in `category_images`
+#         image = self.cleaned_data.get('image')
+#         if image:
+#             image_url = default_storage.save(f'home/{image.name}', image)
+#             full_url = default_storage.url(image_url)
+#             instance.category_images = {'image': full_url}
+
+#         if commit:
+#             instance.save()
+#         return instance
+
+
+
+class BaseHomeInteriorDifferentRoomForm(forms.ModelForm):
+    image = forms.ImageField(required=False)
+    delete_image = forms.BooleanField(required=False, label="Delete current image")
+
+    class Meta:
+        model = Home
+        fields = ['title', 'type_description', 'image']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Display image preview if exists
+        if self.instance and self.instance.category_images.get('image'):
+            image_url = self.instance.category_images['image']
+            self.fields['image'].help_text = mark_safe(
+                f'<img src="{image_url}" width="200" style="margin-top:10px;" /><br/>'
+                f'Upload a new image to replace the current one.'
+            )
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+
+        # Handle image deletion
+        if self.cleaned_data.get('delete_image'):
+            instance.category_images = {}
+
+        # Save new image if provided
+        image = self.cleaned_data.get('image')
+        if image:
+            image_url = default_storage.save(f'home/{image.name}', image)
+            full_url = default_storage.url(image_url)
+            instance.category_images = {'image': full_url}
+
+        if commit:
+            instance.save()
+        return instance
+
+
+
+class HomeInteriorDifferentRoomForm(BaseHomeInteriorDifferentRoomForm):
+    class Meta(BaseHomeInteriorDifferentRoomForm.Meta):
+        fields = ['title', 'type_description', 'image']
+
+# ==================================multiple image============================================
+class BaseBannerMultipleImageForm(forms.ModelForm):
+    class Meta:
+        model = Banner
+        fields = []  # Exclude all fields for now, except for those that are editable
+        # We don't include 'type' in the form anymore, as it's non-editable
+
+# Form for BannerImage inline to handle multiple images
+class BannerImageInlineForm(forms.ModelForm):
+    class Meta:
+        model = BannerImage
+        fields = ['image']  # Only allow uploading images
+
+# Inline model for BannerImage
+class BannerImageInline(admin.TabularInline):
+    model = BannerImage
+    form = BannerImageInlineForm
+    extra = 1  # Allow adding 1 extra inline image
+    readonly_fields = ['image_preview']
+
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" width="100" height="auto" style="object-fit:contain;"/>', obj.image.url)
+        return "No image"
+
+    image_preview.short_description = "Preview"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class GalleryBannerForm(BaseBannerForm):
+    class Meta(BaseBannerForm.Meta):
+        fields = ['banner_image']
+
+
+
+
+
+
+
+
+# ================================================================================================================
 class BannerImageForm(BaseImageForm):
     class Meta:
         model = HomeBanner

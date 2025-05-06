@@ -126,6 +126,12 @@ class Banner(TimeStampedModel):
 class BannerImage(models.Model):
     banner = models.ForeignKey(Banner, on_delete=models.CASCADE, related_name='images')
     image = models.ImageField(upload_to='banners/images/')
+
+    def image_preview(self):
+        if self.image:
+            return mark_safe(f'<img src="{self.image.url}" width="100" />')
+        return "No image"
+    image_preview.short_description = 'Preview'
     # alt_text = models.CharField(max_length=255, blank=True)
 
     # def __str__(self):
@@ -138,13 +144,60 @@ class Home(TimeStampedModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=200)
     type = models.CharField(max_length=200 , choices=Home_Type_CHOICES)
-    banners = models.ForeignKey(Banner,on_delete=models.CASCADE,related_name="homes")
+    banners = models.ForeignKey(Banner,on_delete=models.CASCADE,related_name="homes", null=True, blank=True)
     category_name = models.CharField(max_length=100)
     subcategory_name = models.CharField(max_length=100)
     category_images = models.JSONField(default=dict, blank=True)
     type_images = models.JSONField(default=dict, blank=True)
     type_description = models.TextField()
     title_type = models.CharField(max_length=200)
+
+class CategoryImage(models.Model):
+    home = models.ForeignKey(Home, on_delete=models.CASCADE, related_name='category_images_set')
+    image = models.ImageField(upload_to='category_images/')
+
+class HomeInteriorColorCategory(Home):
+    class Meta:
+        proxy = True
+        verbose_name = 'Home Interior Color Category'
+        verbose_name_plural = 'home interior color categories'
+
+    def save(self, *args, **kwargs):
+        self.type = 'home-interior-color-category'
+        super().save(*args, **kwargs)
+
+
+class HomeInterior(Home):
+    class Meta:
+        proxy = True
+        verbose_name = 'Home Interior'
+        verbose_name_plural = 'home interiors'
+
+    def save(self, *args, **kwargs):
+        self.type = 'home-interior'
+        super().save(*args, **kwargs)
+
+
+class HomeInteriorDifferentRoom(Home):
+    class Meta:
+        proxy = True
+        verbose_name = 'Home Interior Different Room'
+        verbose_name_plural = 'home interiors Different Rooms'
+
+    def save(self, *args, **kwargs):
+        self.type = 'home-interior-different-room'
+        super().save(*args, **kwargs)
+
+class HomeExteriorData(Home):
+    class Meta:
+        proxy = True
+        verbose_name = 'Home Exterior Data'
+        verbose_name_plural = 'home exterior datas'
+
+    def save(self, *args, **kwargs):
+        self.type = 'home-exterior-data'
+        super().save(*args, **kwargs)
+
 
 
 
