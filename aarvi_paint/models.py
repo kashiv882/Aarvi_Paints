@@ -1,7 +1,7 @@
 import uuid
 from django.db import models
 from .choices import *
-
+import json
 
 class TimeStampedModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -59,11 +59,68 @@ class ColourPalette(TimeStampedModel):
 
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    title = models.CharField(max_length=200)
-    description = models.TextField()
-    colour_code = models.IntegerField()
-    colour_code_category = models.CharField(max_length=200)
+    title = models.CharField(max_length=200 ,null=True)
+    description = models.TextField(null=True)
+    colour_code = models.IntegerField(null=True)
+    colour_code_category = models.CharField(max_length=200,null=True)
     url = models.JSONField(default=dict, blank=True)
+
+
+class ColourCode(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    palette = models.ForeignKey(ColourPalette, related_name='colour_codes', on_delete=models.CASCADE)
+    code = models.IntegerField()
+    category = models.CharField(max_length=200)
+
+class MultiColorPalette(ColourPalette):
+    class Meta:
+        proxy = True
+        verbose_name = "Multi-Color Palette"
+        verbose_name_plural = "Multi-Color Palettes"
+
+    def get_colour_codes(self):
+        return self.colour_codes.all()
+
+class ColourPaletteImage(models.Model):
+    palette = models.ForeignKey(ColourPalette, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='colour_palette_images/')
+
+class ColourPaletteWithImages(ColourPalette):
+    class Meta:
+        proxy = True
+        verbose_name = 'Colour Palette With Images'
+        verbose_name_plural = 'Colour Palettes With Images'
+
+    def save(self, *args, **kwargs):
+        # Proxy behavior can be extended here if needed
+        super().save(*args, **kwargs)
+
+
+class ColourPaletteProxy(ColourPalette):
+    class Meta:
+        proxy = True
+        verbose_name = "Colour Palette (Enhanced)"
+        verbose_name_plural = "Colour Palettes (Enhanced)"
+
+    @property
+    def colour_mappings(self):
+        try:
+            codes = json.loads(self.colour_code or "[]")
+            categories = json.loads(self.colour_code_category or "[]")
+            return list(zip(codes, categories))
+        except Exception:
+            return []
+
+    @colour_mappings.setter
+    def colour_mappings(self, value):
+        """
+        Accepts a list of tuples: [(code1, cat1), (code2, cat2)]
+        """
+        codes, cats = zip(*value) if value else ([], [])
+        self.colour_code = json.dumps(list(codes))
+        self.colour_code_category = json.dumps(list(cats))
+
+
 
 
 class Parallax(TimeStampedModel):
@@ -92,6 +149,81 @@ class AdditionalInfo(TimeStampedModel):
     url = models.JSONField(default=dict, blank=True)
     details = models.JSONField(default=dict, blank=True)
 
+#proxy for AdditionalInfo
+class Inspiration(AdditionalInfo):
+    class Meta:
+        proxy = True
+        verbose_name = "Inspiration"
+        verbose_name_plural = "Inspirations"
+
+    @property
+    def image_url(self):
+        return self.url.get('image', '')
+
+    @image_url.setter
+    def image_url(self, value):
+        self.url['image'] = value
+
+    @property
+    def is_interior(self):
+        return self.type == 'interior'
+
+    @property
+    def is_exterior(self):
+        return self.type == 'exterior'
+
+class Testimonial(AdditionalInfo):
+    class Meta:
+        proxy = True
+        verbose_name = "Testimonial"
+        verbose_name_plural = "Testimonials"
+
+    def save(self, *args, **kwargs):
+        self.type = "TESTIMONIAL"
+        super().save(*args, **kwargs)
+
+    @property
+    def name(self):
+        return self.title
+
+    @property
+    def image_url(self):
+        return self.url.get('image', '')
+class Calculator(AdditionalInfo):
+    class Meta:
+        proxy = True
+        verbose_name = "Paint Calculator"
+        verbose_name_plural = "Paint Calculators"
+
+    def save(self, *args, **kwargs):
+        self.type = "PAINT_BUDGET_CALCULATOR"  # Automatically set type
+        super().save(*args, **kwargs)
+
+    @property
+    def product(self):
+        return self.details.get('product', '')
+
+    @property
+    def area(self):
+        return self.details.get('area', '')
+
+class WaterCalculator(AdditionalInfo):
+    class Meta:
+        proxy = True
+        verbose_name = "WaterCalculator"
+        verbose_name_plural = "WaterCalculators"
+
+    def save(self, *args, **kwargs):
+        self.type = "WATER_CALCULATOR"  # Ensure correct type is set
+        super().save(*args, **kwargs)
+
+    @property
+    def product(self):
+        return self.details.get('product', '')
+
+    @property
+    def area(self):
+        return self.details.get('area', '')
 
 
 class AdminContactDetails(TimeStampedModel):
@@ -132,10 +264,27 @@ class BannerImage(models.Model):
             return mark_safe(f'<img src="{self.image.url}" width="100" />')
         return "No image"
     image_preview.short_description = 'Preview'
-    # alt_text = models.CharField(max_length=255, blank=True)
 
-    # def __str__(self):
-    #     return f"Image for {self.banner.title or self.banner.id}"
+
+class AboutUs(TimeStampedModel):
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    title = models.CharField(max_length=200,blank=True,null=True)
+    sub_title = models.CharField(max_length=200,blank=True,null=True)
+    description = models.TextField(blank=True,null=True)
+    url = models.JSONField(default=dict, blank=True,null=True)
+    details = models.JSONField(default=dict, blank=True,null=True)
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -145,16 +294,49 @@ class Home(TimeStampedModel):
     title = models.CharField(max_length=200)
     type = models.CharField(max_length=200 , choices=Home_Type_CHOICES)
     banners = models.ForeignKey(Banner,on_delete=models.CASCADE,related_name="homes", null=True, blank=True)
-    category_name = models.CharField(max_length=100)
-    subcategory_name = models.CharField(max_length=100)
-    category_images = models.JSONField(default=dict, blank=True)
-    type_images = models.JSONField(default=dict, blank=True)
-    type_description = models.TextField()
-    title_type = models.CharField(max_length=200)
+    category_name = models.CharField(max_length=100, null=True, blank=True)
+    subcategory_name = models.CharField(max_length=100, null=True, blank=True)
+    category_images = models.JSONField(default=dict,null=True, blank=True)
+    type_images = models.JSONField(default=dict,null=True, blank=True)
+    type_description = models.TextField(null=True, blank=True)
+    title_type = models.CharField(max_length=200,null=True, blank=True)
+
+
+class TypeImage(models.Model):
+    home = models.ForeignKey("Home", on_delete=models.CASCADE, related_name="type_images_relation")
+    image = models.ImageField(upload_to="type_images/")
 
 class CategoryImage(models.Model):
-    home = models.ForeignKey(Home, on_delete=models.CASCADE, related_name='category_images_set')
+    home = models.ForeignKey(Home, on_delete=models.CASCADE, related_name='category_images_relation')
     image = models.ImageField(upload_to='category_images/')
+
+class HomeProxy(Home):
+    class Meta:
+        proxy = True
+        verbose_name = "Home Custom View"
+        verbose_name_plural = "Homes Custom View"
+
+class WaterproofHome(Home):
+    class Meta:
+        proxy = True
+        verbose_name = "Waterproof Home"
+        verbose_name_plural = "Waterproof Homes"
+
+    def __str__(self):
+        return f"Waterproof: {self.title}"
+
+    def save(self, *args, **kwargs):
+        # Ensure we're working with waterproof type
+        self.type = "Waterproof"  # Assuming 'Waterproof' is in your Home_Type_CHOICES
+        super().save(*args, **kwargs)
+
+
+# class HomeProxy(Home):
+#     class Meta:
+#         proxy = True  # <- Tells Django this is a proxy, not a new table
+#         verbose_name = "Custom Home Entry"
+#         verbose_name_plural = "Custom Home Entries"
+
 
 class HomeInteriorColorCategory(Home):
     class Meta:
@@ -213,15 +395,6 @@ class HomeExteriorData(Home):
 #     variable_name = models.CharField(max_length=100, unique=True)
 #     fields = models.JSONField(default=dict)
 
-# class AboutUs(TimeStampedModel):
-#
-#     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-#     title = models.CharField(max_length=200)
-#     sub_title = models.CharField(max_length=200)
-#     description = models.TextField()
-#     url = models.JSONField(default=dict, blank=True)
-#     details = models.JSONField(default=dict, blank=True)
-
 
 # class Navbar(TimeStampedModel):
 #
@@ -245,7 +418,7 @@ class GalleryBanner(Banner):
         self.type = 'gallery-banner'
         super().save(*args, **kwargs)
 
-
+# ==========================================Home Bannner============================================================================
 class HomeBanner(Banner):
     class Meta:
         proxy = True
@@ -255,6 +428,30 @@ class HomeBanner(Banner):
     def save(self, *args, **kwargs):
         self.type = 'home-banner'
         super().save(*args, **kwargs)
+
+    @property
+    def main_image(self):
+        """Get the first uploaded image"""
+        return self.images.first()
+
+
+
+
+
+
+
+
+
+# ====================================================================================================================================
+# class HomeBanner(Banner):
+#     class Meta:
+#         proxy = True
+#         verbose_name = 'Home Banner'
+#         verbose_name_plural = 'Home Banners'
+
+#     def save(self, *args, **kwargs):
+#         self.type = 'home-banner'
+#         super().save(*args, **kwargs)
 
 
 class HomeInteriorBanner(Banner):

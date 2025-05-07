@@ -4,14 +4,14 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django import forms
 from django.contrib.auth.models import User, Group
-from .forms import  HomeInteriorBannerForm, HomeExteriorBannerForm, ColourPaletteForm, ParallaxForm, \
-    BrochureForm, AdditionalInfoForm, AdminContactDetailsForm, CategoryForm, ProductForm, HomeForm, GalleryBannerForm, \
-    AboutUsTopBannerForm, ColorPalletsBannerForm, ProductBannerForm, ContactUsBannerForm, HomeWaterproofingBannerForm, \
-    AboutUsBottomVideoBannerForm,  BaseBannerForm, BannerImageForm,HomeInteriorForm, BaseHomeInteriorForm, HomeInteriorDifferentRoomForm,HomeExteriordataForm,BaseBannerMultipleImageForm,BannerImageInline
-from .models import HomeExteriorBanner, HomeInteriorBanner,  PaintBudgetCalculator, ColourPalette, \
-    Parallax, Brochure, AdditionalInfo, AdminContactDetails, WaterProofCalculator, Category, Product, UserInfo, Home, \
-    Banner, GalleryBanner, AboutUsTopBanner, ColorPalletsBanner, ProductBanner, ContactUsBanner, \
-    HomeWaterproofingBanner, AboutUsBottomVideoBanner, HomeBanner,BannerImage, HomeInterior,HomeInteriorDifferentRoom,HomeExteriorData,HomeInteriorColorCategory, CategoryImage
+from .forms import  HomeInteriorBannerForm, HomeExteriorBannerForm, ColourPaletteForm, ParallaxForm,WaterproofHomeForm,HomeBannerImageForm,AboutUsAdminForm,TestimonialAdminForm,\
+    BrochureForm, AdditionalInfoForm, AdminContactDetailsForm, CategoryForm, ProductForm, HomeForm, GalleryBannerForm,InspirationForm, \
+    AboutUsTopBannerForm, ColorPalletsBannerForm, ProductBannerForm, ContactUsBannerForm, HomeWaterproofingBannerForm,HomeAdminForm,waterAdminForm, \
+    AboutUsBottomVideoBannerForm, CalculatorAdminForm, BaseBannerForm,HomeInteriorForm, BaseHomeInteriorForm, HomeInteriorDifferentRoomForm,HomeExteriordataForm,BaseBannerMultipleImageForm,BannerImageInline
+from .models import HomeExteriorBanner, Testimonial,HomeInteriorBanner,  PaintBudgetCalculator, ColourPalette,WaterproofHome,Inspiration, \
+    Parallax, Brochure, AdditionalInfo, AdminContactDetails, WaterProofCalculator, Category, Product, UserInfo, Home,CategoryImage, TypeImage,HomeProxy, \
+    Banner, GalleryBanner, AboutUsTopBanner, ColorPalletsBanner, ProductBanner, ContactUsBanner, Category, CategoryImage,AboutUs, WaterCalculator,\
+    HomeWaterproofingBanner, AboutUsBottomVideoBanner, HomeBanner,BannerImage,Calculator, HomeInterior,HomeInteriorDifferentRoom,HomeExteriorData,HomeInteriorColorCategory, CategoryImage,ColourPaletteWithImages, ColourPaletteImage,ColourPaletteProxy,ColourCode,MultiColorPalette
 
 # Unregister default auth models (optional if you only want superuser access)
 admin.site.unregister(User)
@@ -193,33 +193,490 @@ display_media_urls.short_description = "Media URLs"
 #         obj.type = 'home-interior-color-category'
 #         super().save_model(request, obj, form, change)
 
+# Inline model to handle multiple image uploads
+
+
+# =============================Color pallets proxy models===========================================================
+
+class ColourPaletteImageInline(admin.TabularInline):
+    model = ColourPaletteImage
+    extra = 1
+    readonly_fields = ['preview']  # Show preview but prevent editing it
+    fields = ['image', 'preview']  # Fields to show
+
+    def preview(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" width="100" height="100" style="object-fit: contain;" />', obj.image.url)
+        return "-"
+    preview.short_description = 'Image Preview'
+
+
+# Admin for proxy model only (editable: title, description, and inline images)
+
+@admin.register(ColourPaletteWithImages)
+class ColourPaletteWithImagesAdmin(admin.ModelAdmin):
+    fields = ('title', 'description')  # Only show title and description
+    inlines = [ColourPaletteImageInline]
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        # Update the `url` field with all related image URLs
+        obj.url = {
+            str(image.pk): image.image.url for image in obj.images.all()
+        }
+        obj.save()
+
+
+# ======================================Color pallet proxy model=================================================
+
+class ColourCodeInline(admin.TabularInline):
+    model = ColourCode
+    extra = 1  # Number of empty forms to display
+
+@admin.register(MultiColorPalette)
+class MultiColorPaletteAdmin(admin.ModelAdmin):
+    inlines = [ColourCodeInline]
+    # Exclude the single color fields if you want
+    exclude = ('colour_code', 'colour_code_category')
+    
+    # Optional: Display color codes in list view
+    list_display = ('title', 'description', 'display_colour_codes')
+    
+    def display_colour_codes(self, obj):
+        return ", ".join([f"{cc.category}: {cc.code}" for cc in obj.colour_codes.all()])
+    display_colour_codes.short_description = "Color Codes"
+# =============================================================================================================
+
+# ======================================HomE INTERIor=============================================================
+
+class CategoryImageInline(admin.TabularInline):
+    model = CategoryImage
+    extra = 1
+
+class TypeImageInline(admin.TabularInline):
+    model = TypeImage
+    extra = 1
+
+@admin.register(HomeProxy)
+class HomeProxyAdmin(admin.ModelAdmin):
+    inlines = [CategoryImageInline, TypeImageInline]
+    fields = ['title', 'category_name', 'subcategory_name', 'title_type', 'type_description']
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+
+        # sync category_images
+        obj.category_images = [img.image.url for img in obj.category_images_relation.all()]
+        # sync type_images
+        obj.type_images = [img.image.url for img in obj.type_images_relation.all()]
+        obj.save()
+
+
+# ===========================================Home Exterior=========================================================
+
+
+# @admin.register(Home)
+# class HomeAdmin(admin.ModelAdmin):
+#     form = HomeAdminForm
+#     list_display = ('title', 'type', 'title_type', 'get_category_names')
+
+#     def get_category_names(self, obj):
+#         return f"{obj.category_name or '-'} / {obj.subcategory_name or '-'}"
+#     get_category_names.short_description = 'Categories'
+
+# ===========================================================================water proofing=====
+
+
+@admin.register(WaterproofHome)
+class WaterproofHomeAdmin(admin.ModelAdmin):
+    form = WaterproofHomeForm
+    list_display = ['title_type', 'admin_image_preview', 'type_description_short']
+    readonly_fields = ['current_image_display']
+
+    def admin_image_preview(self, obj):
+        if obj.type_images and obj.type_images.get('url'):
+            return format_html(
+                '<img src="{}" style="max-height: 50px;" />',
+                obj.type_images['url']
+            )
+        return "No image"
+    admin_image_preview.short_description = 'Image Preview'
+
+    def type_description_short(self, obj):
+        return obj.type_description[:75] + '...' if obj.type_description else ""
+    type_description_short.short_description = 'Description'
+
+    def current_image_display(self, obj):
+        if obj.type_images and obj.type_images.get('url'):
+            return format_html(
+                '''
+                <div style="margin-bottom: 20px;">
+                    <h3>Current Image</h3>
+                    <img src="{}" style="max-height: 200px;" />
+                    <p><strong>Filename:</strong> {}</p>
+                </div>
+                ''',
+                obj.type_images['url'],
+                obj.type_images.get('name', '')
+            )
+        return "No image currently set"
+    current_image_display.short_description = 'Image'
+    current_image_display.allow_tags = True
+
+    fieldsets = (
+        (None, {
+            'fields': ('title_type', 'type_description')
+        }),
+        ('Image Management', {
+            'fields': ('current_image_display', 'new_image'),
+            'classes': ('collapse', 'wide'),
+        }),
+    )
+
+    class Media:
+        css = {
+            'all': ('admin/css/waterproof.css',)
+        }
+        js = ('admin/js/image_preview.js',)
+
+# =================================================================about Us=======================================================
+
+@admin.register(AboutUs)
+class AboutUsAdmin(admin.ModelAdmin):
+    form = AboutUsAdminForm
+    list_display = ('title', )
+    
+    fieldsets = (
+        ('Main Information', {
+            'fields': ('title', 'description')
+        }),
+        ('Lower Section', {
+            'fields': ('lower_title', 'lower_sub_title', 'lower_description'),
+            'classes': ('collapse',)
+        }),
+        ('Additional Information', {
+            'fields': ('extra_info',),
+            'classes': ('collapse',),
+        }),
+        # ('Advanced Options', {
+        #     'fields': ('url',),
+        #     'classes': ('collapse',),
+        # }),
+    )
 
 
 
+# ===================================================================================================
 
+# ===========================================================Home Banner======================================
 
+class BannerImageInline(admin.TabularInline):
+    model = BannerImage
+    extra = 1
+    readonly_fields = ['image_preview']
+    fields = ['image', 'image_preview']  # Only image upload here
 
-
-
-
-
-
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html(
+                '<img src="{}" style="max-height: 100px;"/>',
+                obj.image.url
+            )
+        return "No image"
+    image_preview.short_description = 'Preview'
 
 @admin.register(HomeBanner)
 class HomeBannerAdmin(admin.ModelAdmin):
-    form = BaseBannerMultipleImageForm  # Use the form that excludes 'type'
+    form = HomeBannerImageForm
     inlines = [BannerImageInline]
-    list_display = ['type']  # Display 'type' in the list view
+    list_display = ['banner_preview','image_count']
+    list_display_links = ['banner_preview']
+    
+    fieldsets = (
+        ('General Information', {
+            'fields': (),  # No actual fields
+            'description': format_html(
+                '''
+                <div style="background:#f8f8f8; padding:20px; border-radius:5px;">
+                    <h3 style="margin-top:0">Home Banner Management</h3>
+                   
+                    <p style="margin-bottom:0">
+                        <strong>Add images using the "Banner Images" section below</strong><br>
+                         <br>
+                    </p>
+                </div>
+                '''
+            ),
+            'classes': ('wide',),
+        }),
+    )
+    # New method to show image count
+    def image_count(self, obj):
+        count = obj.images.count()
+        color = '#4CAF50' if count > 0 else '#F44336'
+        return format_html(
+            '<span style="color: {}; font-weight: bold;">{}</span>',
+            color,
+            f"{count} image{'s' if count != 1 else ''}"
+        )
+    image_count.short_description = 'Images'
+    # Enhanced preview method
+    def banner_preview(self, obj):
+        images = obj.images.all()
+        if images:
+            return format_html(
+                '''
+                <div style="
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                ">
+                    <img src="{}" style="
+                        height: 50px;
+                        width: auto;
+                        border-radius: 4px;
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                    "/>
+                    <span style="font-size: 0.9em; color: #666;">
+                        {:.25}...
+                    </span>
+                </div>
+                ''',
+                images[0].image.url,
+                images[0].image.name
+            )
+        return format_html(
+            '<span style="color: #F44336;">No images uploaded</span>'
+        )
+
+    def banner_preview(self, obj):
+        if obj.main_image and obj.main_image.image:
+            return format_html(
+                '<img src="{}" style="max-height: 50px;"/>',
+                obj.main_image.image.url
+            )
+        return "Upload Images"
+    banner_preview.short_description = 'Banner Preview'
 
     def get_queryset(self, request):
         return super().get_queryset(request).filter(type='home-banner')
 
     def save_model(self, request, obj, form, change):
-        # Set 'type' automatically to 'home-banner' when saving
         obj.type = 'home-banner'
         super().save_model(request, obj, form, change)
 
 
+# ===================================================================Additional info inspiration========================
+
+
+@admin.register(Inspiration)
+class InspirationAdmin(admin.ModelAdmin):
+    form = InspirationForm
+    list_display = ('title', 'type', 'description_short', 'image_preview')
+    list_filter = ('type',)
+    readonly_fields = ('image_preview',)
+    
+    def description_short(self, obj):
+        return obj.description[:50] + '...' if len(obj.description) > 50 else obj.description
+    description_short.short_description = 'Description'
+    
+    def image_preview(self, obj):
+        if obj.url and obj.url.get('image'):
+            return format_html(
+                '<img src="{}" style="max-height: 200px; max-width: 200px;" />',
+                obj.url['image']
+            )
+        return "No image"
+    image_preview.short_description = 'Preview'
+
+    def get_queryset(self, request):
+        # Only show interior and exterior inspirations
+        return super().get_queryset(request).filter(type__in=['interior', 'exterior'])
+
+
+# ======================================================================================================================================/
+
+
+@admin.register(Testimonial)
+class TestimonialAdmin(admin.ModelAdmin):
+    form = TestimonialAdminForm
+    list_display = ('name', 'description','image_preview')
+
+    readonly_fields = ['image_display']
+
+    fieldsets = (
+        (None, {
+            'fields': (
+                'name',
+                'description',
+                'image',
+                'image_display',
+                'delete_image',
+            )
+        }),
+    )
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(type="TESTIMONIAL")
+
+    def image_preview(self, obj):
+        url = obj.url.get('image')
+        if url:
+            return format_html('<img src="{}" style="max-height: 100px;" />', url)
+        return "No image"
+    image_preview.short_description = "Image Preview"
+
+    def image_display(self, obj):
+        url = obj.url.get('image')
+        if url:
+            return mark_safe(f'<img src="{url}" style="max-height: 200px;" />')
+        return "No image uploaded."
+    image_display.short_description = "Current Image"
+
+
+# ===========================================================================paint budgt calculator===========================================
+
+
+
+@admin.register(Calculator)
+class CalculatorAdmin(admin.ModelAdmin):
+    form = CalculatorAdminForm
+    list_display = ('title', 'product', 'area')
+
+    fieldsets = (
+        ('Paint Budget Calculator', {
+            'fields': (
+                'product',
+                'area',
+            )
+        }),
+    )
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(type="PAINT_BUDGET_CALCULATOR")
+
+    def product(self, obj):
+        return obj.details.get('product', '')
+
+    def area(self, obj):
+        return obj.details.get('area', '')
+
+
+@admin.register(WaterCalculator)
+class WaterproofcalculatorAdmin(admin.ModelAdmin):
+    form = waterAdminForm
+    list_display = ( 'product', 'area')
+
+    fieldsets = (
+        ('Paint Budget Calculator', {
+            'fields': (
+                'product',
+                'area',
+            )
+        }),
+    )
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(type="PAINT_BUDGET_CALCULATOR")
+
+    def product(self, obj):
+        return obj.details.get('product', '')
+
+    def area(self, obj):
+        return obj.details.get('area', '')
+
+
+
+
+
+
+
+
+
+
+
+
+# =======================================================================================================================================
+
+
+
+
+
+
+
+
+# class BannerImageInline(admin.TabularInline):
+#     model = BannerImage  # Using your existing BannerImage model
+#     extra = 1
+#     readonly_fields = ['image_preview']
+#     fields = ['image', 'image_preview']
+
+#     def image_preview(self, obj):
+#         if obj.image:
+#             return format_html(
+#                 '<img src="{}" style="max-height: 100px; max-width: 200px;"/>',
+#                 obj.image.url
+#             )
+#         return "No image"
+#     image_preview.short_description = 'Preview'
+
+# @admin.register(HomeBanner)
+# class HomeBannerAdmin(admin.ModelAdmin):
+#     form = HomeBannerImageForm
+#     inlines = [BannerImageInline]
+#     list_display = ['banner_preview']
+#     list_display_links = ['banner_preview']
+
+#     def banner_preview(self, obj):
+#         if obj.main_image and obj.main_image.image:
+#             return format_html(
+#                 '<img src="{}" style="max-height: 50px;"/>',
+#                 obj.main_image.image.url
+#             )
+#         return "Upload Images"
+#     banner_preview.short_description = 'Banner Preview'
+
+#     def get_queryset(self, request):
+#         return super().get_queryset(request).filter(type='home-banner')
+
+#     def save_model(self, request, obj, form, change):
+#         obj.type = 'home-banner'
+#         super().save_model(request, obj, form, change)
+
+#     fieldsets = (
+#         ('Upload New Image', {
+#             'fields': ('new_image',),
+#             'classes': ('wide',),
+#         }),
+#     )
+
+#     class Media:
+#         css = {
+#             'all': ('admin/css/homebanner.css',)
+#         }
+
+
+
+
+
+
+
+
+# @admin.register(HomeBanner)
+# class HomeBannerAdmin(admin.ModelAdmin):
+#     form = BaseBannerMultipleImageForm  # Use the form that excludes 'type'
+#     inlines = [BannerImageInline]
+#     list_display = ['type']  # Display 'type' in the list view
+
+#     def get_queryset(self, request):
+#         return super().get_queryset(request).filter(type='home-banner')
+
+#     def save_model(self, request, obj, form, change):
+#         # Set 'type' automatically to 'home-banner' when saving
+#         obj.type = 'home-banner'
+#         super().save_model(request, obj, form, change)
+
+# =====================================================================================================================
 
 
 @admin.register(HomeInterior)
@@ -624,8 +1081,8 @@ class AdminContactDetailsAdmin(admin.ModelAdmin):
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     form = CategoryForm
-    list_display = ['name' , 'subcategory_name']
-    search_fields = ['name' , 'subcategory_name']
+    list_display = ['name' ,'subcategory_name']
+    search_fields = ['name','subcategory_name' ]
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):

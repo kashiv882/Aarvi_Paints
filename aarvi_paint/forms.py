@@ -1,10 +1,18 @@
 from django import forms
-from .models import Banner, Parallax, ColourPalette, Brochure, AdditionalInfo, AdminContactDetails, Category, Product, Home,BannerImage,HomeBanner
+import uuid
+import os
+from django.conf import settings
+from .models import Banner, Parallax, ColourPalette, Brochure, AdditionalInfo, AdminContactDetails,\
+         Category, Product, Home,BannerImage,Testimonial,HomeBanner,AboutUs,Inspiration,Calculator
 from django.core.files.storage import default_storage
 from django.utils.safestring import mark_safe
 from django.contrib import admin
 from django.utils.html import format_html
 from .utils.base_image_handler import BaseImageForm
+from django.core.files.base import ContentFile
+import requests
+from urllib.parse import urlparse
+
 
 
 # class BaseBannerForm(forms.ModelForm):
@@ -80,9 +88,67 @@ from .utils.base_image_handler import BaseImageForm
 #     class Meta(BaseBannerForm.Meta):
 #         fields = ['title', 'short_description', 'desktop_image', 'delete_desktop']
 
+# ===================================================Home enterior=========================================================
 
 
+class HomeAdminForm(forms.ModelForm):
+    class Meta:
+        model = Home
+        fields = '__all__'
 
+    def clean_type(self):
+        type_value = self.cleaned_data['type']
+        valid_types = dict(Home_Type_CHOICES).keys()
+        if type_value not in valid_types:
+            raise forms.ValidationError("Invalid home type selected.")
+        return type_value
+
+    def clean(self):
+        cleaned_data = super().clean()
+        title_type = cleaned_data.get('title_type')
+        type_description = cleaned_data.get('type_description')
+
+        if title_type and not type_description:
+            raise forms.ValidationError("Type description is required when title_type is set.")
+
+
+# ==============================================water proofing===========================================
+
+class WaterproofHomeForm(forms.ModelForm):
+    new_image = forms.ImageField(
+        required=False,
+        label="Upload New Image",
+        help_text="Image will replace the current one"
+    )
+
+    class Meta:
+        model = Home
+        fields = ['title_type', 'type_description',]
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        new_image = self.cleaned_data.get('new_image')
+        
+        if new_image:
+            # Generate unique filename
+            ext = os.path.splitext(new_image.name)[1]
+            filename = f"{uuid.uuid4()}{ext}"
+            upload_path = os.path.join('waterproof', filename)
+            
+            # Save file using Django's storage system
+            default_storage.save(upload_path, new_image)
+            
+            # Update JSON field
+            instance.type_images = {
+                'url': default_storage.url(upload_path),
+                'name': filename,
+                'path': upload_path
+            }
+        
+        if commit:
+            instance.save()
+        return instance
+# ============================================================================================================
 
 class ColourPaletteForm(BaseImageForm):
     delete_entry = forms.BooleanField(required=False, label="Delete this Colour Palette", initial=False)
@@ -328,67 +394,6 @@ class BaseBannerForm(forms.ModelForm):
 
 # ===============================================================================Snkalp=========================
 
-
-# class BaseHomeForm(forms.ModelForm):
-#     home_image = forms.ImageField(required=False)
-#     delete_image = forms.BooleanField(required=False, label='Delete Image')
-
-#     # banner_video = forms.FileField(required=False)
-#     # delete_video = forms.BooleanField(required=False, label='Delete Banner Video')
-
-#     class Meta:
-#         model = Home
-#         fields = [
-#             'title', 'banners', 'category_name', 'subcategory_name',
-#             'category_images', 'type_description', 'title_type'
-#         ]
-
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-
-#         image_data = self.instance.category_images or {}
-
-#         home_image_url = image_data.get('image')
-
-#         if home_image_url:
-#             self.fields['home_image'].help_text = mark_safe(
-#                 f'<br><strong>Home Image Preview:</strong><br>'
-#                 f'<img src="{home_image_url}" style="max-height: 100px;" /><br>'
-#                 f'<strong>URL:</strong> <a href="{home_image_url}" target="_blank">{home_image_url}</a>'
-#             )
-#         # if video_url:
-#         #     self.fields['banner_video'].help_text = mark_safe(
-#         #         f'<br><strong>Video Preview:</strong><br>'
-#         #         f'<video width="320" height="240" controls>'
-#         #         f'<source src="{video_url}" type="video/mp4">'
-#         #         f'Your browser does not support the video tag.'
-#         #         f'</video><br>'
-#         #         f'<strong>URL:</strong> <a href="{video_url}" target="_blank">{video_url}</a>'
-#         #     )
-
-#     def save(self, commit=True):
-#         instance = super().save(commit=False)
-
-#         image_data = instance.category_images or {}
-
-#         # Delete logic
-#         if self.cleaned_data.get('delete_image'):
-#             image_data.pop('image', None)
-
-#         # Upload logic
-#         if self.cleaned_data.get('home_image'):
-#             path = default_storage.save(
-#                 f'home/image/{self.cleaned_data["home_image"].name}',
-#                 self.cleaned_data["home_image"]
-#             )
-#             image_data['image'] = default_storage.url(path)
-
-#         instance.category_images = image_data
-
-#         if commit:
-#             instance.save()
-#         return instance
-
 class BaseHomeInteriorForm(forms.ModelForm):
     class Meta:
         model = Home
@@ -505,8 +510,7 @@ class BannerImageInline(admin.TabularInline):
     image_preview.short_description = "Preview"
 
 
-
-
+# =============================================color pallet ==============================================
 
 
 
@@ -534,22 +538,241 @@ class GalleryBannerForm(BaseBannerForm):
 
 
 
-# ================================================================================================================
-class BannerImageForm(BaseImageForm):
+# ==========================================Home banner======================================================================
+
+
+class HomeBannerImageForm(forms.ModelForm):
     class Meta:
         model = HomeBanner
-        fields = [ 'image_field']
+        fields = []  
 
-    # def __init__(self, *args, **kwargs):
-    #     super().__init__(*args, **kwargs)
-    #     if self.instance.pk and self.instance.image:
-    #         self.fields['image'].widget = forms.ClearableFileInput()
+# ==================================================================================================================
+
+# ====================================================About Uss================================================================
+
+class AboutUsAdminForm(forms.ModelForm):
+    lower_title = forms.CharField(
+        max_length=200, 
+        required=False, 
+        label="Lower Title",
+        help_text="Title for the lower section"
+    )
+    lower_sub_title = forms.CharField(
+        max_length=200, 
+        required=False, 
+        label="Lower Sub Title",
+        help_text="Sub title for the lower section"
+    )
+    lower_description = forms.CharField(
+        widget=forms.Textarea, 
+        required=False, 
+        label="Lower Description",
+        help_text="Description for the lower section"
+    )
+    extra_info = forms.CharField(
+        widget=forms.Textarea, 
+        required=False, 
+        label="Extra Info",
+        help_text="Additional information to display"
+    )
+
+    class Meta:
+        model = AboutUs
+        fields = ['title', 'sub_title', 'description', 'url']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.details:
+            details = self.instance.details
+            self.fields['lower_title'].initial = details.get('lower_title', '')
+            self.fields['lower_sub_title'].initial = details.get('lower_sub_title', '')
+            self.fields['lower_description'].initial = details.get('lower_description', '')
+            self.fields['extra_info'].initial = details.get('extra_info', '')
+
+    def clean(self):
+        cleaned_data = super().clean()
+        cleaned_data['details'] = {
+            'lower_title': cleaned_data.get('lower_title', ''),
+            'lower_sub_title': cleaned_data.get('lower_sub_title', ''),
+            'lower_description': cleaned_data.get('lower_description', ''),
+            'extra_info': cleaned_data.get('extra_info', ''),
+        }
+        return cleaned_data
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.details = self.cleaned_data['details']
+        if commit:
+            instance.save()
+        return instance
 
 
 
-# class HomeBannerForm(BaseBannerForm):
-#     class Meta(BaseBannerForm.Meta):
-#         fields = ['banner_image']
+
+
+
+# ===============================================================================================================================
+
+# =========================================================Additional info Inspiration==============================================
+
+class InspirationForm(forms.ModelForm):
+    SECTION_CHOICES = [
+        ('interior', 'Interior'),
+        ('exterior', 'Exterior'),
+    ]
+    
+    section = forms.ChoiceField(choices=SECTION_CHOICES, label="Inspiration Section")
+    image = forms.URLField(required=False, label="Image URL")
+    current_image = forms.CharField(widget=forms.HiddenInput, required=False)
+
+    class Meta:
+        model = Inspiration
+        fields = ['section', 'title', 'description', 'image', 'details']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        if self.instance and self.instance.pk:
+            self.fields['section'].initial = self.instance.type
+            self.fields['image'].initial = self.instance.url.get('image', '')
+            self.fields['current_image'].initial = self.instance.url.get('image', '')
+
+    def clean(self):
+        cleaned_data = super().clean()
+        cleaned_data['type'] = cleaned_data.get('section')
+        
+        image_url = cleaned_data.get('image', '')
+        if image_url:
+            cleaned_data['url'] = {'image': image_url}
+        else:
+            # Keep existing image if no new one provided
+            cleaned_data['url'] = {'image': cleaned_data.get('current_image', '')}
+        
+        return cleaned_data
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.type = self.cleaned_data['type']
+        instance.url = self.cleaned_data['url']
+        
+        if commit:
+            instance.save()
+        return instance
+
+    def image_preview(self):
+        if self.instance and self.instance.url.get('image'):
+            return format_html(
+                '<img src="{}" style="max-height: 200px; max-width: 200px;" />',
+                self.instance.url['image']
+            )
+        return "No image uploaded"
+    image_preview.short_description = 'Preview'
+
+
+
+
+# ========================================================================================================================================
+
+# =============================================================additional info testimonial=================================================
+
+class TestimonialAdminForm(forms.ModelForm):
+    name = forms.CharField(max_length=200, required=True, label="Name")
+    description = forms.CharField(widget=forms.Textarea, required=True, label="Description")
+    image = forms.ImageField(required=False, label="Upload Image")
+    delete_image = forms.BooleanField(required=False, label="Delete Existing Image")
+
+    class Meta:
+        model = Testimonial
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance:
+            self.fields['name'].initial = self.instance.title
+            self.fields['description'].initial = self.instance.description
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+
+        instance.title = self.cleaned_data['name']
+        instance.description = self.cleaned_data['description']
+
+        # Handle image deletion
+        if self.cleaned_data.get('delete_image'):
+            instance.url = {}
+
+        # Handle image upload
+        image_file = self.cleaned_data.get('image')
+        if image_file:
+            path = default_storage.save(f"uploads/testimonials/{image_file.name}", ContentFile(image_file.read()))
+            image_url = default_storage.url(path)
+            instance.url = {'image': image_url}
+
+        if commit:
+            instance.save()
+        return instance
+
+
+
+
+
+
+
+# ===========================================================================================================================================
+
+
+#  ===========================================================additional info paint budgt calculator================================================================================
+class CalculatorAdminForm(forms.ModelForm):
+    product = forms.CharField(required=True, label="Enter Product Name")
+    area = forms.FloatField(required=True, label="Enter Area (sq ft)")
+
+    class Meta:
+        model = Calculator
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance:
+            self.fields['product'].initial = self.instance.details.get('product', '')
+            self.fields['area'].initial = self.instance.details.get('area', '')
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.details = {
+            'product': self.cleaned_data.get('product'),
+            'area': self.cleaned_data.get('area'),
+        }
+        if commit:
+            instance.save()
+        return instance
+
+class waterAdminForm(forms.ModelForm):
+    product = forms.CharField(required=True, label="Enter Product Name")
+    area = forms.FloatField(required=True, label="Enter Area (sq ft)")
+
+    class Meta:
+        model = Calculator
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance:
+            self.fields['product'].initial = self.instance.details.get('product', '')
+            self.fields['area'].initial = self.instance.details.get('area', '')
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.details = {
+            'product': self.cleaned_data.get('product'),
+            'area': self.cleaned_data.get('area'),
+        }
+        if commit:
+            instance.save()
+        return instance
+
+
+
+# ===========================================================================================================================================
 
 
 class GalleryBannerForm(BaseBannerForm):
