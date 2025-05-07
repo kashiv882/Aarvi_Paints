@@ -6,11 +6,11 @@ from django.contrib.auth.models import User, Group
 from .forms import HomeBannerForm, HomeInteriorBannerForm, HomeExteriorBannerForm, ColourPaletteForm, ParallaxForm, \
     BrochureForm, AdditionalInfoForm, AdminContactDetailsForm, CategoryForm, ProductForm, HomeForm, GalleryBannerForm, \
     AboutUsTopBannerForm, ColorPalletsBannerForm, ProductBannerForm, ContactUsBannerForm, HomeWaterproofingBannerForm, \
-    AboutUsBottomVideoBannerForm
-from .models import HomeExteriorBanner, HomeInteriorBanner,  PaintBudgetCalculator, ColourPalette, \
+    AboutUsBottomVideoBannerForm, AboutUsForm
+from .models import HomeExteriorBanner, HomeInteriorBanner, PaintBudgetCalculator, ColourPalette, \
     Parallax, Brochure, AdditionalInfo, AdminContactDetails, WaterProofCalculator, Category, Product, UserInfo, Home, \
     Banner, GalleryBanner, AboutUsTopBanner, ColorPalletsBanner, ProductBanner, ContactUsBanner, \
-    HomeWaterproofingBanner, AboutUsBottomVideoBanner, HomeBanner
+    HomeWaterproofingBanner, AboutUsBottomVideoBanner, HomeBanner, AboutUs
 
 # Unregister default auth models (optional if you only want superuser access)
 admin.site.unregister(User)
@@ -277,9 +277,10 @@ class ColourPaletteAdmin(admin.ModelAdmin):
 
 @admin.register(Parallax)
 class ParallaxAdmin(admin.ModelAdmin):
-    form = ParallaxForm  # Link to the custom form
+    form = ParallaxForm
+    exclude = ('url',)
 
-    list_display = ['title', 'priority', 'get_image_preview']
+    list_display = ['title','sub_title', 'description' ,'priority', 'get_image_preview']
     search_fields = ['title', 'sub_title']
     list_filter = ['priority']
     readonly_fields = ['get_image_preview']
@@ -319,7 +320,7 @@ class BrochureAdmin(admin.ModelAdmin):
 class AdditionalInfoAdmin(admin.ModelAdmin):
     form = AdditionalInfoForm
     list_display = ['type', 'title', 'preview_image' , 'description', 'details']
-    search_fields = ['type', 'title', 'preview_image' , 'description','details']
+    search_fields = ['type', 'title', 'description','details']
     readonly_fields = ['preview_image']
 
     def preview_image(self, obj):
@@ -329,6 +330,23 @@ class AdditionalInfoAdmin(admin.ModelAdmin):
         return "No image"
 
     preview_image.short_description = "Image Preview"
+
+
+@admin.register(AboutUs)
+class AboutUsAdmin(admin.ModelAdmin):
+    form = AboutUsForm
+    list_display = ['title','sub_title','description','details','preview_image']
+    search_fields = ['title','sub_title','description']
+    readonly_fields = ['preview_image']
+
+    def preview_image(self, obj):
+        image_url = obj.url.get('image') if obj.url else None
+        if image_url:
+            return mark_safe(f'<img src="{image_url}" style="max-height: 100px;" />')
+        return "No image"
+
+    preview_image.short_description = "Image Preview"
+
 
 
 @admin.register(Home)
@@ -356,23 +374,13 @@ class HomeAdmin(admin.ModelAdmin):
         'get_banner_type',
         'get_banner_placement_location',
         'get_banner_short_description',
-        'get_category_images',   # Display methods in list_display
-        'get_type_images',       # Display methods in list_display
+        'category_images',
+        'type_images',
         'type_description',
-        'get_image_preview',     # Display image preview
+        'get_image_preview',
     ]
 
 
-
-    readonly_fields = [f.name for f in Home._meta.fields] + [
-
-        'get_banner_title',
-        'get_banner_type',
-        'get_banner_placement_location',
-        'get_banner_short_description',
-    ]
-
-    actions = None
 
     # Define methods for displaying related data in the admin
     def get_banner_title(self, obj):
@@ -391,60 +399,69 @@ class HomeAdmin(admin.ModelAdmin):
         return obj.banners.short_description
     get_banner_short_description.short_description = "Banner Short Description"
 
-    # Display the category images in the admin
-    def get_category_images(self, obj):
-        return mark_safe("<br>".join([f'<img src="{img}" style="max-height: 100px;" />' for img in obj.category_images.values()]))
-    get_category_images.short_description = "Category Images"
 
-    # Display the type images in the admin
-    def get_type_images(self, obj):
-        return mark_safe("<br>".join([f'<img src="{img}" style="max-height: 100px;" />' for img in obj.type_images.values()]))
-    get_type_images.short_description = "Type Images"
 
 @admin.register(AdminContactDetails)
 class AdminContactDetailsAdmin(admin.ModelAdmin):
     form = AdminContactDetailsForm
-    list_display = ['location', 'phone_number', 'email' , 'google_link' , 'social_media_links']
-    search_fields = ['location', 'phone_number', 'email' , 'google_link' , 'social_media_links']
+
+    list_display = [
+        'location',
+        'phone_number',
+        'email',
+        'google_link',
+        'display_social_media_links'
+    ]
+
+    search_fields = [
+        'location',
+        'phone_number',
+        'email',
+        'google_link',
+    ]
+
+    def display_social_media_links(self, obj):
+        links = obj.social_media_links or {}
+        instagram = links.get('instagram', '')
+        facebook = links.get('facebook', '')
+        whatsapp = links.get('whatsapp', '')
+        return f"Insta: {instagram}, FB: {facebook}, WA: {whatsapp}"
+
+    display_social_media_links.short_description = "Social Media Links"
 
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    form = CategoryForm
-    list_display = ['name' , 'subcategory_name']
-    search_fields = ['name' , 'subcategory_name']
+    form = CategoryForm  # your custom form that handles comma-separated subcategories
+
+    list_display = ['name', 'display_subcategories']
+    search_fields = ['name']
+
+    def display_subcategories(self, obj):
+        return ", ".join(obj.subcategory_names or [])
+    display_subcategories.short_description = 'Subcategories'
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     form = ProductForm
-    list_display = [
-        'title',
-        'get_category_name',
-        'get_subcategory_name',
-        'description',
-        'get_image_preview',
-        'keyfeature',
-    ]
+    list_display = ['title', 'get_category_name', 'subcategory', 'description', 'get_image_preview', 'keyfeature']
     search_fields = ['title', 'description', 'keyfeature']
     list_filter = ['category']
+
+    def get_category_name(self, obj):
+        return obj.category.name
+    get_category_name.short_description = "Category Name"
 
     def get_image_preview(self, obj):
         image_url = obj.url.get('image') if obj.url else None
         if image_url:
             return mark_safe(f'<img src="{image_url}" style="max-height: 100px;" />')
-        return "No image available"
-
+        return "No image"
     get_image_preview.short_description = "Image Preview"
 
-    # Related Category fields
-    def get_category_name(self, obj):
-        return obj.category.name
-    get_category_name.short_description = "Category Name"
-
-    def get_subcategory_name(self, obj):
-        return obj.category.subcategory_name
-    get_subcategory_name.short_description = "Subcategory"
-
+    class Media:
+        js = ('js/product_subcategory.js',)
+        print(js)
 
 @admin.register(UserInfo)
 class UserInfoAdmin(admin.ModelAdmin):

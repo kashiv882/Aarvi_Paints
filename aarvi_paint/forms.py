@@ -1,6 +1,6 @@
 from django import forms
 from .models import Banner, Parallax, ColourPalette, Brochure, AdditionalInfo, AdminContactDetails, Category, Product, \
-    Home
+    Home, AboutUs
 from django.core.files.storage import default_storage
 from django.utils.safestring import mark_safe
 
@@ -85,31 +85,29 @@ from .utils.base_image_handler import BaseImageForm
 
 
 class ColourPaletteForm(BaseImageForm):
-    delete_entry = forms.BooleanField(required=False, label="Delete this Colour Palette", initial=False)
 
     class Meta:
         model = ColourPalette
-        fields = ['title', 'description', 'colour_code', 'colour_code_category', 'image_field','delete_entry']
+        fields = ['title', 'description', 'colour_code', 'colour_code_category']
 
 
 class ParallaxForm(BaseImageForm):
     class ParallaxForm(BaseImageForm):
-        delete_entry = forms.BooleanField(required=False, label="Delete this Parallax", initial=False)
 
         class Meta:
             model = Parallax
-            fields = ['title', 'sub_title', 'description', 'priority', 'image_field', 'delete_image']
+            fields = ['title', 'sub_title', 'description', 'priority']
 
 
 class BrochureForm(forms.ModelForm):
     image_field = forms.ImageField(required=False, label="Upload Image")
-    delete_image = forms.BooleanField(required=False, label="Delete Preview Image")
+
     pdf_field = forms.FileField(required=False, label="Upload PDF")
-    delete_pdf = forms.BooleanField(required=False, label="Delete PDF")
+
 
     class Meta:
         model = Brochure
-        fields = ['image_field', 'pdf_field', 'delete_image', 'delete_pdf']
+        fields = ['image_field', 'pdf_field']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -172,38 +170,108 @@ class BrochureForm(forms.ModelForm):
 
 
 class AdditionalInfoForm(BaseImageForm):
-    delete_entry = forms.BooleanField(required=False, label="Delete this Additional Info", initial=False)
+
 
     class Meta:
         model = AdditionalInfo
-        fields = ['type', 'title', 'description', 'details', 'image_field', 'delete_image']
+        fields = ['type', 'title', 'description', 'details']
 
 
+class AboutUsForm(BaseImageForm):
 
 
-
+    class Meta:
+        model = AboutUs
+        fields = ['title', 'sub_title', 'description', 'details']
 
 class AdminContactDetailsForm(forms.ModelForm):
-    delete_entry = forms.BooleanField(required=False, label="Delete this Admin Contact Details", initial=False)
+
+    instagram = forms.URLField(required=False, label="Instagram Link")
+    facebook = forms.URLField(required=False, label="Facebook Link")
+    whatsapp = forms.URLField(required=False, label="WhatsApp Link")
 
     class Meta:
         model = AdminContactDetails
-        fields = ['location', 'phone_number', 'email', 'google_link', 'social_media_links']
+        fields = ['location', 'phone_number', 'email', 'google_link']
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.social_media_links:
+            links = self.instance.social_media_links
+            self.fields['instagram'].initial = links.get('instagram', '')
+            self.fields['facebook'].initial = links.get('facebook', '')
+            self.fields['whatsapp'].initial = links.get('whatsapp', '')
+
+    def clean(self):
+        cleaned_data = super().clean()
+        cleaned_data['social_media_links'] = {
+            'instagram': cleaned_data.get('instagram', ''),
+            'facebook': cleaned_data.get('facebook', ''),
+            'whatsapp': cleaned_data.get('whatsapp', ''),
+        }
+        return cleaned_data
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.social_media_links = self.cleaned_data['social_media_links']
+        if commit:
+            instance.save()
+        return instance
 
 class CategoryForm(forms.ModelForm):
-    delete_entry = forms.BooleanField(required=False, label="Delete this Category", initial=False)
+    subcategories = forms.CharField(
+        required=False,
+        label="Subcategories (comma separated)",
+        widget=forms.TextInput()
+    )
 
     class Meta:
         model = Category
-        fields = ['name', 'subcategory_name']
+        fields = ['name', 'subcategories']
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.subcategory_names:
+            self.fields['subcategories'].initial = ', '.join(self.instance.subcategory_names)
 
+    def clean_subcategories(self):
+        data = self.cleaned_data['subcategories']
+        return [s.strip() for s in data.split(',') if s.strip()]
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.subcategory_names = self.cleaned_data.get('subcategories', [])
+        if commit:
+            instance.save()
+        return instance
 
 class ProductForm(BaseImageForm):
+    subcategory = forms.ChoiceField(required=False, choices=[('', 'Select category first')])
+
     class Meta:
         model = Product
-        fields = ['title', 'keyfeature', 'description', 'category']
+        fields = ['title', 'keyfeature', 'description', 'category', 'subcategory']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        category = None
+        if 'category' in self.data:
+            try:
+                category = Category.objects.get(id=self.data.get('category'))
+            except Category.DoesNotExist:
+                pass
+        elif self.instance and hasattr(self.instance, 'category') and self.instance.category:
+            category = self.instance.category
+
+        if category:
+            choices = [(s, s) for s in category.subcategory_names]
+            self.fields['subcategory'].choices = choices
+            # Pass the selected one as data-attribute for JS
+            self.fields['subcategory'].widget.attrs['data-selected'] = self.data.get('subcategory', '')
+        else:
+            self.fields['subcategory'].choices = [('', 'Select category first')]
+
 
 class HomeForm(forms.ModelForm):
     category_image_field = forms.ImageField(required=False, label="Category Image")
@@ -214,44 +282,65 @@ class HomeForm(forms.ModelForm):
         fields = [
             'title',
             'type',
+            'banners',
             'category_name',
             'subcategory_name',
             'title_type',
-            'category_images',  # Include model fields here
-            'type_images',      # Include model fields here
             'type_description',
-            'banners',
         ]
 
-    # Exclude unwanted fields from the form display
-    exclude = ['id', 'created_on', 'updated_on']
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Handle Category Image Preview
+        category_url = self.instance.category_images.get('image') if self.instance.category_images else None
+        if category_url:
+            self.fields['category_image_field'].help_text = mark_safe(
+                f'<br><strong>Category Image Preview:</strong><br>'
+                f'<img src="{category_url}" style="max-height: 100px;" /><br>'
+                f'<strong>URL:</strong> <a href="{category_url}" target="_blank">{category_url}</a>'
+            )
+
+        # Handle Type Image Preview
+        type_url = self.instance.type_images.get('image') if self.instance.type_images else None
+        if type_url:
+            self.fields['type_image_field'].help_text = mark_safe(
+                f'<br><strong>Type Image Preview:</strong><br>'
+                f'<img src="{type_url}" style="max-height: 100px;" /><br>'
+                f'<strong>URL:</strong> <a href="{type_url}" target="_blank">{type_url}</a>'
+            )
 
     def save(self, commit=True):
         instance = super().save(commit=False)
 
-        # Handle category_images
-        category_images = instance.category_images or {}
+        # Handle Category Image Upload or Delete
+        category_data = instance.category_images or {}
+        if self.cleaned_data.get('delete_category_image'):
+            category_data.pop('image', None)
         if self.cleaned_data.get('category_image_field'):
             path = default_storage.save(
                 f'uploads/{self.cleaned_data["category_image_field"].name}',
                 self.cleaned_data["category_image_field"]
             )
-            category_images['image'] = default_storage.url(path)
-            instance.category_images = category_images
+            category_data['image'] = default_storage.url(path)
+        instance.category_images = category_data
 
-        # Handle type_images
-        type_images = instance.type_images or {}
+        # Handle Type Image Upload or Delete
+        type_data = instance.type_images or {}
+        if self.cleaned_data.get('delete_type_image'):
+            type_data.pop('image', None)
         if self.cleaned_data.get('type_image_field'):
             path = default_storage.save(
                 f'uploads/{self.cleaned_data["type_image_field"].name}',
                 self.cleaned_data["type_image_field"]
             )
-            type_images['image'] = default_storage.url(path)
-            instance.type_images = type_images
+            type_data['image'] = default_storage.url(path)
+        instance.type_images = type_data
 
         if commit:
             instance.save()
         return instance
+
 
 
 
@@ -329,7 +418,6 @@ class BaseBannerForm(forms.ModelForm):
 class HomeBannerForm(BaseBannerForm):
     class Meta(BaseBannerForm.Meta):
         fields = ['banner_image']
-
 
 class GalleryBannerForm(BaseBannerForm):
     class Meta(BaseBannerForm.Meta):

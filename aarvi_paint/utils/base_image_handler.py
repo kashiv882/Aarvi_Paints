@@ -4,12 +4,11 @@ from django.utils.safestring import mark_safe
 
 
 class BaseImageForm(forms.ModelForm):
-    image_field = forms.ImageField(required=False)
-    delete_image = forms.BooleanField(required=False, label='Delete Image')
+    image_field = forms.ImageField(required=False, label='Upload Image')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Check if the instance has a URL field and set the help text for image preview
+        # Show preview if image exists
         url = self.instance.url or {}
         image_url = url.get('image')
         if image_url:
@@ -23,11 +22,7 @@ class BaseImageForm(forms.ModelForm):
         instance = super().save(commit=False)
         url_data = instance.url or {}
 
-        if self.cleaned_data.get('delete_image'):
-            url_data.pop('image', None)
-            if instance.image:
-                instance.image.delete()
-
+        # Only handle new image upload; no deletion
         if self.cleaned_data.get('image_field'):
             path = default_storage.save(
                 f'uploads/{self.cleaned_data["image_field"].name}',
@@ -40,4 +35,3 @@ class BaseImageForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
-

@@ -25,7 +25,8 @@ class PaintBudgetCalculatorSerializer(serializers.ModelSerializer):
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = ['name', 'subcategory_name']
+        fields = ['name', 'subcategory_names']
+
 
 class ProductSerializer(serializers.ModelSerializer):
     category = CategorySerializer()
@@ -39,10 +40,15 @@ class BannerSerializer(serializers.ModelSerializer):
         model = Banner
         fields = ['title', 'type', 'placement_location', 'short_description', 'url']
 
-class ColourPaletteSerializer(serializers.ModelSerializer):
+class ColourPaletteFullSerializer(serializers.ModelSerializer):
     class Meta:
         model = ColourPalette
-        fields = ['title', 'description', 'colour_code', 'colour_code_category', 'url']
+        fields = ['title', 'description', 'url']
+
+class ColourPaletteCodeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ColourPalette
+        fields = ['colour_code', 'colour_code_category']
 
 class ParallaxSerializer(serializers.ModelSerializer):
     class Meta:
@@ -54,10 +60,10 @@ class BrochureSerializer(serializers.ModelSerializer):
         model = Brochure
         fields = ['url', 'uploaded_pdf']
 
-# class AboutUsSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = AboutUs
-#         fields = ['title','sub_title', 'description', 'url', 'details']
+class AboutUsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AboutUs
+        fields = ['title','sub_title', 'description', 'url', 'details']
 
 class AdditionalInfoSerializer(serializers.ModelSerializer):
     class Meta:

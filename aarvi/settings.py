@@ -140,8 +140,14 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
+import os
 
+# Already existing:
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'aarvi_paint/static')]
+
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -155,12 +161,41 @@ JAZZMIN_SETTINGS = {
     "welcome_sign": "Welcome to Aarvi Paints Admin Panel",
     "copyright": "Aarvi Paints",
 
+
     # Optional: top menu and sidebar tweaks
     "show_sidebar": True,
     "navigation_expanded": True,
     "hide_apps": [],
     "hide_models": [],
-    "order_with_respect_to": [],
+
+    "order_with_respect_to": [
+    # Banner-related models
+    "aarvi_paint.HomeBanner",
+    "aarvi_paint.HomeInteriorBanner",
+    "aarvi_paint.HomeExteriorBanner",
+    "aarvi_paint.HomeWaterproofingBanner",
+    "aarvi_paint.GalleryBanner",
+    "aarvi_paint.AboutUsTopBanner",
+    "aarvi_paint.ColorPalletsBanner",
+    "aarvi_paint.ProductBanner",
+    "aarvi_paint.ContactUsBanner",
+    "aarvi_paint.AboutUsBottomVideoBanner",
+
+    # Other models in alphabetical order
+    "aarvi_paint.AboutUs",
+    "aarvi_paint.AdditionalInfo",
+    "aarvi_paint.AdminContactDetails",
+    "aarvi_paint.Brochure",
+    "aarvi_paint.Category",
+    "aarvi_paint.ColourPalette",
+    "aarvi_paint.Home",
+    "aarvi_paint.PaintBudgetCalculator",
+    "aarvi_paint.Parallax",
+    "aarvi_paint.Product",
+    "aarvi_paint.UserInfo",
+    "aarvi_paint.WaterProofCalculator",
+],
+
 
 
     "icons": {

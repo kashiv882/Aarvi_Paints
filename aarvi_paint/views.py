@@ -1,5 +1,6 @@
 import logging
 
+from django.http import JsonResponse
 from rest_framework import viewsets
 from rest_framework.exceptions import ValidationError, NotFound
 from rest_framework . response import Response
@@ -8,13 +9,14 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 from .common import create_user_info, validate_request_data
 from .models import PaintBudgetCalculator, Category, ColourPalette, Parallax, Brochure, AdditionalInfo, \
-    UserInfo, Product, Banner, Home, AdminContactDetails, WaterProofCalculator  # CustomInfo ,Navbar,  AboutUs
+    UserInfo, Product, Banner, Home, AdminContactDetails, WaterProofCalculator, AboutUs  # CustomInfo ,Navbar,  AboutUs
 from .choices import ADDITIONAL_INFO_TYPE_CHOICES, SOURCE_CHOICES, ALLOWED_SOURCES
 from .serializers import PaintBudgetCalculatorSerializer, ProductSerializer, CategorySerializer, \
-    ColourPaletteSerializer, ParallaxSerializer, BrochureSerializer, \
+     ParallaxSerializer, BrochureSerializer, \
     AdditionalInfoSerializer, BannerSerializer, UserInfoSerializer, \
     HomeSerializer, AdminContactDetailsSerializer, \
-    WaterProofCalculatorSerializer  # CustomSerializer ,NavbarSerializer ,AboutUsSerializer
+    WaterProofCalculatorSerializer, AboutUsSerializer, \
+    ColourPaletteCodeSerializer, ColourPaletteFullSerializer  # CustomSerializer ,NavbarSerializer ,AboutUsSerializer
 
 
 logger = logging.getLogger(__name__)
@@ -111,14 +113,26 @@ class BannerViewSet(viewsets.ModelViewSet):
 
         return Banner.objects.all()
 
+
 class ColourPaletteViewSet(viewsets.ModelViewSet):
-    serializer_class = ColourPaletteSerializer
     queryset = ColourPalette.objects.all()
 
+    def get_serializer_class(self):
+        if self.request.query_params.get('colour_code'):
+            return ColourPaletteCodeSerializer
+        return ColourPaletteFullSerializer
+
     def get_queryset(self):
-        queryset = ColourPalette.objects.all()
+        colour_code = self.request.query_params.get('colour_code')
+
+        if colour_code:
+            queryset = ColourPalette.objects.filter(colour_code=colour_code)
+        else:
+            queryset = ColourPalette.objects.all()
+
         if not queryset.exists():
             raise NotFound({"error": "No colour palettes found."})
+
         return queryset
 
 
@@ -266,14 +280,24 @@ class WaterProofCalculatorViewSet(viewsets.ModelViewSet):
 #
 #         return queryset
 
-# class AboutUsViewSet(viewsets.ModelViewSet):
-#     serializer_class = AboutUsSerializer
-#     queryset = AboutUs.objects.all()
-#
-#     def get_queryset(self):
-#         return AboutUs.objects.all()
+class AboutUsViewSet(viewsets.ModelViewSet):
+    serializer_class = AboutUsSerializer
+    queryset = AboutUs.objects.all()
 
-#
+    def get_queryset(self):
+        return AboutUs.objects.all()
+
+
+def get_subcategories(request):
+    category_id = request.GET.get('category_id')
+    try:
+        category = Category.objects.get(id=category_id)
+        return JsonResponse({'subcategories': category.subcategory_names})
+    except Category.DoesNotExist:
+        return JsonResponse({'subcategories': []})
+
+
+
 # class NavbarViewSet(viewsets.ModelViewSet):
 #     serializer_class = NavbarSerializer
 #     filter_backends = [DjangoFilterBackend]

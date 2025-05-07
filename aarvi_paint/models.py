@@ -26,10 +26,12 @@ class Category(TimeStampedModel):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
-    subcategory_name = models.CharField(max_length=100)
+    subcategory_names = models.JSONField(default=list)
 
     def __str__(self):
-        return f"{self.name} - {self.subcategory_name}"
+        return self.name
+
+
 
 
 class Product(TimeStampedModel):
@@ -39,7 +41,11 @@ class Product(TimeStampedModel):
     keyfeature = models.TextField()
     description = models.TextField()
     category = models.ForeignKey(Category, on_delete=models.CASCADE, to_field='id', related_name='category')
+    subcategory = models.CharField(max_length=100, blank=True)
     url = models.JSONField()
+
+    def __str__(self):
+        return self.title
 
 
 
@@ -122,20 +128,22 @@ class Banner(TimeStampedModel):
     short_description = models.TextField(null=True, blank=True)
     url = models.JSONField(default=dict, blank=True)
 
+    def __str__(self):
+        return f"{self.type or 'No Type'} - {self.title or 'Untitled'}"
 
 
 class Home(TimeStampedModel):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    title = models.CharField(max_length=200)
+    title = models.CharField(max_length=200, null = True )
     type = models.CharField(max_length=200 , choices=Home_Type_CHOICES)
     banners = models.ForeignKey(Banner,on_delete=models.CASCADE,related_name="homes")
-    category_name = models.CharField(max_length=100)
-    subcategory_name = models.CharField(max_length=100)
-    category_images = models.JSONField(default=dict, blank=True)
-    type_images = models.JSONField(default=dict, blank=True)
-    type_description = models.TextField()
-    title_type = models.CharField(max_length=200)
+    category_name = models.CharField(max_length=100 , null =True)
+    subcategory_name = models.CharField(max_length=100 , null = True)
+    category_images = models.JSONField(default=dict, null=True ,  blank=True)
+    type_images = models.JSONField(default=dict, blank=True , null = True)
+    type_description = models.TextField(null = True)
+    title_type = models.CharField(max_length=200 , null=True)
 
 
 
@@ -151,14 +159,14 @@ class Home(TimeStampedModel):
 #     variable_name = models.CharField(max_length=100, unique=True)
 #     fields = models.JSONField(default=dict)
 
-# class AboutUs(TimeStampedModel):
-#
-#     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-#     title = models.CharField(max_length=200)
-#     sub_title = models.CharField(max_length=200)
-#     description = models.TextField()
-#     url = models.JSONField(default=dict, blank=True)
-#     details = models.JSONField(default=dict, blank=True)
+class AboutUs(TimeStampedModel):
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    title = models.CharField(max_length=200)
+    sub_title = models.CharField(max_length=200)
+    description = models.TextField()
+    url = models.JSONField(default=dict, blank=True)
+    details = models.JSONField(default=dict, blank=True)
 
 
 # class Navbar(TimeStampedModel):
