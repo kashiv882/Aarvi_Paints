@@ -6,7 +6,8 @@ from .models import AdminContactDetails
 from .views import ProductViewSet, PaintBudgetCalculatorViewSet, CategoryViewSet, BannerViewSet, ColourPaletteViewSet, \
     ParallaxViewSet, BrochureViewSet, AdditionalInfoViewSet, \
     UserInfoViewSet, HomeViewSet, AdminContactViewSet, \
-    WaterProofCalculatorViewSet, AboutUsViewSet, SettingViewSet  # CustomViewSet NavbarViewSet,, AboutUsViewSet
+    WaterProofCalculatorViewSet, AboutUsViewSet, SettingViewSet, \
+    create_home_interior  # CustomViewSet NavbarViewSet,, AboutUsViewSet
 
 router = DefaultRouter()
 router.register(r'categories', CategoryViewSet, basename='category')
@@ -33,4 +34,6 @@ router.register(r'setting',SettingViewSet, basename='setting')
 urlpatterns = [
     path('', include(router.urls)),
     path('get-subcategories/', views.get_subcategories, name='get_subcategories'),
+    path('home-interior/', create_home_interior, name='create_home_interior'),
+    path('upload-image-url/', views.upload_image_url, name='upload_image_url'),
 ]

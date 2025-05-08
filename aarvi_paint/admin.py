@@ -1,16 +1,18 @@
 from django.contrib import admin
 from django.contrib.admin import AdminSite
+from django.utils.html import format_html
 
 from django.utils.safestring import mark_safe
 from django.contrib.auth.models import User, Group
 from .forms import HomeBannerForm, HomeInteriorBannerForm, HomeExteriorBannerForm, ColourPaletteForm, ParallaxForm, \
     BrochureForm, AdditionalInfoForm, AdminContactDetailsForm, CategoryForm, ProductForm, HomeForm, GalleryBannerForm, \
     AboutUsTopBannerForm, ColorPalletsBannerForm, ProductBannerForm, ContactUsBannerForm, HomeWaterproofingBannerForm, \
-    AboutUsBottomVideoBannerForm, AboutUsForm, SettingAdminForm
+    AboutUsBottomVideoBannerForm, AboutUsForm, SettingAdminForm, HomeInteriorForm, HomeExteriorForm, HomeWaterProofForm
 from .models import HomeExteriorBanner, HomeInteriorBanner, PaintBudgetCalculator, ColourPalette, \
     Parallax, Brochure, AdditionalInfo, AdminContactDetails, WaterProofCalculator, Category, Product, UserInfo, Home, \
     Banner, GalleryBanner, AboutUsTopBanner, ColorPalletsBanner, ProductBanner, ContactUsBanner, \
-    HomeWaterproofingBanner, AboutUsBottomVideoBanner, HomeBanner, AboutUs, Setting
+    HomeWaterproofingBanner, AboutUsBottomVideoBanner, HomeBanner, AboutUs, Setting, HomeInterior, HomeExterior, \
+    HomeWaterProof
 
 # Unregister default auth models (optional if you only want superuser access)
 admin.site.unregister(User)
@@ -355,57 +357,57 @@ class AboutUsAdmin(admin.ModelAdmin):
     preview_image.short_description = "Image Preview"
 
 
-
-@admin.register(Home)
-class HomeAdmin(admin.ModelAdmin):
-    form = HomeForm
-
-    def get_image_preview(self, obj):
-        try:
-            category_img = next(iter(obj.category_images.values()), None)
-            type_img = next(iter(obj.type_images.values()), None)
-            image_url = category_img or type_img
-            if image_url:
-                return mark_safe(f'<img src="{image_url}" style="max-height: 100px; border: 1px solid #ccc;" />')
-        except Exception:
-            pass
-        return "No image available"
-
-    list_display = [
-        'title',
-        'type',
-        'category_name',
-        'subcategory_name',
-        'title_type',
-        'get_banner_title',
-        'get_banner_type',
-        'get_banner_placement_location',
-        'get_banner_short_description',
-        'category_images',
-        'type_images',
-        'type_description',
-        'get_image_preview',
-    ]
-
-
-
-    # Define methods for displaying related data in the admin
-    def get_banner_title(self, obj):
-        return obj.banners.title
-    get_banner_title.short_description = "Banner Title"
-
-    def get_banner_type(self, obj):
-        return obj.banners.type
-    get_banner_type.short_description = "Banner Type"
-
-    def get_banner_placement_location(self, obj):
-        return obj.banners.placement_location
-    get_banner_placement_location.short_description = "Banner Placement Location"
-
-    def get_banner_short_description(self, obj):
-        return obj.banners.short_description
-    get_banner_short_description.short_description = "Banner Short Description"
-
+#
+# @admin.register(Home)
+# class HomeAdmin(admin.ModelAdmin):
+#     form = HomeForm
+#
+#     def get_image_preview(self, obj):
+#         try:
+#             category_img = next(iter(obj.category_images.values()), None)
+#             type_img = next(iter(obj.type_images.values()), None)
+#             image_url = category_img or type_img
+#             if image_url:
+#                 return mark_safe(f'<img src="{image_url}" style="max-height: 100px; border: 1px solid #ccc;" />')
+#         except Exception:
+#             pass
+#         return "No image available"
+#
+#     list_display = [
+#         'title',
+#         'type',
+#         'category_name',
+#         'subcategory_name',
+#         'title_type',
+#         'get_banner_title',
+#         'get_banner_type',
+#         'get_banner_placement_location',
+#         'get_banner_short_description',
+#         'category_images',
+#         'type_images',
+#         'type_description',
+#         'get_image_preview',
+#     ]
+#
+#
+#
+#     # Define methods for displaying related data in the admin
+#     def get_banner_title(self, obj):
+#         return obj.banners.title
+#     get_banner_title.short_description = "Banner Title"
+#
+#     def get_banner_type(self, obj):
+#         return obj.banners.type
+#     get_banner_type.short_description = "Banner Type"
+#
+#     def get_banner_placement_location(self, obj):
+#         return obj.banners.placement_location
+#     get_banner_placement_location.short_description = "Banner Placement Location"
+#
+#     def get_banner_short_description(self, obj):
+#         return obj.banners.short_description
+#     get_banner_short_description.short_description = "Banner Short Description"
+#
 
 
 @admin.register(AdminContactDetails)
@@ -589,3 +591,70 @@ class WaterProofCalculatorAdmin(admin.ModelAdmin):
     def get_user_source(self, obj):
         return obj.userinfo.source
     get_user_source.short_description = "Source"
+
+
+
+@admin.register(HomeInterior)
+class HomeInteriorAdmin(admin.ModelAdmin):
+    form = HomeInteriorForm
+
+    list_display = [
+        'title',
+        'type_image_preview',
+        'category_image_preview',
+        'category_name_display',
+        'subcategory_name_display',
+    ]
+
+    def category_name_display(self, obj):
+        if isinstance(obj.category_name, list):
+            return ", ".join(obj.category_name)
+        return obj.category_name or "-"
+    category_name_display.short_description = "Categories"
+
+    def subcategory_name_display(self, obj):
+        if isinstance(obj.subcategory_name, list):
+            return ", ".join(obj.subcategory_name)
+        return obj.subcategory_name or "-"
+    subcategory_name_display.short_description = "Subcategories"
+
+    def type_image_preview(self, obj):
+        if obj.type_images and len(obj.type_images) > 0:
+            return format_html('<img src="{}" width="100" style="border-radius:4px;" />', obj.type_images[0])
+        return "-"
+    type_image_preview.short_description = "Type Image"
+
+    def category_image_preview(self, obj):
+        if obj.category_images and len(obj.category_images) > 0:
+            return format_html('<img src="{}" width="100" style="border-radius:4px;" />', obj.category_images[0])
+        return "-"
+    category_image_preview.short_description = "Category Image"
+
+@admin.register(HomeExterior)
+class HomeExteriorAdmin(admin.ModelAdmin):
+    form = HomeExteriorForm
+    list_display = ['title', 'category_name', 'category_image_preview','description']
+
+    def category_image_preview(self, obj):
+        if obj.category_images and len(obj.category_images) > 0:
+            return format_html('<img src="{}" width="100" style="border-radius:5px;" />', obj.category_images[0])
+        return "-"
+    category_image_preview.short_description = "Preview"
+
+
+@admin.register(HomeWaterProof)
+class HomeWaterProofAdmin(admin.ModelAdmin):
+    form = HomeWaterProofForm
+    list_display = ['title', 'category_name_display', 'sideimage_preview', 'description']
+
+    def category_name_display(self, obj):
+        return ", ".join(obj.category or [])
+
+    category_name_display.short_description = "Categories"
+
+    def sideimage_preview(self, obj):
+        if obj.sideimage_url:
+            return format_html('<img src="{}" width="100" style="border-radius:4px;" />', obj.sideimage_url)
+        return "-"
+
+    sideimage_preview.short_description = "Side Image"

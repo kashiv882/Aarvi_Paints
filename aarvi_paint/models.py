@@ -130,7 +130,7 @@ class Banner(TimeStampedModel):
     title = models.CharField(max_length=200, null=True, blank=True)
     type = models.CharField(max_length=200, editable=False, null=True, blank=True)
     placement_location = models.CharField(max_length=200, null=True, blank=True)
-    short_description = models.TextField(null=True, blank=True)
+    short_description = RichTextField()
     url = models.JSONField(default=dict, blank=True)
 
     def __str__(self):
@@ -141,14 +141,37 @@ class Home(TimeStampedModel):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=200, null = True )
+    description = RichTextField()
     type = models.CharField(max_length=200 , choices=Home_Type_CHOICES)
     banners = models.ForeignKey(Banner,on_delete=models.CASCADE,related_name="homes")
     category_name = models.CharField(max_length=100 , null =True)
     subcategory_name = models.CharField(max_length=100 , null = True)
     category_images = models.JSONField(default=dict, null=True ,  blank=True)
+    side_images = models.JSONField(default=dict, null=True ,  blank=True)
     type_images = models.JSONField(default=dict, blank=True , null = True)
-    type_description = models.TextField(null = True)
+    type_description = RichTextField()
     title_type = models.CharField(max_length=200 , null=True)
+
+class HomeInterior(Home):
+    class Meta:
+        proxy = True
+        verbose_name = "Home Interior"
+        verbose_name_plural = "Home Interiors"
+
+class HomeExterior(Home):
+    class Meta:
+        proxy = True
+        verbose_name = "Home Exterior"
+        verbose_name_plural = "Home Exterior"
+
+
+class HomeWaterProof(Home):
+    class Meta:
+        proxy = True
+        verbose_name = "Home Waterproof"
+        verbose_name_plural = "Home Waterproof"
+
+
 
 
 class Setting(models.Model):

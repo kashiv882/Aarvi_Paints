@@ -3,7 +3,7 @@ from django import forms
 from django.forms import Select, SelectMultiple
 
 from .models import Banner, Parallax, ColourPalette, Brochure, AdditionalInfo, AdminContactDetails, Category, Product, \
-    Home, AboutUs, Setting
+    Home, AboutUs, Setting, HomeExterior, HomeWaterProof
 from django.core.files.storage import default_storage
 from django.utils.safestring import mark_safe
 
@@ -607,3 +607,132 @@ class AboutUsBottomVideoBannerForm(BaseBannerForm):
             instance.save()
 
         return  instance
+
+
+class HomeInteriorForm(forms.ModelForm):
+    category_name = forms.CharField(
+        widget=forms.Textarea,
+        help_text="Comma-separated category names"
+    )
+    subcategory_name = forms.CharField(
+        widget=forms.Textarea,
+        help_text="Comma-separated subcategory names"
+    )
+    category_image = forms.ImageField(required=False, label="Category Image")
+    type_image = forms.ImageField(required=False, label="Type Image")
+
+    class Meta:
+        model = Home
+        fields = ['title', 'title_type', 'type_description', 'description', 'category_name', 'subcategory_name']
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        # Handle single image uploads
+        category_image_file = self.files.get('category_image')
+        type_image_file = self.files.get('type_image')
+
+        if category_image_file:
+            category_image_path = default_storage.save(f'category_images/{category_image_file.name}', category_image_file)
+            cleaned_data['category_images'] = [default_storage.url(category_image_path)]
+        else:
+            cleaned_data['category_images'] = []
+
+        if type_image_file:
+            type_image_path = default_storage.save(f'type_images/{type_image_file.name}', type_image_file)
+            cleaned_data['type_images'] = [default_storage.url(type_image_path)]
+        else:
+            cleaned_data['type_images'] = []
+
+        # Clean comma-separated fields
+        cleaned_data['category_name'] = [x.strip() for x in cleaned_data.get('category_name', '').split(',')]
+        cleaned_data['subcategory_name'] = [x.strip() for x in cleaned_data.get('subcategory_name', '').split(',')]
+
+        return cleaned_data
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+
+        # Forcefully set type for proxy
+        instance.type = "HomeInterior"
+
+        instance.type_images = self.cleaned_data.get('type_images', [])
+        instance.category_images = self.cleaned_data.get('category_images', [])
+        instance.category_name = self.cleaned_data.get('category_name', [])
+        instance.subcategory_name = self.cleaned_data.get('subcategory_name', [])
+
+        if commit:
+            instance.save()
+        return instance
+
+
+class HomeExteriorForm(forms.ModelForm):
+    category_name = forms.CharField(
+        label="Categories",
+        widget=forms.TextInput(attrs={'placeholder': 'Enter categories separated by commas'})
+    )
+    category_images = forms.ImageField()
+
+    class Meta:
+        model = HomeExterior
+        fields = ['title', 'description', 'category_name', 'category_images']
+
+    def clean_category_name(self):
+        data = self.cleaned_data['category_name']
+        # Optionally clean and split by commas to store as list or stringified list
+        categories = [cat.strip() for cat in data.split(',') if cat.strip()]
+        return ', '.join(categories)  # or return categories to store as list in JSONField
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+
+        images = self.files.getlist('category_images')
+        image_urls = []
+        for img in images:
+
+            path = default_storage.save(f"category_images/{img.name}", img)
+            image_urls.append(default_storage.url(path))
+
+        instance.category_images = image_urls
+
+        if commit:
+            instance.save()
+        return instance
+
+class HomeWaterProofForm(forms.ModelForm):
+    category = forms.CharField(
+        widget=forms.Textarea,
+        help_text="Comma-separated category names"
+    )
+    sideimage = forms.ImageField(required=False, label="Side Image")
+
+    class Meta:
+        model = HomeWaterProof
+        fields = ['title', 'description', 'category', 'sideimage']
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        # Handle single image upload for sideimage
+        sideimage_file = self.files.get('sideimage')
+        if sideimage_file:
+            sideimage_path = default_storage.save(f'side_images/{sideimage_file.name}', sideimage_file)
+            cleaned_data['sideimage_url'] = default_storage.url(sideimage_path)
+        else:
+            cleaned_data['sideimage_url'] = ""
+
+        # Clean category as comma-separated values
+        cleaned_data['category'] = [x.strip() for x in cleaned_data.get('category', '').split(',')]
+
+        return cleaned_data
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+
+        # Save the sideimage URL and category
+        instance.sideimage_url = self.cleaned_data.get('sideimage_url', "")
+        instance.category = self.cleaned_data.get('category', [])
+
+        if commit:
+            instance.save()
+        return instance

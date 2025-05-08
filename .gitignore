@@ -1,1 +1,6 @@
 .env
+# Ignore all migrations
+*/migrations/
+
+# Ignore .pyc files
+*.pyc

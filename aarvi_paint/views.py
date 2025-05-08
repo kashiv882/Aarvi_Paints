@@ -1,6 +1,8 @@
 import logging
 
+from django.contrib.messages.storage import default_storage
 from django.http import JsonResponse
+from django.shortcuts import redirect, render
 from rest_framework import viewsets
 from rest_framework.exceptions import ValidationError, NotFound
 from rest_framework . response import Response
@@ -8,6 +10,7 @@ from rest_framework import status
 from django_filters.rest_framework import DjangoFilterBackend
 
 from .common import create_user_info, validate_request_data
+from .forms import HomeInteriorForm
 from .models import PaintBudgetCalculator, Category, ColourPalette, Parallax, Brochure, AdditionalInfo, \
     UserInfo, Product, Banner, Home, AdminContactDetails, WaterProofCalculator, AboutUs, \
     Setting  # CustomInfo ,Navbar,  AboutUs
@@ -336,3 +339,24 @@ def get_subcategories(request):
 #
 #         serializer = self.get_serializer(queryset, many=True)
 #         return Response(serializer.data)
+
+def create_home_interior(request):
+    if request.method == 'POST':
+        form = HomeInteriorForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()  # Save the HomeInterior instance with image URLs and other fields
+            return redirect('home_interior_success')  # Redirect to success page (or wherever)
+    else:
+        form = HomeInteriorForm()  # Initialize an empty form
+
+    return render(request, 'home_interior_form.html', {'form': form})
+
+
+def upload_image_url(request):
+    if request.method == 'POST' and request.FILES.get('file'):
+        file = request.FILES['file']
+        path = default_storage.save(f'uploads/{file.name}', file)
+        url = default_storage.url(path)
+        return JsonResponse({'url': url})
+    return JsonResponse({'error': 'No file uploaded'}, status=400)
+

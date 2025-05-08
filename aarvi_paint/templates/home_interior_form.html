@@ -1,0 +1,102 @@
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  {{ form.as_p }}
+
+  <div id="category-images-section">
+    <label>Category Images</label><br/>
+    <input type="file" name="category_image_0"><br/>
+  </div>
+  <button type="button" onclick="addField('category-images-section', 'category_image_')">Add Category Image</button>
+
+  <div id="type-images-section">
+    <label>Type Images</label><br/>
+    <input type="file" name="type_image_0"><br/>
+  </div>
+  <button type="button" onclick="addField('type-images-section', 'type_image_')">Add Type Image</button>
+
+  <!-- Hidden fields to store the URLs -->
+  <input type="hidden" name="category_images" id="category_images" value="">
+  <input type="hidden" name="type_images" id="type_images" value="">
+
+  <br/><br/>
+  <button type="submit">Save</button>
+</form>
+
+<script>
+let catIndex = 1;
+let typeIndex = 1;
+
+function addField(sectionId, namePrefix) {
+  let section = document.getElementById(sectionId);
+  let input = document.createElement("input");
+  input.type = "file";
+  input.name = namePrefix + (namePrefix.includes('category') ? catIndex++ : typeIndex++);
+  section.appendChild(document.createElement("br"));
+  section.appendChild(input);
+}
+
+// On form submission, collect the uploaded image URLs
+document.querySelector("form").addEventListener("submit", function (e) {
+  e.preventDefault(); // Prevent form submission until URLs are set
+
+  let categoryImages = [];
+  document.querySelectorAll("input[name^='category_image_']").forEach(function (input) {
+    if (input.files[0]) {
+      categoryImages.push(input.files[0]);
+    }
+  });
+
+  let typeImages = [];
+  document.querySelectorAll("input[name^='type_image_']").forEach(function (input) {
+    if (input.files[0]) {
+      typeImages.push(input.files[0]);
+    }
+  });
+
+  let categoryImageURLs = [];
+  let typeImageURLs = [];
+
+  // Upload category images first
+  uploadImages(categoryImages, categoryImageURLs)
+    .then(() => {
+      // Upload type images after category images
+      return uploadImages(typeImages, typeImageURLs);
+    })
+    .then(() => {
+      // Set the hidden field values after all uploads are complete
+      document.getElementById('category_images').value = categoryImageURLs.join(',');
+      document.getElementById('type_images').value = typeImageURLs.join(',');
+
+      // Submit the form after setting the URLs
+      document.querySelector("form").submit();
+    })
+    .catch((error) => {
+      console.error("Error uploading images:", error);
+    });
+
+  // Upload images and return a promise when done
+  function uploadImages(images, urlArray) {
+    return new Promise((resolve, reject) => {
+      let promises = images.map((file) => {
+        let formData = new FormData();
+        formData.append("file", file);
+
+        return fetch("/upload-image-url/", { method: "POST", body: formData })
+          .then(response => response.json())
+          .then(data => {
+            if (data.url) {
+              urlArray.push(data.url);
+            }
+          })
+          .catch((err) => {
+            console.error("Image upload failed", err);
+            reject(err);
+          });
+      });
+
+      // Wait for all images to be uploaded
+      Promise.all(promises).then(resolve).catch(reject);
+    });
+  }
+});
+</script>
