@@ -1,17 +1,20 @@
 from django.contrib import admin
 from django.contrib.admin import AdminSite
-from django.utils.html import format_html
+from django.utils.html import format_html,format_html_join
+from django.urls import path
 from django.utils.safestring import mark_safe
 from django import forms
+import json
+from django.template.response import TemplateResponse
 from django.contrib.auth.models import User, Group
 from .forms import  HomeInteriorBannerForm, HomeExteriorBannerForm, ColourPaletteForm, ParallaxForm,WaterproofHomeForm,HomeBannerImageForm,AboutUsAdminForm,TestimonialAdminForm,\
     BrochureForm, AdditionalInfoForm, AdminContactDetailsForm, CategoryForm, ProductForm, HomeForm, GalleryBannerForm,InspirationForm, \
-    AboutUsTopBannerForm, ColorPalletsBannerForm, ProductBannerForm, ContactUsBannerForm, HomeWaterproofingBannerForm,HomeAdminForm,waterAdminForm, \
-    AboutUsBottomVideoBannerForm, CalculatorAdminForm, BaseBannerForm,HomeInteriorForm, BaseHomeInteriorForm, HomeInteriorDifferentRoomForm,HomeExteriordataForm,BaseBannerMultipleImageForm,BannerImageInline
-from .models import HomeExteriorBanner, Testimonial,HomeInteriorBanner,  PaintBudgetCalculator, ColourPalette,WaterproofHome,Inspiration, \
+    AboutUsTopBannerForm, ColorPalletsBannerForm, ProductBannerForm, ContactUsBannerForm, HomeWaterproofingBannerForm,HomeAdminForm, \
+    AboutUsBottomVideoBannerForm, BaseBannerForm,HomeInteriorForm, BaseHomeInteriorForm, HomeInteriorDifferentRoomForm,HomeExteriordataForm,BaseBannerMultipleImageForm,BannerImageInline
+from .models import PaintCalculator,PaintProduct,HomeExteriorBanner,WaterProduct, Testimonial,HomeInteriorBanner,  PaintBudgetCalculator, ColourPalette,WaterproofHome,Inspiration, \
     Parallax, Brochure, AdditionalInfo, AdminContactDetails, WaterProofCalculator, Category, Product, UserInfo, Home,CategoryImage, TypeImage,HomeProxy, \
     Banner, GalleryBanner, AboutUsTopBanner, ColorPalletsBanner, ProductBanner, ContactUsBanner, Category, CategoryImage,AboutUs, WaterCalculator,\
-    HomeWaterproofingBanner, AboutUsBottomVideoBanner, HomeBanner,BannerImage,Calculator, HomeInterior,HomeInteriorDifferentRoom,HomeExteriorData,HomeInteriorColorCategory, CategoryImage,ColourPaletteWithImages, ColourPaletteImage,ColourPaletteProxy,ColourCode,MultiColorPalette
+    HomeWaterproofingBanner, AboutUsBottomVideoBanner, HomeBanner,BannerImage, HomeInterior,HomeInteriorDifferentRoom,HomeExteriorData,HomeInteriorColorCategory, CategoryImage,ColourPaletteWithImages, ColourPaletteImage,ColourPaletteProxy,ColourCode,MultiColorPalette
 
 # Unregister default auth models (optional if you only want superuser access)
 admin.site.unregister(User)
@@ -536,64 +539,196 @@ class TestimonialAdmin(admin.ModelAdmin):
 
 # ===========================================================================paint budgt calculator===========================================
 
+class PaintProductInline(admin.TabularInline):
+    model = PaintProduct
+    extra = 1
+    fields = ['product_name', 'area']
+    verbose_name = "Paint Product"
+    verbose_name_plural = "Paint Products"
 
+class PaintCalculatorForm(forms.ModelForm):
+    subtitle = forms.CharField(required=False, help_text="This will be stored in the details JSON field")
 
-@admin.register(Calculator)
-class CalculatorAdmin(admin.ModelAdmin):
-    form = CalculatorAdminForm
-    list_display = ('title', 'product', 'area')
+    class Meta:
+        model = PaintCalculator
+        fields = ['title', 'subtitle', 'description']
 
-    fieldsets = (
-        ('Paint Budget Calculator', {
-            'fields': (
-                'product',
-                'area',
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.details and 'subtitle' in self.instance.details:
+            self.fields['subtitle'].initial = self.instance.details['subtitle']
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.details = instance.details or {}
+        instance.details['subtitle'] = self.cleaned_data.get('subtitle', '')
+        if commit:
+            instance.save()
+        return instance
+
+@admin.register(PaintCalculator)
+class PaintCalculatorAdmin(admin.ModelAdmin):
+    form = PaintCalculatorForm
+    inlines = [PaintProductInline]
+    list_display = ('title', 'display_subtitle', 'display_products', 'description_preview')
+    fields = ['title', 'subtitle', 'description']
+    search_fields = ['title', 'details__subtitle', 'paint_products__product_name']
+    readonly_fields = ('details_preview',)
+
+    def display_subtitle(self, obj):
+        return obj.details.get('subtitle', '—')
+    display_subtitle.short_description = 'Subtitle'
+
+    def display_products(self, obj):
+        products = obj.paint_products.all()
+        if products:
+            return format_html("<br>".join([f"• {p.product_name} ({p.area} units)" for p in products]))
+        return "—"
+    display_products.short_description = 'Products'
+
+    def description_preview(self, obj):
+        if obj.description:
+            return format_html(
+                '<span title="{}">{}</span>',
+                obj.description,
+                obj.description[:100] + '...' if len(obj.description) > 100 else obj.description
             )
-        }),
-    )
+        return "—"
+    description_preview.short_description = 'Description'
 
-    def get_queryset(self, request):
-        return super().get_queryset(request).filter(type="PAINT_BUDGET_CALCULATOR")
+    def details_preview(self, obj):
+        if not obj.details:
+            return "No additional details"
+        return format_html_join(
+            '\n',
+            '<div><strong>{}:</strong> {}</div>',
+            ((k, v) for k, v in obj.details.items() if k != 'subtitle')
+        )
+    details_preview.short_description = 'Additional Details'
 
-    def product(self, obj):
-        return obj.details.get('product', '')
+    def save_model(self, request, obj, form, change):
+        obj.type = "PAINT_CALCULATOR"
+        super().save_model(request, obj, form, change)
 
-    def area(self, obj):
-        return obj.details.get('area', '')
+    def get_fields(self, request, obj=None):
+        return ['title', 'subtitle', 'description']
 
+    def get_readonly_fields(self, request, obj=None):
+        return ['details_preview']
+
+
+
+
+# @admin.register(Calculator)
+# class CalculatorAdmin(admin.ModelAdmin):
+#     form = CalculatorAdminForm
+#     list_display = ('title', 'product', 'area')
+
+#     fieldsets = (
+#         ('Paint Budget Calculator', {
+#             'fields': (
+#                 'product',
+#                 'area',
+#             )
+#         }),
+#     )
+
+#     def get_queryset(self, request):
+#         return super().get_queryset(request).filter(type="PAINT_BUDGET_CALCULATOR")
+
+#     def product(self, obj):
+#         return obj.details.get('product', '')
+
+#     def area(self, obj):
+#         return obj.details.get('area', '')
+
+
+# class WaterProductInline(admin.TabularInline):
+#     model = WaterProduct
+#     extra = 1  # Show one empty form by default
+#     min_num = 1
+#     verbose_name = "Product"
+#     verbose_name_plural = "Products"
+
+
+# ===================================================water calculator========================================================
+class WaterProductInline(admin.TabularInline):
+    model = WaterProduct
+    extra = 1
+    fields = ['product_name', 'area']
+    verbose_name = "Water Product"
+    verbose_name_plural = "Water Products"
+
+class WaterCalculatorForm(forms.ModelForm):
+    subtitle = forms.CharField(required=False, help_text="This will be stored in the details JSON field")
+
+    class Meta:
+        model = WaterCalculator
+        fields = ['title', 'subtitle', 'description']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.details and 'subtitle' in self.instance.details:
+            self.fields['subtitle'].initial = self.instance.details['subtitle']
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.details = instance.details or {}
+        instance.details['subtitle'] = self.cleaned_data.get('subtitle', '')
+        if commit:
+            instance.save()
+        return instance
 
 @admin.register(WaterCalculator)
-class WaterproofcalculatorAdmin(admin.ModelAdmin):
-    form = waterAdminForm
-    list_display = ( 'product', 'area')
+class WaterCalculatorAdmin(admin.ModelAdmin):
+    form = WaterCalculatorForm
+    inlines = [WaterProductInline]
+    list_display = ('title', 'display_subtitle', 'display_products', 'description_preview')
+    
+    fields = ['title', 'subtitle', 'description']
+    search_fields = ['title', 'details__subtitle', 'water_products__product_name']
+    readonly_fields = ('details_preview',)  # Add this if you want to show all details
 
-    fieldsets = (
-        ('Paint Budget Calculator', {
-            'fields': (
-                'product',
-                'area',
+    def display_subtitle(self, obj):
+        return obj.details.get('subtitle', '—')
+    display_subtitle.short_description = 'Subtitle'
+
+    def display_products(self, obj):
+        products = obj.water_products.all()
+        if products:
+            return format_html("<br>".join([f"• {p.product_name} ({p.area} units)" for p in products]))
+        return "—"
+    display_products.short_description = 'Products'
+
+    def description_preview(self, obj):
+        if obj.description:
+            return format_html(
+                '<span title="{}">{}</span>',
+                obj.description,
+                obj.description[:100] + '...' if len(obj.description) > 100 else obj.description
             )
-        }),
-    )
+        return "—"
+    description_preview.short_description = 'Description'
 
-    def get_queryset(self, request):
-        return super().get_queryset(request).filter(type="PAINT_BUDGET_CALCULATOR")
+    def details_preview(self, obj):
+        if not obj.details:
+            return "No additional details"
+        return format_html_join(
+            '\n',
+            '<div><strong>{}:</strong> {}</div>',
+            ((k, v) for k, v in obj.details.items() if k != 'subtitle')  # Exclude subtitle as it's shown separately
+        )
+    details_preview.short_description = 'Additional Details'
 
-    def product(self, obj):
-        return obj.details.get('product', '')
+    def save_model(self, request, obj, form, change):
+        obj.type = "WATER_CALCULATOR"
+        super().save_model(request, obj, form, change)
 
-    def area(self, obj):
-        return obj.details.get('area', '')
+    def get_fields(self, request, obj=None):
+        return ['title', 'subtitle', 'description']
 
-
-
-
-
-
-
-
-
-
+    def get_readonly_fields(self, request, obj=None):
+        return ['details_preview']
 
 
 # =======================================================================================================================================

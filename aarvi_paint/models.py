@@ -145,6 +145,7 @@ class AdditionalInfo(TimeStampedModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     type = models.CharField(max_length=200 , choices=ADDITIONAL_INFO_TYPE_CHOICES)
     title = models.CharField(max_length=200)
+
     description = models.TextField()
     url = models.JSONField(default=dict, blank=True)
     details = models.JSONField(default=dict, blank=True)
@@ -189,42 +190,89 @@ class Testimonial(AdditionalInfo):
     @property
     def image_url(self):
         return self.url.get('image', '')
-class Calculator(AdditionalInfo):
+        
+
+
+class PaintProduct(models.Model):
+    additional_info = models.ForeignKey(
+        'AdditionalInfo', on_delete=models.CASCADE, related_name='paint_products'
+    )
+    product_name = models.CharField(max_length=255)
+    area = models.FloatField()
+
+    def __str__(self):
+        return f"{self.product_name} - {self.area} sq.m"
+
+
+class PaintCalculator(AdditionalInfo):
     class Meta:
         proxy = True
         verbose_name = "Paint Calculator"
         verbose_name_plural = "Paint Calculators"
 
     def save(self, *args, **kwargs):
-        self.type = "PAINT_BUDGET_CALCULATOR"  # Automatically set type
+        self.type = "PAINT_CALCULATOR"
         super().save(*args, **kwargs)
+    
+    def __str__(self):
+        details = []
+        if self.title:
+            details.append(self.title)
+        if self.details.get('subtitle'):
+            details.append(self.details['subtitle'])
+        if self.paint_products.exists():
+            products = ", ".join([str(p) for p in self.paint_products.all()])
+            details.append(f"Products: {products}")
+        return " | ".join(details) if details else super().__str__()
+# class Calculator(AdditionalInfo):
+#     class Meta:
+#         proxy = True
+#         verbose_name = "Paint Calculator"
+#         verbose_name_plural = "Paint Calculators"
 
-    @property
-    def product(self):
-        return self.details.get('product', '')
+#     def save(self, *args, **kwargs):
+#         self.type = "PAINT_BUDGET_CALCULATOR"  # Automatically set type
+#         super().save(*args, **kwargs)
 
-    @property
-    def area(self):
-        return self.details.get('area', '')
+#     @property
+#     def product(self):
+#         return self.details.get('product', '')
+
+#     @property
+#     def area(self):
+#         return self.details.get('area', '')
+
+class WaterProduct(models.Model):
+    additional_info = models.ForeignKey(
+        'AdditionalInfo', on_delete=models.CASCADE, related_name='water_products'
+    )
+    product_name = models.CharField(max_length=255)
+    area = models.FloatField()
+
+    def __str__(self):
+        return f"{self.product_name} - {self.area} sq.ft"
+
 
 class WaterCalculator(AdditionalInfo):
     class Meta:
         proxy = True
-        verbose_name = "WaterCalculator"
-        verbose_name_plural = "WaterCalculators"
+        verbose_name = "Water Calculator"
+        verbose_name_plural = "Water Calculators"
 
     def save(self, *args, **kwargs):
-        self.type = "WATER_CALCULATOR"  # Ensure correct type is set
+        self.type = "WATER_CALCULATOR"
         super().save(*args, **kwargs)
-
-    @property
-    def product(self):
-        return self.details.get('product', '')
-
-    @property
-    def area(self):
-        return self.details.get('area', '')
-
+    
+    def __str__(self):
+        details = []
+        if self.title:
+            details.append(self.title)
+        if self.details.get('subtitle'):
+            details.append(self.details['subtitle'])
+        if self.water_products.exists():
+            products = ", ".join([str(p) for p in self.water_products.all()])
+            details.append(f"Products: {products}")
+        return " | ".join(details) if details else super().__str__()
 
 class AdminContactDetails(TimeStampedModel):
 

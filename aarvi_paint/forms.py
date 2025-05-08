@@ -3,7 +3,7 @@ import uuid
 import os
 from django.conf import settings
 from .models import Banner, Parallax, ColourPalette, Brochure, AdditionalInfo, AdminContactDetails,\
-         Category, Product, Home,BannerImage,Testimonial,HomeBanner,AboutUs,Inspiration,Calculator
+         Category, Product, Home,BannerImage,Testimonial,HomeBanner,AboutUs,Inspiration,WaterCalculator,WaterProduct
 from django.core.files.storage import default_storage
 from django.utils.safestring import mark_safe
 from django.contrib import admin
@@ -11,6 +11,7 @@ from django.utils.html import format_html
 from .utils.base_image_handler import BaseImageForm
 from django.core.files.base import ContentFile
 import requests
+from django.forms import formset_factory
 from urllib.parse import urlparse
 
 
@@ -722,57 +723,63 @@ class TestimonialAdminForm(forms.ModelForm):
 
 
 #  ===========================================================additional info paint budgt calculator================================================================================
-class CalculatorAdminForm(forms.ModelForm):
-    product = forms.CharField(required=True, label="Enter Product Name")
-    area = forms.FloatField(required=True, label="Enter Area (sq ft)")
+# class CalculatorAdminForm(forms.ModelForm):
+#     product = forms.CharField(required=True, label="Enter Product Name")
+#     area = forms.FloatField(required=True, label="Enter Area (sq ft)")
 
-    class Meta:
-        model = Calculator
-        fields = '__all__'
+#     class Meta:
+#         model = Calculator
+#         fields = '__all__'
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if self.instance:
-            self.fields['product'].initial = self.instance.details.get('product', '')
-            self.fields['area'].initial = self.instance.details.get('area', '')
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         if self.instance:
+#             self.fields['product'].initial = self.instance.details.get('product', '')
+#             self.fields['area'].initial = self.instance.details.get('area', '')
 
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-        instance.details = {
-            'product': self.cleaned_data.get('product'),
-            'area': self.cleaned_data.get('area'),
-        }
-        if commit:
-            instance.save()
-        return instance
+#     def save(self, commit=True):
+#         instance = super().save(commit=False)
+#         instance.details = {
+#             'product': self.cleaned_data.get('product'),
+#             'area': self.cleaned_data.get('area'),
+#         }
+#         if commit:
+#             instance.save()
+#         return instance
 
-class waterAdminForm(forms.ModelForm):
-    product = forms.CharField(required=True, label="Enter Product Name")
-    area = forms.FloatField(required=True, label="Enter Area (sq ft)")
+# class waterAdminForm(forms.ModelForm):
+#     product = forms.CharField(required=True, label="Enter Product Name")
+#     area = forms.FloatField(required=True, label="Enter Area (sq ft)")
 
-    class Meta:
-        model = Calculator
-        fields = '__all__'
+#     class Meta:
+#         model = Calculator
+#         fields = '__all__'
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if self.instance:
-            self.fields['product'].initial = self.instance.details.get('product', '')
-            self.fields['area'].initial = self.instance.details.get('area', '')
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         if self.instance:
+#             self.fields['product'].initial = self.instance.details.get('product', '')
+#             self.fields['area'].initial = self.instance.details.get('area', '')
 
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-        instance.details = {
-            'product': self.cleaned_data.get('product'),
-            'area': self.cleaned_data.get('area'),
-        }
-        if commit:
-            instance.save()
-        return instance
-
-
+#     def save(self, commit=True):
+#         instance = super().save(commit=False)
+#         instance.details = {
+#             'product': self.cleaned_data.get('product'),
+#             'area': self.cleaned_data.get('area'),
+#         }
+#         if commit:
+#             instance.save()
+        # return instance
 
 # ===========================================================================================================================================
+# ===================================================water calculator==========================================================================
+
+
+
+
+# ================================================================================================================================================
+
+
 
 
 class GalleryBannerForm(BaseBannerForm):
