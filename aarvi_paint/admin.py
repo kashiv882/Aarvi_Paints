@@ -6,11 +6,11 @@ from django.contrib.auth.models import User, Group
 from .forms import HomeBannerForm, HomeInteriorBannerForm, HomeExteriorBannerForm, ColourPaletteForm, ParallaxForm, \
     BrochureForm, AdditionalInfoForm, AdminContactDetailsForm, CategoryForm, ProductForm, HomeForm, GalleryBannerForm, \
     AboutUsTopBannerForm, ColorPalletsBannerForm, ProductBannerForm, ContactUsBannerForm, HomeWaterproofingBannerForm, \
-    AboutUsBottomVideoBannerForm, AboutUsForm
+    AboutUsBottomVideoBannerForm, AboutUsForm, SettingAdminForm
 from .models import HomeExteriorBanner, HomeInteriorBanner, PaintBudgetCalculator, ColourPalette, \
     Parallax, Brochure, AdditionalInfo, AdminContactDetails, WaterProofCalculator, Category, Product, UserInfo, Home, \
     Banner, GalleryBanner, AboutUsTopBanner, ColorPalletsBanner, ProductBanner, ContactUsBanner, \
-    HomeWaterproofingBanner, AboutUsBottomVideoBanner, HomeBanner, AboutUs
+    HomeWaterproofingBanner, AboutUsBottomVideoBanner, HomeBanner, AboutUs, Setting
 
 # Unregister default auth models (optional if you only want superuser access)
 admin.site.unregister(User)
@@ -260,7 +260,7 @@ class PaintBudgetCalculatorAdmin(admin.ModelAdmin):
 class ColourPaletteAdmin(admin.ModelAdmin):
     form = ColourPaletteForm
 
-    list_display = ['title', 'colour_code', 'colour_code_category', 'get_image_preview']
+    list_display = ['title', 'colour_code', 'colour_code_category', 'get_image_preview','description']
     search_fields = ['title', 'colour_code', 'colour_code_category']
     list_filter = ['colour_code_category']
     readonly_fields = ['get_image_preview']
@@ -280,19 +280,26 @@ class ParallaxAdmin(admin.ModelAdmin):
     form = ParallaxForm
     exclude = ('url',)
 
-    list_display = ['title','sub_title', 'description' ,'priority', 'get_image_preview']
+    list_display = ['title', 'sub_title', 'description', 'priority', 'get_desktop_preview', 'get_mobile_preview']
     search_fields = ['title', 'sub_title']
     list_filter = ['priority']
-    readonly_fields = ['get_image_preview']
+    readonly_fields = ['get_desktop_preview', 'get_mobile_preview']
 
-    def get_image_preview(self, obj):
-        image_url = obj.url.get('image') if obj.url else None
-        if image_url:
-            return mark_safe(f'<img src="{image_url}" style="max-height: 100px;" />')
-        return "No image available"
+    def get_desktop_preview(self, obj):
+        if obj.url and 'desktop' in obj.url:
+            desktop_url = obj.url['desktop']
+            return mark_safe(f'<img src="{desktop_url}" style="max-height: 100px; border: 1px solid #ccc;" />')
+        return "No desktop image available"
 
-    get_image_preview.short_description = "Image Preview"
+    get_desktop_preview.short_description = "Desktop Image Preview"
 
+    def get_mobile_preview(self, obj):
+        if obj.url and 'mobile' in obj.url:
+            mobile_url = obj.url['mobile']
+            return mark_safe(f'<img src="{mobile_url}" style="max-height: 100px; border: 1px solid #ccc;" />')
+        return "No mobile image available"
+
+    get_mobile_preview.short_description = "Mobile Image Preview"
 
 
 @admin.register(Brochure)
@@ -429,6 +436,45 @@ class AdminContactDetailsAdmin(admin.ModelAdmin):
 
     display_social_media_links.short_description = "Social Media Links"
 
+@admin.register(Setting)
+class SettingAdmin(admin.ModelAdmin):
+    form = SettingAdminForm
+
+    list_display = [
+        'name',
+        'copyright',
+        'display_app_download_links',
+        'get_logo_preview',  # Preview for logo
+        'get_side_image_preview',  # Preview for side image
+    ]
+
+    search_fields = [
+        'name',
+    ]
+
+    def display_app_download_links(self, obj):
+        links = obj.app_download_links or {}
+        playstore = links.get('playstore', '')
+        appstore = links.get('appstore', '')
+        return f"Play Store: {playstore}, App Store: {appstore}"
+
+    display_app_download_links.short_description = "App Download Links"
+
+    def get_logo_preview(self, obj):
+        if obj.url and 'logo' in obj.url:
+            logo_url = obj.url['logo']
+            return mark_safe(f'<img src="{logo_url}" style="max-height: 50px; border: 1px solid #ccc;" />')
+        return "No logo available"
+
+    get_logo_preview.short_description = "Logo Preview"
+
+    def get_side_image_preview(self, obj):
+        if obj.url and 'side_image' in obj.url:
+            side_image_url = obj.url['side_image']
+            return mark_safe(f'<img src="{side_image_url}" style="max-height: 50px; border: 1px solid #ccc;" />')
+        return "No side image available"
+
+    get_side_image_preview.short_description = "Side Image Preview"
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
@@ -444,8 +490,10 @@ class CategoryAdmin(admin.ModelAdmin):
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     form = ProductForm
-    list_display = ['title', 'get_category_name', 'subcategory', 'description', 'get_image_preview', 'keyfeature']
-    search_fields = ['title', 'description', 'keyfeature']
+    list_display = ['title', 'subtitle', 'short_description', 'long_description', 'keyfeature',
+                  'get_category_name', 'subcategory', 'colour_palate1', 'colour_palate2','get_image_preview']
+
+    search_fields = ['title', 'keyfeature']
     list_filter = ['category']
 
     def get_category_name(self, obj):
@@ -461,7 +509,6 @@ class ProductAdmin(admin.ModelAdmin):
 
     class Media:
         js = ('js/product_subcategory.js',)
-        print(js)
 
 @admin.register(UserInfo)
 class UserInfoAdmin(admin.ModelAdmin):

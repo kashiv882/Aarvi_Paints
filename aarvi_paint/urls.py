@@ -6,7 +6,7 @@ from .models import AdminContactDetails
 from .views import ProductViewSet, PaintBudgetCalculatorViewSet, CategoryViewSet, BannerViewSet, ColourPaletteViewSet, \
     ParallaxViewSet, BrochureViewSet, AdditionalInfoViewSet, \
     UserInfoViewSet, HomeViewSet, AdminContactViewSet, \
-    WaterProofCalculatorViewSet, AboutUsViewSet  # CustomViewSet NavbarViewSet,, AboutUsViewSet
+    WaterProofCalculatorViewSet, AboutUsViewSet, SettingViewSet  # CustomViewSet NavbarViewSet,, AboutUsViewSet
 
 router = DefaultRouter()
 router.register(r'categories', CategoryViewSet, basename='category')
@@ -23,6 +23,7 @@ router.register(r'userinfo', UserInfoViewSet, basename='userinfo'),
 router.register(r'home', HomeViewSet, basename='home'),
 router.register(r'admincontectinfo', AdminContactViewSet, basename='admincontectinfo'),
 router.register(r'waterproof',WaterProofCalculatorViewSet, basename='waterproof')
+router.register(r'setting',SettingViewSet, basename='setting')
 
 
 

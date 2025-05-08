@@ -9,14 +9,16 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 from .common import create_user_info, validate_request_data
 from .models import PaintBudgetCalculator, Category, ColourPalette, Parallax, Brochure, AdditionalInfo, \
-    UserInfo, Product, Banner, Home, AdminContactDetails, WaterProofCalculator, AboutUs  # CustomInfo ,Navbar,  AboutUs
+    UserInfo, Product, Banner, Home, AdminContactDetails, WaterProofCalculator, AboutUs, \
+    Setting  # CustomInfo ,Navbar,  AboutUs
 from .choices import ADDITIONAL_INFO_TYPE_CHOICES, SOURCE_CHOICES, ALLOWED_SOURCES
 from .serializers import PaintBudgetCalculatorSerializer, ProductSerializer, CategorySerializer, \
-     ParallaxSerializer, BrochureSerializer, \
+    ParallaxSerializer, BrochureSerializer, \
     AdditionalInfoSerializer, BannerSerializer, UserInfoSerializer, \
     HomeSerializer, AdminContactDetailsSerializer, \
     WaterProofCalculatorSerializer, AboutUsSerializer, \
-    ColourPaletteCodeSerializer, ColourPaletteFullSerializer  # CustomSerializer ,NavbarSerializer ,AboutUsSerializer
+    ColourPaletteCodeSerializer, ColourPaletteFullSerializer, \
+    SettingSerializer  # CustomSerializer ,NavbarSerializer ,AboutUsSerializer
 
 
 logger = logging.getLogger(__name__)
@@ -63,7 +65,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['category__name', 'category__subcategory_name']
+    filterset_fields = ['category__name', 'subcategory']
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -79,6 +81,16 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = Category.objects.all().order_by('name')
+        if not queryset.exists():
+            raise NotFound({"error": "No categories found."})
+        return queryset
+
+class SettingViewSet(viewsets.ModelViewSet):
+    queryset = Setting.objects.all()
+    serializer_class = SettingSerializer
+
+    def get_queryset(self):
+        queryset = Setting.objects.all().order_by('name')
         if not queryset.exists():
             raise NotFound({"error": "No categories found."})
         return queryset
@@ -290,13 +302,16 @@ class AboutUsViewSet(viewsets.ModelViewSet):
 
 def get_subcategories(request):
     category_id = request.GET.get('category_id')
-    try:
-        category = Category.objects.get(id=category_id)
-        return JsonResponse({'subcategories': category.subcategory_names})
-    except Category.DoesNotExist:
-        return JsonResponse({'subcategories': []})
+    if category_id:
+        try:
+            category = Category.objects.get(id=category_id)
+            subcategories = category.subcategory_names or []
+        except Category.DoesNotExist:
+            subcategories = []
+    else:
+        subcategories = []
 
-
+    return JsonResponse({'subcategories': subcategories})
 
 # class NavbarViewSet(viewsets.ModelViewSet):
 #     serializer_class = NavbarSerializer

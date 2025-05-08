@@ -34,6 +34,8 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     'jazzmin',
+
+
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -42,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'aarvi_paint',
     'rest_framework',
+    'ckeditor',
 ]
 
 MIDDLEWARE = [
@@ -52,7 +55,12 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
 ]
+
+
+
+
 
 ROOT_URLCONF = 'aarvi.urls'
 
@@ -168,33 +176,7 @@ JAZZMIN_SETTINGS = {
     "hide_apps": [],
     "hide_models": [],
 
-    "order_with_respect_to": [
-    # Banner-related models
-    "aarvi_paint.HomeBanner",
-    "aarvi_paint.HomeInteriorBanner",
-    "aarvi_paint.HomeExteriorBanner",
-    "aarvi_paint.HomeWaterproofingBanner",
-    "aarvi_paint.GalleryBanner",
-    "aarvi_paint.AboutUsTopBanner",
-    "aarvi_paint.ColorPalletsBanner",
-    "aarvi_paint.ProductBanner",
-    "aarvi_paint.ContactUsBanner",
-    "aarvi_paint.AboutUsBottomVideoBanner",
-
-    # Other models in alphabetical order
-    "aarvi_paint.AboutUs",
-    "aarvi_paint.AdditionalInfo",
-    "aarvi_paint.AdminContactDetails",
-    "aarvi_paint.Brochure",
-    "aarvi_paint.Category",
-    "aarvi_paint.ColourPalette",
-    "aarvi_paint.Home",
-    "aarvi_paint.PaintBudgetCalculator",
-    "aarvi_paint.Parallax",
-    "aarvi_paint.Product",
-    "aarvi_paint.UserInfo",
-    "aarvi_paint.WaterProofCalculator",
-],
+    "order_with_respect_to": [],
 
 
 

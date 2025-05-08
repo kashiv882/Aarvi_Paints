@@ -1,6 +1,9 @@
+from ckeditor.widgets import CKEditorWidget
 from django import forms
+from django.forms import Select, SelectMultiple
+
 from .models import Banner, Parallax, ColourPalette, Brochure, AdditionalInfo, AdminContactDetails, Category, Product, \
-    Home, AboutUs
+    Home, AboutUs, Setting
 from django.core.files.storage import default_storage
 from django.utils.safestring import mark_safe
 
@@ -87,16 +90,53 @@ from .utils.base_image_handler import BaseImageForm
 class ColourPaletteForm(BaseImageForm):
 
     class Meta:
+        description = forms.CharField(widget=CKEditorWidget())
         model = ColourPalette
         fields = ['title', 'description', 'colour_code', 'colour_code_category']
 
+class ParallaxForm(forms.ModelForm):
+    desktop = forms.ImageField(required=False, label="Desktop Image")
+    mobile = forms.ImageField(required=False, label="Mobile Image")
+    description = forms.CharField(widget=CKEditorWidget())
 
-class ParallaxForm(BaseImageForm):
-    class ParallaxForm(BaseImageForm):
+    class Meta:
+        model = Parallax
+        fields = ['title', 'sub_title', 'description', 'priority', 'desktop', 'mobile']
 
-        class Meta:
-            model = Parallax
-            fields = ['title', 'sub_title', 'description', 'priority']
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if self.instance and self.instance.url:
+            urls = self.instance.url
+            self.fields['desktop'].initial = urls.get('desktop', '')
+            self.fields['mobile'].initial = urls.get('mobile', '')
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        desktop = cleaned_data.get('desktop')
+        mobile = cleaned_data.get('mobile')
+
+        url_data = self.instance.url or {}
+
+        if desktop:
+            desktop_path = default_storage.save(f'parallax/desktop/{desktop.name}', desktop)
+            url_data['desktop'] = default_storage.url(desktop_path)
+
+        if mobile:
+            mobile_path = default_storage.save(f'parallax/mobile/{mobile.name}', mobile)
+            url_data['mobile'] = default_storage.url(mobile_path)
+
+        cleaned_data['url'] = url_data
+
+        return cleaned_data
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.url = self.cleaned_data.get('url', {})
+        if commit:
+            instance.save()
+        return instance
 
 
 class BrochureForm(forms.ModelForm):
@@ -169,7 +209,63 @@ class BrochureForm(forms.ModelForm):
 
 
 
+class SettingAdminForm(forms.ModelForm):
+    playstore = forms.URLField(required=False, label="Play Store Link")
+    appstore = forms.URLField(required=False, label="App Store Link")
+    logo = forms.ImageField(required=False, label="Logo Image")
+    side_image = forms.ImageField(required=False, label="Side Image")
+
+    class Meta:
+        model = Setting
+        fields = ['name', 'copyright', 'logo', 'side_image']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.app_download_links:
+            links = self.instance.app_download_links
+            self.fields['playstore'].initial = links.get('playstore', '')
+            self.fields['appstore'].initial = links.get('appstore', '')
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        # Handle logo and side image uploads
+        app_download_links = {
+            'playstore': cleaned_data.get('playstore', ''),
+            'appstore': cleaned_data.get('appstore', ''),
+        }
+
+        # Save logo and side image and get their URLs
+        logo = cleaned_data.get('logo')
+        side_image = cleaned_data.get('side_image')
+
+        url_data = {}
+        if logo:
+            # Save logo and get the URL
+            logo_path = default_storage.save(f'logos/{logo.name}', logo)
+            url_data['logo'] = default_storage.url(logo_path)
+
+        if side_image:
+            # Save side image and get the URL
+            side_image_path = default_storage.save(f'side_images/{side_image.name}', side_image)
+            url_data['side_image'] = default_storage.url(side_image_path)
+
+        # Save the URLs in the `url` field
+        cleaned_data['url'] = url_data
+        cleaned_data['app_download_links'] = app_download_links
+
+        return cleaned_data
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.app_download_links = self.cleaned_data['app_download_links']
+        instance.url = self.cleaned_data['url']
+        if commit:
+            instance.save()
+        return instance
+
 class AdditionalInfoForm(BaseImageForm):
+
 
 
     class Meta:
@@ -245,15 +341,25 @@ class CategoryForm(forms.ModelForm):
             instance.save()
         return instance
 
+
 class ProductForm(BaseImageForm):
-    subcategory = forms.ChoiceField(required=False, choices=[('', 'Select category first')])
+    subcategory = forms.MultipleChoiceField(
+        required=False,
+        choices=[('', 'Select category first')],
+        widget=SelectMultiple
+    )
+    short_description = forms.CharField(widget=CKEditorWidget())
+    long_description = forms.CharField(widget=CKEditorWidget())
 
     class Meta:
         model = Product
-        fields = ['title', 'keyfeature', 'description', 'category', 'subcategory']
+        fields = ['title', 'subtitle', 'short_description', 'long_description', 'keyfeature',
+                  'category', 'subcategory', 'colour_palate1', 'colour_palate2']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.fields['category'].widget = forms.Select(choices=self.fields['category'].choices)
 
         category = None
         if 'category' in self.data:
@@ -267,11 +373,9 @@ class ProductForm(BaseImageForm):
         if category:
             choices = [(s, s) for s in category.subcategory_names]
             self.fields['subcategory'].choices = choices
-            # Pass the selected one as data-attribute for JS
             self.fields['subcategory'].widget.attrs['data-selected'] = self.data.get('subcategory', '')
         else:
             self.fields['subcategory'].choices = [('', 'Select category first')]
-
 
 class HomeForm(forms.ModelForm):
     category_image_field = forms.ImageField(required=False, label="Category Image")

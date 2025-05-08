@@ -29,16 +29,21 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
-    category = CategorySerializer()
+    category = serializers.CharField(source='category.name')
 
     class Meta:
         model = Product
-        fields = ['title', 'keyfeature', 'description', 'category', 'url']
+        fields = ['title', 'keyfeature', 'description', 'category', 'url','subcategory']
 
 class BannerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Banner
         fields = ['title', 'type', 'placement_location', 'short_description', 'url']
+
+class SettingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Setting
+        fields = ['name','copyright','url','app_download_links']
 
 class ColourPaletteFullSerializer(serializers.ModelSerializer):
     class Meta:

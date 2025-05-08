@@ -2,6 +2,8 @@ import uuid
 from django.db import models
 from .choices import *
 
+from ckeditor.fields import RichTextField
+
 
 class TimeStampedModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -32,21 +34,23 @@ class Category(TimeStampedModel):
         return self.name
 
 
-
-
 class Product(TimeStampedModel):
-
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=200)
+    subtitle = models.CharField(max_length=255, blank=True)
+    short_description = RichTextField()
+    long_description = RichTextField()
     keyfeature = models.TextField()
-    description = models.TextField()
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, to_field='id', related_name='category')
-    subcategory = models.CharField(max_length=100, blank=True)
+    category = models.ForeignKey(
+        Category, on_delete=models.CASCADE, to_field='id', related_name='category'
+    )
+    subcategory = models.JSONField(default=list, blank=True)
     url = models.JSONField()
+    colour_palate1 = models.CharField(max_length=100, blank=True)
+    colour_palate2 = models.CharField(max_length=100, blank=True)
 
     def __str__(self):
         return self.title
-
 
 
 class UserInfo(TimeStampedModel):
@@ -58,6 +62,7 @@ class UserInfo(TimeStampedModel):
     pincode = models.CharField(max_length=100)
     type = models.CharField(max_length=200,null = True)
     description = models.TextField()
+    whatsapp = models.CharField(max_length=3, choices=WHATSAPP_CHOICES, default='No')
     source = models.CharField(max_length=50, choices=SOURCE_CHOICES)
 
 
@@ -66,7 +71,7 @@ class ColourPalette(TimeStampedModel):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=200)
-    description = models.TextField()
+    description = RichTextField()
     colour_code = models.IntegerField()
     colour_code_category = models.CharField(max_length=200)
     url = models.JSONField(default=dict, blank=True)
@@ -77,7 +82,7 @@ class Parallax(TimeStampedModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=200)
     sub_title = models.CharField(max_length=200)
-    description = models.TextField()
+    description = RichTextField()
     url = models.JSONField(default=dict, blank=True)
     priority = models.IntegerField()
 
@@ -93,7 +98,7 @@ class AdditionalInfo(TimeStampedModel):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     type = models.CharField(max_length=200 , choices=ADDITIONAL_INFO_TYPE_CHOICES)
-    title = models.CharField(max_length=200)
+    title = models.CharField(max_length=200,null=True)
     description = models.TextField()
     url = models.JSONField(default=dict, blank=True)
     details = models.JSONField(default=dict, blank=True)
@@ -146,6 +151,12 @@ class Home(TimeStampedModel):
     title_type = models.CharField(max_length=200 , null=True)
 
 
+class Setting(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    url = models.JSONField(default=dict, blank=True)
+    name = models.CharField(max_length=255)
+    copyright = models.CharField(max_length=255)
+    app_download_links = models.JSONField(default=dict)
 
 # class CustomInfo(models.Model):
 #
@@ -281,6 +292,7 @@ class ProductBanner(Banner):
     def save(self, *args, **kwargs):
         self.type = 'product-banner'
         super().save(*args, **kwargs)
+
 
 
 class ContactUsBanner(Banner):

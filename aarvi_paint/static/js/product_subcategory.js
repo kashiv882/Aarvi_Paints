@@ -1,49 +1,69 @@
 document.addEventListener('DOMContentLoaded', function () {
-    const categorySelect = document.querySelector('#id_category');
-    const subcategorySelect = document.querySelector('#id_subcategory');
- 
-    if (!categorySelect || !subcategorySelect) return;
+    setTimeout(() => {
+        const categorySelect = $('#id_category');  // Use jQuery to target Select2 element
+        const subcategorySelect = document.querySelector('[name="subcategory"]');
 
-    // Function to update subcategories based on selected category
-    function updateSubcategories() {
-        const categoryId = categorySelect.value;
-        if (!categoryId) return;
+        if (!categorySelect || !subcategorySelect) return;
 
-        // Make an API call to fetch subcategories based on the selected category ID
-        fetch(`/api/get-subcategories/?category_id=${categoryId}`)
-            .then(response => response.json())
-            .then(data => {
-                // Clear existing options
-                subcategorySelect.innerHTML = '';
+        // Define the updateSubcategories function
+        function updateSubcategories() {
+            const categoryId = categorySelect.val();  // Get the selected category ID (using Select2 API)
 
-                // Add the default 'Select subcategory' option
-                const defaultOption = document.createElement('option');
-                defaultOption.value = '';
-                defaultOption.textContent = 'Select subcategory';
-                subcategorySelect.appendChild(defaultOption);
+            console.log('Category selected:', categoryId);  // Log the selected category ID
 
-                // Check if we got subcategories in the response
-                if (data.subcategories && data.subcategories.length > 0) {
-                    data.subcategories.forEach(sub => {
-                        const option = document.createElement('option');
-                        option.value = sub;
-                        option.textContent = sub;
-                        subcategorySelect.appendChild(option);
-                    });
-                } else {
-                    // No subcategories found
-                    const noSubOption = document.createElement('option');
-                    noSubOption.value = '';
-                    noSubOption.textContent = 'No subcategories available';
-                    subcategorySelect.appendChild(noSubOption);
-                }
-            })
-            .catch(error => console.error('Error fetching subcategories:', error));
-    }
+            if (!categoryId) return;  // Don't proceed if no category is selected
 
-    // Listen for category change event
-    categorySelect.addEventListener('change', updateSubcategories);
+            // Make the API request to fetch subcategories based on the selected category ID
+            fetch(`/api/get-subcategories/?category_id=${categoryId}`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log("API Response:", data);  // Log the API response
 
-    // Trigger subcategory update immediately if a category is pre-selected on page load
-    updateSubcategories();
+                    // Clear existing subcategory options
+                    subcategorySelect.innerHTML = '';
+
+                    // Add default option
+                    const defaultOption = document.createElement('option');
+                    defaultOption.value = '';
+                    defaultOption.textContent = 'Select subcategory';
+                    subcategorySelect.appendChild(defaultOption);
+
+                    // Check if subcategories are available
+                    if (data.subcategories && data.subcategories.length > 0) {
+                        data.subcategories.forEach(sub => {
+                            const option = document.createElement('option');
+                            option.value = sub;  // Use the subcategory name as the value
+                            option.textContent = sub;  // Use the subcategory name as the displayed text
+                            subcategorySelect.appendChild(option);
+                        });
+                    } else {
+                        const noSubOption = document.createElement('option');
+                        noSubOption.value = '';
+                        noSubOption.textContent = 'No subcategories available';
+                        subcategorySelect.appendChild(noSubOption);
+                    }
+
+                    console.log('Subcategory dropdown updated:', subcategorySelect);  // Check if dropdown is updated
+                })
+                .catch(error => console.error('Error fetching subcategories:', error));
+        }
+
+        // Trigger the updateSubcategories function when the category changes (via Select2)
+        categorySelect.on('change', function() {
+            // Clear previous subcategory values when a new category is selected
+            subcategorySelect.innerHTML = '';
+
+            // Add default 'Select Subcategory' option to subcategory dropdown
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = 'Loading subcategories...';
+            subcategorySelect.appendChild(defaultOption);
+
+            // Proceed to update subcategories based on selected category
+            updateSubcategories();
+        });
+
+        // If a category is pre-selected on page load, run updateSubcategories to populate subcategories
+        updateSubcategories();
+    }, 100);  // Ensure the page has loaded before attaching the event
 });

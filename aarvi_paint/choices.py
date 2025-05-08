@@ -48,3 +48,8 @@ SURFACE_CONDITION_CHOICES_WATERPROOF = [
 
 
 ALLOWED_SOURCES = ['quote', 'BookAppointment']
+
+WHATSAPP_CHOICES = (
+    ('Yes', 'Yes'),
+    ('No', 'No'),
+)
