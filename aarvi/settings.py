@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'aarvi_paint',
     'rest_framework',
     'ckeditor',
+    'nested_admin',
 ]
 
 MIDDLEWARE = [
@@ -67,7 +68,7 @@ ROOT_URLCONF = 'aarvi.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'aarvi_paint' / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

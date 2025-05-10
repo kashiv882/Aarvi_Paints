@@ -33,7 +33,18 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ['title', 'keyfeature', 'description', 'category', 'url','subcategory']
+        fields = [
+            'title',
+            'subtitle',
+            'short_description',
+            'long_description',
+            'keyfeature',
+            'category',            
+            'subcategory',
+            'url',
+            'colour_palate1',
+            'colour_palate2'
+        ]
 
 class BannerSerializer(serializers.ModelSerializer):
     class Meta:
@@ -43,17 +54,14 @@ class BannerSerializer(serializers.ModelSerializer):
 class SettingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Setting
-        fields = ['name','copyright','url','app_download_links']
-
-class ColourPaletteFullSerializer(serializers.ModelSerializer):
+        fields = ['name','copyright','url','app_download_links','hide']
+ 
+class ColourPaletteSerializer(serializers.ModelSerializer):
     class Meta:
         model = ColourPalette
-        fields = ['title', 'description', 'url']
+        fields = ['title', 'description', 'url', 'side_Title', 'side_description', 'details']
 
-class ColourPaletteCodeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ColourPalette
-        fields = ['colour_code', 'colour_code_category']
+
 
 class ParallaxSerializer(serializers.ModelSerializer):
     class Meta:
@@ -68,7 +76,7 @@ class BrochureSerializer(serializers.ModelSerializer):
 class AboutUsSerializer(serializers.ModelSerializer):
     class Meta:
         model = AboutUs
-        fields = ['title','sub_title', 'description', 'url', 'details']
+        fields = ['title', 'description', 'details']
 
 class AdditionalInfoSerializer(serializers.ModelSerializer):
     class Meta:

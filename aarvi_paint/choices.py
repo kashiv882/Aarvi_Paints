@@ -25,9 +25,9 @@ SOURCE_CHOICES = [
 
 ADDITIONAL_INFO_TYPE_CHOICES = [
     ("Inspiration", "Inspiration"),
-    ("Testimonial", "Testimonial"),
+    ("TESTIMONIAL", "TESTIMONIAL"),
     ("Calculator" , "Calculator"),
-    ("Waterproof"  , "Waterproof"),
+    ("WATER_CALCULATOR"  , "WATER_CALCULATOR"),
 ]
 
 

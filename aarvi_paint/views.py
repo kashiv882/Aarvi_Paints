@@ -16,11 +16,11 @@ from .models import PaintBudgetCalculator, Category, ColourPalette, Parallax, Br
     Setting  # CustomInfo ,Navbar,  AboutUs
 from .choices import ADDITIONAL_INFO_TYPE_CHOICES, SOURCE_CHOICES, ALLOWED_SOURCES
 from .serializers import PaintBudgetCalculatorSerializer, ProductSerializer, CategorySerializer, \
-    ParallaxSerializer, BrochureSerializer, \
+    ParallaxSerializer, BrochureSerializer,ColourPaletteSerializer, \
     AdditionalInfoSerializer, BannerSerializer, UserInfoSerializer, \
     HomeSerializer, AdminContactDetailsSerializer, \
     WaterProofCalculatorSerializer, AboutUsSerializer, \
-    ColourPaletteCodeSerializer, ColourPaletteFullSerializer, \
+ \
     SettingSerializer  # CustomSerializer ,NavbarSerializer ,AboutUsSerializer
 
 
@@ -65,17 +65,26 @@ class PaintBudgetCalculatorViewSet(viewsets.ModelViewSet):
 
 
 class ProductViewSet(viewsets.ModelViewSet):
-    queryset = Product.objects.all()
     serializer_class = ProductSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['category__name', 'subcategory']
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = Product.objects.all()
+
+        # Get filters from request query parameters
+        category_name = self.request.query_params.get('category__name')
+        subcategory = self.request.query_params.get('subcategory')
+
+        if category_name:
+            queryset = queryset.filter(category__name__iexact=category_name)
+
+        if subcategory:
+            queryset = queryset.filter(subcategory__icontains=subcategory)
+
         if not queryset.exists():
             raise NotFound({"error": "No products found."})
-        return queryset
 
+        return queryset
 
 class CategoryViewSet(viewsets.ModelViewSet):
 
@@ -131,24 +140,18 @@ class BannerViewSet(viewsets.ModelViewSet):
 
 class ColourPaletteViewSet(viewsets.ModelViewSet):
     queryset = ColourPalette.objects.all()
-
-    def get_serializer_class(self):
-        if self.request.query_params.get('colour_code'):
-            return ColourPaletteCodeSerializer
-        return ColourPaletteFullSerializer
+    serializer_class = ColourPaletteSerializer
 
     def get_queryset(self):
-        colour_code = self.request.query_params.get('colour_code')
 
-        if colour_code:
-            queryset = ColourPalette.objects.filter(colour_code=colour_code)
-        else:
-            queryset = ColourPalette.objects.all()
-
+        queryset = ColourPalette.objects.all()
         if not queryset.exists():
-            raise NotFound({"error": "No colour palettes found."})
-
+            raise NotFound({"error": "No parallax objects found."})
         return queryset
+
+        
+    
+
 
 
 class ParallaxViewSet(viewsets.ModelViewSet):
@@ -184,7 +187,7 @@ class AdditionalInfoViewSet(viewsets.ModelViewSet):
 
             valid_types = dict(ADDITIONAL_INFO_TYPE_CHOICES).keys()
             if type_param not in valid_types:
-                raise ValidationError({"error": "Type not found. Valid types are: Inspiration, Testimonial,Calculator."})
+                raise ValidationError({"error": "Type not found. Valid types are: Inspiration, TESTIMONIAL,Calculator,WATER_CALCULATOR."})
 
 
             queryset = AdditionalInfo.objects.filter(type=type_param)

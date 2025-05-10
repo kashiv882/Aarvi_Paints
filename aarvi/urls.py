@@ -22,6 +22,7 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/' , include('aarvi_paint.urls')),
+     path('nested_admin/', include('nested_admin.urls')),
 ]
 
 
