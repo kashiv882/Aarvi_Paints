@@ -4,11 +4,12 @@ import uuid
 import os
 from django.conf import settings
 from .models import Banner, Parallax, ColourPalette, Brochure, AdditionalInfo, AdminContactDetails,\
-         Category, Product, Home,BannerImage,Testimonial,HomeBanner,AboutUs,Inspiration,WaterCalculator,WaterProduct
+         Category, Product, Home,BannerImage,Testimonial,HomeBanner,AboutUs,Inspiration,WaterCalculator,WaterProduct,AboutUsBottomVideoBanner
 from django.forms import Select, SelectMultiple
 
 from .models import Banner, Parallax, ColourPalette, Brochure, AdditionalInfo, AdminContactDetails, Category, Product, \
-    Home, AboutUs, Setting, HomeExterior, HomeWaterProof,GalleryBanner
+    Home, AboutUs, Setting, HomeExterior, HomeWaterProof,GalleryBanner,PaintCalculator
+
 from django.core.files.storage import default_storage
 from django.utils.safestring import mark_safe
 from django.contrib import admin
@@ -454,8 +455,8 @@ class HomeForm(forms.ModelForm):
         model = Home
         fields = [
             'title',
-            'type',
-            'banners',
+            # 'type',
+            # 'banners',
             'category_name',
             'subcategory_name',
             'title_type',
@@ -817,58 +818,27 @@ class AboutUsAdminForm(forms.ModelForm):
 
 # =========================================================Additional info Inspiration==============================================
 
+
 class InspirationForm(forms.ModelForm):
-    SECTION_CHOICES = [
-        ('interior', 'Interior'),
-        ('exterior', 'Exterior'),
-    ]
-    
-    section = forms.ChoiceField(choices=SECTION_CHOICES, label="Inspiration Section")
-    image = forms.URLField(required=False, label="Image URL")
-    current_image = forms.CharField(widget=forms.HiddenInput, required=False)
+    image = forms.ImageField(required=False)
 
     class Meta:
         model = Inspiration
-        fields = ['section', 'title', 'description', 'image', 'details']
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        
-        if self.instance and self.instance.pk:
-            self.fields['section'].initial = self.instance.type
-            self.fields['image'].initial = self.instance.url.get('image', '')
-            self.fields['current_image'].initial = self.instance.url.get('image', '')
-
-    def clean(self):
-        cleaned_data = super().clean()
-        cleaned_data['type'] = cleaned_data.get('section')
-        
-        image_url = cleaned_data.get('image', '')
-        if image_url:
-            cleaned_data['url'] = {'image': image_url}
-        else:
-            # Keep existing image if no new one provided
-            cleaned_data['url'] = {'image': cleaned_data.get('current_image', '')}
-        
-        return cleaned_data
+        fields = ['title', 'description', 'image']  # Only show these in admin
 
     def save(self, commit=True):
         instance = super().save(commit=False)
-        instance.type = self.cleaned_data['type']
-        instance.url = self.cleaned_data['url']
-        
+
+        # Handle image upload
+        image_file = self.cleaned_data.get('image')
+        if image_file:
+            from django.core.files.storage import default_storage
+            image_path = default_storage.save(f'additional_info_images/{image_file.name}', image_file)
+            instance.url['image'] = image_path
+
         if commit:
             instance.save()
         return instance
-
-    def image_preview(self):
-        if self.instance and self.instance.url.get('image'):
-            return format_html(
-                '<img src="{}" style="max-height: 200px; max-width: 200px;" />',
-                self.instance.url['image']
-            )
-        return "No image uploaded"
-    image_preview.short_description = 'Preview'
 
 
 
@@ -1027,21 +997,23 @@ class ContactUsBannerForm(BaseBannerForm):
 #     class Meta(BaseBannerForm.Meta):
 #         fields = ['banner_video']
 
+class AboutUsBottomVideoBannerForm(forms.ModelForm):
+    video_file = forms.FileField(
+        required=False,
+        label='Upload Video',
+        help_text='Upload only MP4, WebM, or AVI format videos.'
+    )
 
-class AboutUsBottomVideoBannerForm(BaseBannerForm):
-    video_file = forms.FileField(required=False, label='Upload Video')
+    class Meta:
+        model = AboutUsBottomVideoBanner
+        fields = ['video_file']
 
-    class Meta(BaseBannerForm.Meta):
-        fields = ['title', 'short_description', 'video_file']
-
-    def _init_(self, *args, **kwargs):
-        super()._init_(*args, **kwargs)
-
-        url = self.instance.url or {}
-        video_url = url.get('video')
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        video_url = (self.instance.url or {}).get('video')
 
         if video_url:
-            self.fields['video_file'].help_text = mark_safe(
+            self.fields['video_file'].help_text += mark_safe(
                 f'<br><strong>Video Preview:</strong><br>'
                 f'<video width="320" height="240" controls>'
                 f'<source src="{video_url}" type="video/mp4">'
@@ -1050,23 +1022,67 @@ class AboutUsBottomVideoBannerForm(BaseBannerForm):
                 f'<strong>URL:</strong> <a href="{video_url}" target="_blank">{video_url}</a>'
             )
 
+    def clean_video_file(self):
+        video = self.cleaned_data.get('video_file')
+        if video:
+            valid_mime_types = ['video/mp4', 'video/avi', 'video/webm', 'video/quicktime']
+            if video.content_type not in valid_mime_types:
+                raise forms.ValidationError('Unsupported video format.')
+        return video
+
     def save(self, commit=True):
         instance = super().save(commit=False)
-        url_data = instance.url or {}
 
-        # Upload logic for video
         if self.cleaned_data.get('video_file'):
             path = default_storage.save(
                 f'banners/video/{self.cleaned_data["video_file"].name}',
                 self.cleaned_data["video_file"]
             )
-            url_data['video'] = default_storage.url(path)
+            instance.url = {'video': default_storage.url(path)}
 
-        instance.url = url_data
         if commit:
             instance.save()
 
-        return  instance
+        return instance
+# class AboutUsBottomVideoBannerForm(BaseBannerForm):
+#     video_file = forms.FileField(required=False, label='Upload Video')
+
+#     class Meta(BaseBannerForm.Meta):
+#         fields = [ 'video_file']
+
+#     def _init_(self, *args, **kwargs):
+#         super()._init_(*args, **kwargs)
+
+#         url = self.instance.url or {}
+#         video_url = url.get('video')
+
+#         if video_url:
+#             self.fields['video_file'].help_text = mark_safe(
+#                 f'<br><strong>Video Preview:</strong><br>'
+#                 f'<video width="320" height="240" controls>'
+#                 f'<source src="{video_url}" type="video/mp4">'
+#                 f'Your browser does not support the video tag.'
+#                 f'</video><br>'
+#                 f'<strong>URL:</strong> <a href="{video_url}" target="_blank">{video_url}</a>'
+#             )
+
+#     def save(self, commit=True):
+#         instance = super().save(commit=False)
+#         url_data = instance.url or {}
+
+#         # Upload logic for video
+#         if self.cleaned_data.get('video_file'):
+#             path = default_storage.save(
+#                 f'banners/video/{self.cleaned_data["video_file"].name}',
+#                 self.cleaned_data["video_file"]
+#             )
+#             url_data['video'] = default_storage.url(path)
+
+#         instance.url = url_data
+#         if commit:
+#             instance.save()
+
+#         return  instance
 
 
 class HomeInteriorForm(forms.ModelForm):
@@ -1159,3 +1175,12 @@ class HomeWaterProofForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
+
+
+
+
+
+# class ProductForm(forms.Form):
+#     product_name = forms.CharField(label="Product Name", max_length=255)
+#     area = forms.FloatField(label="Area (sq.m)")
+

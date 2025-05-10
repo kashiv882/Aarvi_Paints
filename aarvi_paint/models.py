@@ -79,6 +79,7 @@ class ColourPalette(TimeStampedModel):
     url = models.JSONField(default=dict, null=True, blank=True)
     side_Title = models.CharField(max_length=200, null=True, blank=True)
     side_description = RichTextField(null=True, blank=True)
+    type = models.CharField(max_length=200, editable=False, null=True, blank=True)
 
     
 
@@ -139,6 +140,10 @@ class MultiColorPalette(ColourPalette):
     def get_colour_codes(self):
         return self.colour_codes.all()
 
+    def save(self, *args, **kwargs):
+        self.type = 'multi-color-palette'
+        super().save(*args, **kwargs)
+
 class ColourPaletteImage(models.Model):
     palette = models.ForeignKey(ColourPalette, on_delete=models.CASCADE, related_name='images')
     image = models.ImageField(upload_to='colour_palette_images/')
@@ -161,8 +166,10 @@ class ColourPaletteWithImages(ColourPalette):
         verbose_name_plural = 'Colour Palettes With Images'
 
     def save(self, *args, **kwargs):
-        # Proxy behavior can be extended here if needed
+        self.type = 'color-palette-with-images'
         super().save(*args, **kwargs)
+
+    
 
 
 # class ColourPaletteProxy(ColourPalette):
@@ -213,8 +220,6 @@ class AdditionalInfo(TimeStampedModel):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     type = models.CharField(max_length=200 , choices=ADDITIONAL_INFO_TYPE_CHOICES)
-    title = models.CharField(max_length=200)
-
     title = models.CharField(max_length=200,null=True)
     description = models.TextField()
     url = models.JSONField(default=dict, blank=True)
@@ -273,7 +278,6 @@ class PaintProduct(models.Model):
     def __str__(self):
         return f"{self.product_name} - {self.area} sq.m"
 
-
 class PaintCalculator(AdditionalInfo):
     class Meta:
         proxy = True
@@ -283,17 +287,19 @@ class PaintCalculator(AdditionalInfo):
     def save(self, *args, **kwargs):
         self.type = "PAINT_CALCULATOR"
         super().save(*args, **kwargs)
-    
+
     def __str__(self):
-        details = []
-        if self.title:
-            details.append(self.title)
-        if self.details.get('subtitle'):
-            details.append(self.details['subtitle'])
-        if self.paint_products.exists():
-            products = ", ".join([str(p) for p in self.paint_products.all()])
-            details.append(f"Products: {products}")
-        return " | ".join(details) if details else super().__str__()
+        parts = [self.title]
+        subtitle = self.details.get("subtitle")
+        if subtitle:
+            parts.append(subtitle)
+        products = self.details.get("products", [])
+        if products:
+            summary = ", ".join([f"{p['product_name']} ({p['area']} sqm)" for p in products])
+            parts.append(f"Products: {summary}")
+        return " | ".join(filter(None, parts))
+
+
 # class Calculator(AdditionalInfo):
 #     class Meta:
 #         proxy = True
@@ -414,7 +420,8 @@ class Home(TimeStampedModel):
     title = models.CharField(max_length=200, null = True )
     description = RichTextField()
     type = models.CharField(max_length=200 , choices=Home_Type_CHOICES)
-    banners = models.ForeignKey(Banner,on_delete=models.CASCADE,related_name="homes", null=True, blank=True)
+    # type = models.CharField(max_length=200, null=True, blank=True)
+    # banners = models.ForeignKey(Banner,on_delete=models.CASCADE,related_name="homes", null=True, blank=True)
     category_name = models.CharField(max_length=100, null=True, blank=True)
     subcategory_name = models.CharField(max_length=100, null=True, blank=True)
     category_images = models.JSONField(default=dict,null=True, blank=True)
@@ -461,6 +468,8 @@ class ExteriorHomeCategory(models.Model):
 class ExteriorCategoryImage(models.Model):
     category = models.ForeignKey(ExteriorHomeCategory, on_delete=models.CASCADE, related_name="exterior_images")
     image = models.ImageField(upload_to='exterior_category_images/')
+
+
 
 
 
@@ -575,7 +584,8 @@ class HomeInterior(Home):
         verbose_name_plural = 'home interiors'
 
     def save(self, *args, **kwargs):
-        self.type = 'home-interior'
+        # self.type = 'home-interior'
+        self.type = 'Interior'
         super().save(*args, **kwargs)
 
 
@@ -621,6 +631,12 @@ class HomeExterior(Home):
         proxy = True
         verbose_name = "Home Exterior"
         verbose_name_plural = "Home Exterior"
+    
+    def save(self, *args, **kwargs):
+        self.type = 'Exterior'
+        super().save(*args, **kwargs)
+
+        
 
 
 class HomeWaterProof(Home):

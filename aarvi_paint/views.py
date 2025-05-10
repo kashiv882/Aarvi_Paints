@@ -18,10 +18,10 @@ from .choices import ADDITIONAL_INFO_TYPE_CHOICES, SOURCE_CHOICES, ALLOWED_SOURC
 from .serializers import PaintBudgetCalculatorSerializer, ProductSerializer, CategorySerializer, \
     ParallaxSerializer, BrochureSerializer,ColourPaletteSerializer, \
     AdditionalInfoSerializer, BannerSerializer, UserInfoSerializer, \
-    HomeSerializer, AdminContactDetailsSerializer, \
-    WaterProofCalculatorSerializer, AboutUsSerializer, \
- \
-    SettingSerializer  # CustomSerializer ,NavbarSerializer ,AboutUsSerializer
+  AdminContactDetailsSerializer, \
+    WaterProofCalculatorSerializer, AboutUsSerializer,HomeWaterProfSerializer,HomeExteriorSerializer,HomeInteriorSerializer,SettingSerializer \
+ 
+     # CustomSerializer ,NavbarSerializer ,AboutUsSerializer
 
 
 logger = logging.getLogger(__name__)
@@ -237,22 +237,32 @@ class UserInfoViewSet(viewsets.ModelViewSet):
                 "message": "An unexpected error occurred.",
                 "error": str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
 class HomeViewSet(viewsets.ModelViewSet):
-    serializer_class = HomeSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['type']
 
     def get_queryset(self):
         home_type = self.request.query_params.get('type', '').strip()
+        print(home_type)
         queryset = Home.objects.filter(type=home_type) if home_type else Home.objects.all()
+        print(queryset)
 
         if not queryset.exists():
             raise NotFound({"error": "No homes found for the provided type."})
 
         return queryset
 
+    def get_serializer_class(self):
+        home_type = self.request.query_params.get('type', '').strip().lower()
+
+        if home_type == 'waterprof':
+            return HomeWaterProfSerializer
+        elif home_type == 'Exterior':
+            return HomeExteriorSerializer
+        elif home_type == 'Interior':
+            return HomeInteriorSerializer
+        else:
+            raise ValidationError({"error": "These Type is Invalide"})
 
 class WaterProofCalculatorViewSet(viewsets.ModelViewSet):
     queryset = WaterProofCalculator.objects.all()

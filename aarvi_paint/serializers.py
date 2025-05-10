@@ -88,15 +88,20 @@ class AdminContactDetailsSerializer(serializers.ModelSerializer):
         model = AdminContactDetails
         fields = ['location', 'phone_number', 'email', 'google_link', 'social_media_links']
 
-
-class HomeSerializer(serializers.ModelSerializer):
-     banners = BannerSerializer()
-
-     class Meta:
+class HomeWaterProfSerializer(serializers.ModelSerializer):
+    class Meta:
         model = Home
-        fields = [ 'type', 'banners', 'category_name', 'subcategory_name'
-                 ,'category_images', 'type_images', 'type_description', 'title_type']
+        fields = ['title', 'description', 'category_name', 'side_images']
 
+class HomeExteriorSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = Home
+            fields = ['title', 'description', 'category_name','category_images','type']
+
+class HomeInteriorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Home
+        fields = ['title', 'description', 'category_name', 'subcategory_name','category_images', 'type','type_images','type_description','title_type']
 
 
 class WaterProofCalculatorSerializer(serializers.ModelSerializer):

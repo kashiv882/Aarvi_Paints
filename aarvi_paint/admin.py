@@ -15,7 +15,7 @@ from .forms import  HomeInteriorBannerForm,SettingAdminForm, HomeExteriorBannerF
     BrochureForm, AdditionalInfoForm, AdminContactDetailsForm, CategoryForm, ProductForm, HomeForm, GalleryBannerForm,GalleryBannerImageForm,InspirationForm,AboutUsForm, HomeWaterProofForm,\
     AboutUsTopBannerForm, ColorPalletsBannerForm, ProductBannerForm, ContactUsBannerForm, HomeWaterproofingBannerForm,HomeAdminForm,HomeExteriorForm, \
     AboutUsBottomVideoBannerForm, BaseBannerForm,HomeInteriorForm, BaseHomeInteriorForm, HomeInteriorDifferentRoomForm,HomeExteriordataForm,BaseBannerMultipleImageForm,BannerImageInline
-from .models import PaintCalculator,ColourCode,PaintProduct,HomeExteriorBanner,WaterProduct, Testimonial,HomeInteriorBanner,  PaintBudgetCalculator, ColourPalette,WaterproofHome,Inspiration, \
+from .models import AboutUsBottomVideoBanner, PaintProduct,PaintCalculator,ColourCode,HomeExteriorBanner,WaterProduct, Testimonial,HomeInteriorBanner,  PaintBudgetCalculator, ColourPalette,WaterproofHome,Inspiration, \
     Parallax, Brochure, AdditionalInfo, AdminContactDetails, WaterProofCalculator, Category, Product, UserInfo, Home,CategoryImage, TypeImage,HomeProxy,HomeExterior,\
     Banner, GalleryBanner,CategoryImage,AboutUsTopBanner, ColorPalletsBanner, ProductBanner, ContactUsBanner, Category, CategoryImage,AboutUs, WaterCalculator,HomeWaterProof,\
     HomeWaterproofingBanner,HomeInterior, HomeInteriorCategory,HomeInteriorSubCategory, HomeInteriorSubCategoryImage,HomeInteriorFeature, AboutUsBottomVideoBanner,ExteriorHomeCategory, ExteriorCategoryImage, Setting, HomeBanner,BannerImage, HomeInterior,HomeInteriorDifferentRoom,HomeInteriorColorCategory, CategoryImage,ColourPaletteWithImages, ColourPaletteImage,MultiColorPalette
@@ -588,26 +588,22 @@ class HomeBannerAdmin(admin.ModelAdmin):
 @admin.register(Inspiration)
 class InspirationAdmin(admin.ModelAdmin):
     form = InspirationForm
-    list_display = ('title', 'type', 'description_short', 'image_preview')
-    list_filter = ('type',)
+    list_display = ('title', 'description', 'image_preview')
     readonly_fields = ('image_preview',)
-    
-    def description_short(self, obj):
-        return obj.description[:50] + '...' if len(obj.description) > 50 else obj.description
-    description_short.short_description = 'Description'
-    
+    exclude = ('type', 'url', 'details')  # hide raw JSON
+
     def image_preview(self, obj):
-        if obj.url and obj.url.get('image'):
-            return format_html(
-                '<img src="{}" style="max-height: 200px; max-width: 200px;" />',
-                obj.url['image']
-            )
+        if obj.image_url:
+            return format_html('<img src="/media/{}" width="100" height="auto" />', obj.image_url)
         return "No image"
-    image_preview.short_description = 'Preview'
+    image_preview.short_description = 'Image Preview'
 
     def get_queryset(self, request):
-        # Only show interior and exterior inspirations
-        return super().get_queryset(request).filter(type__in=['interior', 'exterior'])
+        return super().get_queryset(request).filter(type='inspiration')
+
+    def save_model(self, request, obj, form, change):
+        obj.type = 'inspiration'
+        super().save_model(request, obj, form, change)
 
 
 # ======================================================================================================================================/
@@ -652,82 +648,84 @@ class TestimonialAdmin(admin.ModelAdmin):
 
 # ===========================================================================paint budgt calculator===========================================
 
-class PaintProductInline(admin.TabularInline):
-    model = PaintProduct
-    extra = 1
-    fields = ['product_name', 'area']
-    verbose_name = "Paint Product"
-    verbose_name_plural = "Paint Products"
 
-class PaintCalculatorForm(forms.ModelForm):
-    subtitle = forms.CharField(required=False, help_text="This will be stored in the details JSON field")
 
-    class Meta:
-        model = PaintCalculator
-        fields = ['title', 'subtitle', 'description']
+# class PaintProductInline(admin.TabularInline):
+#     model = PaintProduct
+#     extra = 1
+#     fields = ['product_name', 'area']
+#     verbose_name = "Paint Product"
+#     verbose_name_plural = "Paint Products"
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if self.instance and self.instance.details and 'subtitle' in self.instance.details:
-            self.fields['subtitle'].initial = self.instance.details['subtitle']
+# class PaintCalculatorForm(forms.ModelForm):
+#     subtitle = forms.CharField(required=False, help_text="This will be stored in the details JSON field")
 
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-        instance.details = instance.details or {}
-        instance.details['subtitle'] = self.cleaned_data.get('subtitle', '')
-        if commit:
-            instance.save()
-        return instance
+#     class Meta:
+#         model = PaintCalculator
+#         fields = ['title', 'subtitle', 'description']
 
-@admin.register(PaintCalculator)
-class PaintCalculatorAdmin(admin.ModelAdmin):
-    form = PaintCalculatorForm
-    inlines = [PaintProductInline]
-    list_display = ('title', 'display_subtitle', 'display_products', 'description_preview')
-    fields = ['title', 'subtitle', 'description']
-    search_fields = ['title', 'details__subtitle', 'paint_products__product_name']
-    readonly_fields = ('details_preview',)
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         if self.instance and self.instance.details and 'subtitle' in self.instance.details:
+#             self.fields['subtitle'].initial = self.instance.details['subtitle']
 
-    def display_subtitle(self, obj):
-        return obj.details.get('subtitle', '—')
-    display_subtitle.short_description = 'Subtitle'
+#     def save(self, commit=True):
+#         instance = super().save(commit=False)
+#         instance.details = instance.details or {}
+#         instance.details['subtitle'] = self.cleaned_data.get('subtitle', '')
+#         if commit:
+#             instance.save()
+#         return instance
 
-    def display_products(self, obj):
-        products = obj.paint_products.all()
-        if products:
-            return format_html("<br>".join([f"• {p.product_name} ({p.area} units)" for p in products]))
-        return "—"
-    display_products.short_description = 'Products'
+# @admin.register(PaintCalculator)
+# class PaintCalculatorAdmin(admin.ModelAdmin):
+#     form = PaintCalculatorForm
+#     inlines = [PaintProductInline]
+#     list_display = ('title', 'display_subtitle', 'display_products', 'description_preview')
+#     fields = ['title', 'subtitle', 'description']
+#     search_fields = ['title', 'details__subtitle', 'paint_products__product_name']
+#     readonly_fields = ('details_preview',)
 
-    def description_preview(self, obj):
-        if obj.description:
-            return format_html(
-                '<span title="{}">{}</span>',
-                obj.description,
-                obj.description[:100] + '...' if len(obj.description) > 100 else obj.description
-            )
-        return "—"
-    description_preview.short_description = 'Description'
+#     def display_subtitle(self, obj):
+#         return obj.details.get('subtitle', '—')
+#     display_subtitle.short_description = 'Subtitle'
 
-    def details_preview(self, obj):
-        if not obj.details:
-            return "No additional details"
-        return format_html_join(
-            '\n',
-            '<div><strong>{}:</strong> {}</div>',
-            ((k, v) for k, v in obj.details.items() if k != 'subtitle')
-        )
-    details_preview.short_description = 'Additional Details'
+#     def display_products(self, obj):
+#         products = obj.paint_products.all()
+#         if products:
+#             return format_html("<br>".join([f"• {p.product_name} ({p.area} units)" for p in products]))
+#         return "—"
+#     display_products.short_description = 'Products'
 
-    def save_model(self, request, obj, form, change):
-        obj.type = "PAINT_CALCULATOR"
-        super().save_model(request, obj, form, change)
+#     def description_preview(self, obj):
+#         if obj.description:
+#             return format_html(
+#                 '<span title="{}">{}</span>',
+#                 obj.description,
+#                 obj.description[:100] + '...' if len(obj.description) > 100 else obj.description
+#             )
+#         return "—"
+#     description_preview.short_description = 'Description'
 
-    def get_fields(self, request, obj=None):
-        return ['title', 'subtitle', 'description']
+#     def details_preview(self, obj):
+#         if not obj.details:
+#             return "No additional details"
+#         return format_html_join(
+#             '\n',
+#             '<div><strong>{}:</strong> {}</div>',
+#             ((k, v) for k, v in obj.details.items() if k != 'subtitle')
+#         )
+#     details_preview.short_description = 'Additional Details'
 
-    def get_readonly_fields(self, request, obj=None):
-        return ['details_preview']
+#     def save_model(self, request, obj, form, change):
+#         obj.type = "PAINT_CALCULATOR"
+#         super().save_model(request, obj, form, change)
+
+#     def get_fields(self, request, obj=None):
+#         return ['title', 'subtitle', 'description']
+
+#     def get_readonly_fields(self, request, obj=None):
+#         return ['details_preview']
 
 
 
@@ -958,25 +956,25 @@ class WaterCalculatorAdmin(admin.ModelAdmin):
 
 #     image_preview.short_description = "Image"
 
-@admin.register(HomeInteriorDifferentRoom)
-class HomeInteriorDifferentRoomAdmin(admin.ModelAdmin):
-    form = HomeInteriorDifferentRoomForm
-    list_display = ['title', 'type_description', 'type', 'image_preview']
+# @admin.register(HomeInteriorDifferentRoom)
+# class HomeInteriorDifferentRoomAdmin(admin.ModelAdmin):
+#     form = HomeInteriorDifferentRoomForm
+#     list_display = ['title', 'type_description', 'type', 'image_preview']
 
-    def get_queryset(self, request):
-        return super().get_queryset(request).filter(type='home-interior-different-room')
+#     def get_queryset(self, request):
+#         return super().get_queryset(request).filter(type='home-interior-different-room')
 
-    def save_model(self, request, obj, form, change):
-        obj.type = 'home-interior-different-room'
-        super().save_model(request, obj, form, change)
+#     def save_model(self, request, obj, form, change):
+#         obj.type = 'home-interior-different-room'
+#         super().save_model(request, obj, form, change)
 
-    def image_preview(self, obj):
-        image_url = obj.category_images.get('image') if obj.category_images else None
-        if image_url:
-            return format_html('<img src="{}" width="100" height="auto" />', image_url)
-        return "No image"
+#     def image_preview(self, obj):
+#         image_url = obj.category_images.get('image') if obj.category_images else None
+#         if image_url:
+#             return format_html('<img src="{}" width="100" height="auto" />', image_url)
+#         return "No image"
 
-    image_preview.short_description = "Image"
+#     image_preview.short_description = "Image"
 
 
 
@@ -1140,7 +1138,6 @@ class ContactUsBannerAdmin(admin.ModelAdmin):
 
     display_image_urls = display_media_urls
 
-
 @admin.register(AboutUsBottomVideoBanner)
 class AboutUsBottomVideoBannerAdmin(admin.ModelAdmin):
     form = AboutUsBottomVideoBannerForm
@@ -1151,7 +1148,8 @@ class AboutUsBottomVideoBannerAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         return super().get_queryset(request).filter(type='about-us-bottom-video-banner')
 
-    display_video_urls = display_media_urls
+    display_video_urls = display_media_urls  # Assumes you have this function defined
+
 
 @admin.register(PaintBudgetCalculator)
 class PaintBudgetCalculatorAdmin(admin.ModelAdmin):
@@ -1561,82 +1559,178 @@ class CategoryImageInline(admin.TabularInline):
 
 
 
-
-class HomeInteriorSubCategoryImageInline(nested_admin.NestedTabularInline):
+class HomeInteriorSubCategoryImageInline(NestedTabularInline):
     model = HomeInteriorSubCategoryImage
     extra = 1
 
-class HomeInteriorSubCategoryInline(nested_admin.NestedStackedInline):
+class HomeInteriorSubCategoryInline(NestedStackedInline):
     model = HomeInteriorSubCategory
     inlines = [HomeInteriorSubCategoryImageInline]
     extra = 1
 
-class HomeInteriorCategoryInline(nested_admin.NestedStackedInline):
+class HomeInteriorCategoryInline(NestedStackedInline):
     model = HomeInteriorCategory
     inlines = [HomeInteriorSubCategoryInline]
     extra = 1
 
-class HomeInteriorFeatureInline(nested_admin.NestedStackedInline):
+class HomeInteriorFeatureInline(NestedStackedInline):
     model = HomeInteriorFeature
     extra = 1
 
-class HomeInteriorAdmin(nested_admin.NestedModelAdmin):
 
+@admin.register(HomeInterior)
+class HomeInteriorAdmin(NestedModelAdmin):
     inlines = [HomeInteriorCategoryInline, HomeInteriorFeatureInline]
-    readonly_fields = ['display_data_preview']
     list_display = ['title', 'description', 'display_data_preview']
+    readonly_fields = ['display_data_preview']
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.filter(type="Interior")
 
     def get_fields(self, request, obj=None):
-        if obj:
-            return ['title', 'description', 'display_data_preview']
-        return ['title', 'description', 'display_data_preview']
+        return [
+            'title',
+            'description',
+            'display_data_preview',
+        ]
 
     def save_model(self, request, obj, form, change):
+        obj.type = "Interior"
         super().save_model(request, obj, form, change)
 
-        image_urls = []
-        for cat in obj.homeinterior_categories.all():
-            for sub in cat.subcategories.all():
-                for img in sub.images.all():
-                    if img.image:
-                        image_urls.append(img.image.url)
-        obj.url = image_urls  # assuming `url` is a JSONField or ArrayField
-        obj.save()
+    def save_related(self, request, form, formsets, change):
+        super().save_related(request, form, formsets, change)
+
+        home = form.instance
+        home.type = "Interior"
+
+        # Process HomeInteriorCategory and SubCategory
+        categories = home.homeinterior_categories.all()
+        if categories.exists():
+            home.category_name = categories.first().name
+
+            subcategories = categories.first().subcategories.all()
+            if subcategories.exists():
+                home.subcategory_name = subcategories.first().name
+
+                # Gather images from all subcategories
+                image_urls = []
+                for sub in subcategories:
+                    image_urls += [img.image.url for img in sub.images.all()]
+                home.category_images = {"images": image_urls}
+
+        # Process Features
+        features = home.features.all()
+        if features.exists():
+            home.title_type = features.first().title
+            home.type_description = features.first().description
+            home.type_images = {
+                "images": [feature.image.url for feature in features if feature.image]
+            }
+
+        home.save()
 
     def display_data_preview(self, obj):
         if not obj.pk:
             return "Save and continue editing to see preview."
 
-        html = '<div style="font-family: Arial, sans-serif;">'
-
-        # -- CATEGORY & SUBCATEGORY SECTION --
-        html += '<h3 style="color: #2c3e50;">Categories</h3>'
+        html = "<h4>Categories & Subcategories</h4>"
         for cat in obj.homeinterior_categories.all():
-            html += f'<div style="margin-bottom: 15px;">'
-            html += f'<h4 style="margin-bottom: 5px; color:#2980b9;">Category: {cat.name}</h4>'
+            html += f"<strong>Category: {cat.name}</strong><br>"
             for sub in cat.subcategories.all():
-                html += f'<div style="margin-left: 15px;">'
-                html += f'<strong style="color:#16a085;">Subcategory: {sub.name}</strong><br>'
+                html += f"<em>Subcategory: {sub.name}</em><br>"
                 for img in sub.images.all():
                     if img.image:
-                        html += f'<img src="{img.image.url}" width="120" style="margin: 5px; border: 1px solid #ccc; border-radius:4px;">'
-                html += '</div><br>'
-            html += '</div>'
+                        html += f'<img src="{img.image.url}" width="150" style="margin: 5px;">'
+            html += "<br><br>"
 
-        # -- FEATURES SECTION --
-        html += '<h3 style="color: #8e44ad;">Features</h3>'
-        for feature in obj.features.all():
-            html += '<div style="margin-bottom: 15px; padding-left: 10px; border-left: 3px solid #8e44ad;">'
-            html += f'<h4 style="margin: 0; color:#8e44ad;">{feature.title}</h4>'
-            html += f'<p style="margin: 5px 0 10px; color:#555;">{feature.description}</p>'
-            if feature.image:
-                html += f'<img src="{feature.image.url}" width="120" style="margin: 5px 0; border-radius:4px; border: 1px solid #ccc;">'
-            html += '</div>'
-
-        html += '</div>'
+        html += "<h4>Features</h4>"
+        for feat in obj.features.all():
+            html += f"<strong>{feat.title}</strong>: {feat.description}<br>"
+            if feat.image:
+                html += f'<img src="{feat.image.url}" width="150" style="margin: 5px;"><br>'
         return format_html(html)
-admin.site.register(HomeInterior, HomeInteriorAdmin)
 
+
+
+
+# ==============================================Home Interior Working Code ============================================
+# class HomeInteriorSubCategoryImageInline(nested_admin.NestedTabularInline):
+#     model = HomeInteriorSubCategoryImage
+#     extra = 1
+
+# class HomeInteriorSubCategoryInline(nested_admin.NestedStackedInline):
+#     model = HomeInteriorSubCategory
+#     inlines = [HomeInteriorSubCategoryImageInline]
+#     extra = 1
+
+# class HomeInteriorCategoryInline(nested_admin.NestedStackedInline):
+#     model = HomeInteriorCategory
+#     inlines = [HomeInteriorSubCategoryInline]
+#     extra = 1
+
+# class HomeInteriorFeatureInline(nested_admin.NestedStackedInline):
+#     model = HomeInteriorFeature
+#     extra = 1
+
+# class HomeInteriorAdmin(nested_admin.NestedModelAdmin):
+
+#     inlines = [HomeInteriorCategoryInline, HomeInteriorFeatureInline]
+#     readonly_fields = ['display_data_preview']
+#     list_display = ['title', 'description', 'display_data_preview']
+
+#     def get_fields(self, request, obj=None):
+#         if obj:
+#             return ['title', 'description', 'display_data_preview']
+#         return ['title', 'description', 'display_data_preview']
+
+#     def save_model(self, request, obj, form, change):
+#         super().save_model(request, obj, form, change)
+
+#         image_urls = []
+#         for cat in obj.homeinterior_categories.all():
+#             for sub in cat.subcategories.all():
+#                 for img in sub.images.all():
+#                     if img.image:
+#                         image_urls.append(img.image.url)
+#         obj.url = image_urls  # assuming `url` is a JSONField or ArrayField
+#         obj.save()
+
+#     def display_data_preview(self, obj):
+#         if not obj.pk:
+#             return "Save and continue editing to see preview."
+
+#         html = '<div style="font-family: Arial, sans-serif;">'
+
+#         # -- CATEGORY & SUBCATEGORY SECTION --
+#         html += '<h3 style="color: #2c3e50;">Categories</h3>'
+#         for cat in obj.homeinterior_categories.all():
+#             html += f'<div style="margin-bottom: 15px;">'
+#             html += f'<h4 style="margin-bottom: 5px; color:#2980b9;">Category: {cat.name}</h4>'
+#             for sub in cat.subcategories.all():
+#                 html += f'<div style="margin-left: 15px;">'
+#                 html += f'<strong style="color:#16a085;">Subcategory: {sub.name}</strong><br>'
+#                 for img in sub.images.all():
+#                     if img.image:
+#                         html += f'<img src="{img.image.url}" width="120" style="margin: 5px; border: 1px solid #ccc; border-radius:4px;">'
+#                 html += '</div><br>'
+#             html += '</div>'
+
+#         # -- FEATURES SECTION --
+#         html += '<h3 style="color: #8e44ad;">Features</h3>'
+#         for feature in obj.features.all():
+#             html += '<div style="margin-bottom: 15px; padding-left: 10px; border-left: 3px solid #8e44ad;">'
+#             html += f'<h4 style="margin: 0; color:#8e44ad;">{feature.title}</h4>'
+#             html += f'<p style="margin: 5px 0 10px; color:#555;">{feature.description}</p>'
+#             if feature.image:
+#                 html += f'<img src="{feature.image.url}" width="120" style="margin: 5px 0; border-radius:4px; border: 1px solid #ccc;">'
+#             html += '</div>'
+
+#         html += '</div>'
+#         return format_html(html)
+# admin.site.register(HomeInterior, HomeInteriorAdmin)
+# ====================================================================================================================
 
 
 # @admin.register(HomeInterior)
@@ -1681,6 +1775,53 @@ admin.site.register(HomeInterior, HomeInteriorAdmin)
 #     subcategory_name_display.short_description = "Subcategories"
 
 
+# ===============================Working Home Exterior Admin=============================================
+# class ExteriorCategoryImageInline(NestedTabularInline):
+#     model = ExteriorCategoryImage
+#     extra = 1
+
+# class ExteriorHomeCategoryInline(NestedStackedInline):
+#     model = ExteriorHomeCategory
+#     inlines = [ExteriorCategoryImageInline]
+#     extra = 1
+
+# @admin.register(HomeExterior)
+# class HomeExteriorAdmin(NestedModelAdmin):
+#     inlines = [ExteriorHomeCategoryInline]
+#     list_display = ['title', 'description', 'display_data_preview']
+#     readonly_fields = ['display_data_preview']
+
+#     def get_fields(self, request, obj=None):
+#         return [
+#             'title',
+#             'description',
+#             'display_data_preview',
+#         ]
+
+#     def save_model(self, request, obj, form, change):
+#         obj.type = "Home Exterior"
+#         super().save_model(request, obj, form, change)
+
+#     def formfield_for_foreignkey(self, db_field, request, **kwargs):
+#         if db_field.name == "banners":
+#             kwargs["queryset"] = Banner.objects.filter(type="home_banner")
+#         return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+#     def display_data_preview(self, obj):
+#         if not obj.pk:
+#             return "Save and continue editing to see preview."
+
+#         html = ""
+#         categories = obj.exterior_categories.all()
+#         for cat in categories:
+#             html += f"<strong>Category: {cat.name}</strong><br>"
+#             for img in cat.exterior_images.all():
+#                 if img.image:
+#                     html += f'<img src="{img.image.url}" width="150" style="margin: 5px; border: 1px solid #ccc;">'
+#             html += "<br><br>"
+
+#         return format_html(html)
+# =====================================================================================================================
 
 class ExteriorCategoryImageInline(NestedTabularInline):
     model = ExteriorCategoryImage
@@ -1691,11 +1832,18 @@ class ExteriorHomeCategoryInline(NestedStackedInline):
     inlines = [ExteriorCategoryImageInline]
     extra = 1
 
+
+
 @admin.register(HomeExterior)
 class HomeExteriorAdmin(NestedModelAdmin):
     inlines = [ExteriorHomeCategoryInline]
     list_display = ['title', 'description', 'display_data_preview']
     readonly_fields = ['display_data_preview']
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.filter(type="Exterior")
+
 
     def get_fields(self, request, obj=None):
         return [
@@ -1705,8 +1853,36 @@ class HomeExteriorAdmin(NestedModelAdmin):
         ]
 
     def save_model(self, request, obj, form, change):
-        obj.type = "Home Exterior"
+        obj.type = "Exterior"
         super().save_model(request, obj, form, change)
+
+    def save_related(self, request, form, formsets, change):
+        super().save_related(request, form, formsets, change)
+
+        home = form.instance
+        # home.type = "Exterior"
+        categories = home.exterior_categories.all()
+
+        if categories.exists():
+            # Use first category's name (adjust if you need multiple)
+            home.category_name = categories.first().name
+
+            # Collect all images from all categories
+            all_images = []
+            for cat in categories:
+                all_images += [img.image.url for img in cat.exterior_images.all()]
+
+            # Save images to JSONField
+            home.category_images = {
+                "images": all_images
+            }
+
+            home.save()
+
+        # Optional: remove inlines if you don’t want them stored
+        # for cat in categories:
+        #     cat.exterior_images.all().delete()
+        # categories.delete()
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "banners":
@@ -1727,6 +1903,7 @@ class HomeExteriorAdmin(NestedModelAdmin):
             html += "<br><br>"
 
         return format_html(html)
+
 
 
 
@@ -1939,3 +2116,163 @@ admin.site.register(ColourPalette, ColourPaletteAdmin)
 #         return json.dumps(colour_codes, ensure_ascii=False)
     
 #     display_colour_codes.short_description = "Color Codes"
+
+
+
+# ===================================================================================================
+
+
+# class PaintProductInline(admin.TabularInline):
+#     model = PaintProduct
+#     extra = 1
+
+# class PaintCalculatorAdminForm(forms.ModelForm):
+#     subtitle = forms.CharField(required=False)
+
+#     class Meta:
+#         model = PaintCalculator
+#         fields = ['title', 'description']
+
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         if self.instance and self.instance.details:
+#             self.fields['subtitle'].initial = self.instance.details.get('subtitle', '')
+
+#     def save(self, commit=True):
+#         instance = super().save(commit=False)
+#         subtitle = self.cleaned_data.get("subtitle", "")
+#         details = instance.details or {}
+#         details['subtitle'] = subtitle
+#         instance.details = details
+#         if commit:
+#             instance.save()
+#         return instance
+
+# @admin.register(PaintCalculator)
+# class PaintCalculatorAdmin(admin.ModelAdmin):
+#     form = PaintCalculatorAdminForm
+#     inlines = [PaintProductInline]
+
+#     def get_queryset(self, request):
+#         # Filter only entries of type PAINT_CALCULATOR
+#         qs = super().get_queryset(request)
+#         return qs.filter(type="PAINT_CALCULATOR")
+
+#     def save_related(self, request, form, formsets, change):
+#         super().save_related(request, form, formsets, change)
+
+#         instance = form.instance
+#         products = instance.paint_products.all()
+#         instance.details["products"] = [
+#             {"product_name": p.product_name, "area": p.area} for p in products
+#         ]
+#         instance.save()
+
+
+
+class PaintProductInline(admin.TabularInline):
+    model = PaintProduct
+    extra = 1
+
+class PaintCalculatorAdminForm(forms.ModelForm):
+    subtitle = forms.CharField(required=False, label="Subtitle")
+
+    class Meta:
+        model = PaintCalculator
+        fields = ['title', 'description']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.details:
+            self.fields['subtitle'].initial = self.instance.details.get('subtitle', '')
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        subtitle = self.cleaned_data.get("subtitle", "")
+        details = instance.details or {}
+        details['subtitle'] = subtitle
+        instance.details = details
+        if commit:
+            instance.save()
+        return instance
+
+
+
+@admin.register(PaintCalculator)
+class PaintCalculatorAdmin(admin.ModelAdmin):
+    form = PaintCalculatorAdminForm
+    inlines = [PaintProductInline]
+
+    def get_queryset(self, request):
+        # Filter only entries of type PAINT_CALCULATOR
+        qs = super().get_queryset(request)
+        return qs.filter(type="PAINT_CALCULATOR")
+
+    list_display = ['title', 'get_subtitle', 'short_description', 'display_products']
+
+    def get_subtitle(self, obj):
+        return obj.details.get('subtitle', '—')
+    get_subtitle.short_description = 'Subtitle'
+
+    def short_description(self, obj):
+        return (obj.description[:50] + '...') if obj.description and len(obj.description) > 50 else obj.description or '—'
+    short_description.short_description = 'Description'
+
+    def display_products(self, obj):
+        products = obj.paint_products.all()
+        if not products:
+            return '—'
+
+        product_data = [
+            {"product_name": p.product_name, "area": p.area} for p in products
+        ]
+        return mark_safe(f'<pre>{json.dumps(product_data, indent=4)}</pre>')
+    display_products.short_description = 'Products'
+
+    def save_related(self, request, form, formsets, change):
+        super().save_related(request, form, formsets, change)
+        instance = form.instance
+        products = instance.paint_products.all()
+        instance.details["products"] = [
+            {"product_name": p.product_name, "area": p.area} for p in products
+        ]
+        instance.save()
+# @admin.register(PaintCalculator)
+# class PaintCalculatorAdmin(admin.ModelAdmin):
+#     form = PaintCalculatorAdminForm
+#     inlines = [PaintProductInline]
+
+    
+#     def get_queryset(self, request):
+#         # Filter only entries of type PAINT_CALCULATOR
+#         qs = super().get_queryset(request)
+#         return qs.filter(type="PAINT_CALCULATOR")
+
+#     list_display = ['title', 'get_subtitle', 'short_description', 'display_products']
+
+#     def get_subtitle(self, obj):
+#         return obj.details.get('subtitle', '—')
+#     get_subtitle.short_description = 'Subtitle'
+
+#     def short_description(self, obj):
+#         return (obj.description[:50] + '...') if obj.description and len(obj.description) > 50 else obj.description or '—'
+#     short_description.short_description = 'Description'
+
+#     def display_products(self, obj):
+#         products = obj.paint_products.all()
+#         if not products:
+#             return '—'
+#             product_data = [
+#             {"product_name": p.product_name, "area": p.area} for p in products
+#             ]
+#             return mark_safe(f'<pre>{json.dumps(product_data, indent=4)}</pre>')
+#     display_products.short_description = 'Products'
+
+#     def save_related(self, request, form, formsets, change):
+#         super().save_related(request, form, formsets, change)
+#         instance = form.instance
+#         products = instance.paint_products.all()
+#         instance.details["products"] = [
+#             {"product_name": p.product_name, "area": p.area} for p in products
+#         ]
+#         instance.save()
