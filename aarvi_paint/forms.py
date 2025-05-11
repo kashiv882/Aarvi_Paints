@@ -21,80 +21,6 @@ from django.forms import formset_factory
 from urllib.parse import urlparse
 
 
-
-# class BaseBannerForm(forms.ModelForm):
-#     desktop_image = forms.ImageField(required=False)
-#     mobile_image = forms.ImageField(required=False)
-#     delete_desktop = forms.BooleanField(required=False, label='Delete Desktop Image')
-#     delete_mobile = forms.BooleanField(required=False, label='Delete Mobile Image')
-#
-#     class Meta:
-#         model = Banner
-#         fields = ['title', 'short_description', 'placement_location']
-#
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         url = self.instance.url or {}
-#
-#         desktop_url = url.get('desktop')
-#         mobile_url = url.get('mobile')
-#
-#         if desktop_url:
-#             self.fields['desktop_image'].help_text = mark_safe(
-#                 f'<br><strong>Desktop Preview:</strong><br>'
-#                 f'<img src="{desktop_url}" style="max-height: 100px;" /><br>'
-#                 f'<strong>URL:</strong> <a href="{desktop_url}" target="_blank">{desktop_url}</a>'
-#             )
-#
-#         if mobile_url:
-#             self.fields['mobile_image'].help_text = mark_safe(
-#                 f'<br><strong>Mobile Preview:</strong><br>'
-#                 f'<img src="{mobile_url}" style="max-height: 100px;" /><br>'
-#                 f'<strong>URL:</strong> <a href="{mobile_url}" target="_blank">{mobile_url}</a>'
-#             )
-#
-#     def save(self, commit=True):
-#         instance = super().save(commit=False)
-#         url_data = instance.url or {}
-#
-#         if self.cleaned_data.get('delete_desktop'):
-#             url_data.pop('desktop', None)
-#         if self.cleaned_data.get('delete_mobile'):
-#             url_data.pop('mobile', None)
-#
-#         if self.cleaned_data.get('desktop_image'):
-#             path = default_storage.save(
-#                 f'banners/desktop/{self.cleaned_data["desktop_image"].name}',
-#                 self.cleaned_data["desktop_image"]
-#             )
-#             url_data['desktop'] = default_storage.url(path)
-#
-#         if self.cleaned_data.get('mobile_image'):
-#             path = default_storage.save(
-#                 f'banners/mobile/{self.cleaned_data["mobile_image"].name}',
-#                 self.cleaned_data["mobile_image"]
-#             )
-#             url_data['mobile'] = default_storage.url(path)
-#
-#         instance.url = url_data
-#
-#         if commit:
-#             instance.save()
-#         return instance
-#
-# # Specialized Forms
-# class HomeBannerForm(BaseBannerForm):
-#     class Meta(BaseBannerForm.Meta):
-#         fields = ['title', 'placement_location', 'desktop_image', 'mobile_image', 'delete_desktop', 'delete_mobile']
-#
-# class HomeInteriorBannerForm(BaseBannerForm):
-#     class Meta(BaseBannerForm.Meta):
-#         fields = ['title', 'short_description', 'desktop_image', 'delete_desktop']
-#
-# class HomeExteriorBannerForm(BaseBannerForm):
-#     class Meta(BaseBannerForm.Meta):
-#         fields = ['title', 'short_description', 'desktop_image', 'delete_desktop']
-
 # ===================================================Home enterior=========================================================
 
 
@@ -118,44 +44,6 @@ class HomeAdminForm(forms.ModelForm):
         if title_type and not type_description:
             raise forms.ValidationError("Type description is required when title_type is set.")
 
-
-# ==============================================water proofing===========================================
-
-class WaterproofHomeForm(forms.ModelForm):
-    new_image = forms.ImageField(
-        required=False,
-        label="Upload New Image",
-        help_text="Image will replace the current one"
-    )
-
-    class Meta:
-        model = Home
-        fields = ['title_type', 'type_description',]
-
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-        new_image = self.cleaned_data.get('new_image')
-        
-        if new_image:
-            # Generate unique filename
-            ext = os.path.splitext(new_image.name)[1]
-            filename = f"{uuid.uuid4()}{ext}"
-            upload_path = os.path.join('waterproof', filename)
-            
-            # Save file using Django's storage system
-            default_storage.save(upload_path, new_image)
-            
-            # Update JSON field
-            instance.type_images = {
-                'url': default_storage.url(upload_path),
-                'name': filename,
-                'path': upload_path
-            }
-        
-        if commit:
-            instance.save()
-        return instance
-# ============================================================================================================
 
 class ColourPaletteForm(BaseImageForm):
 
@@ -523,9 +411,6 @@ class BaseBannerForm(forms.ModelForm):
     banner_image = forms.ImageField(required=False)
     delete_image = forms.BooleanField(required=False, label='Delete banner Image')
 
-    # banner_video = forms.FileField(required=False)
-    # delete_video = forms.BooleanField(required=False, label='Delete Banner Video')
-
     class Meta:
         model = Banner
         fields = ['title', 'short_description']
@@ -545,15 +430,7 @@ class BaseBannerForm(forms.ModelForm):
                 f'<img src="{banner_image_url}" style="max-height: 100px;" /><br>'
                 f'<strong>URL:</strong> <a href="{banner_image_url}" target="_blank">{banner_image_url}</a>'
             )
-        # if video_url:
-        #     self.fields['banner_video'].help_text = mark_safe(
-        #         f'<br><strong>Video Preview:</strong><br>'
-        #         f'<video width="320" height="240" controls>'
-        #         f'<source src="{video_url}" type="video/mp4">'
-        #         f'Your browser does not support the video tag.'
-        #         f'</video><br>'
-        #         f'<strong>URL:</strong> <a href="{video_url}" target="_blank">{video_url}</a>'
-        #     )
+        
 
     def save(self, commit=True):
         instance = super().save(commit=False)
@@ -564,8 +441,6 @@ class BaseBannerForm(forms.ModelForm):
         if self.cleaned_data.get('delete_image'):
             url_data.pop('image', None)
 
-        # if self.cleaned_data.get('delete_video'):
-        #     url_data.pop('video', None)
 
         # Upload logic
         if self.cleaned_data.get('banner_image'):
@@ -575,12 +450,7 @@ class BaseBannerForm(forms.ModelForm):
             )
             url_data['image'] = default_storage.url(path)
 
-        # if self.cleaned_data.get('banner_video'):
-        #     path = default_storage.save(
-        #         f'banners/videos/{self.cleaned_data["banner_video"].name}',
-        #         self.cleaned_data["banner_video"]
-        # )
-        #     url_data['video'] = default_storage.url(path)
+        
 
         instance.url = url_data
 
@@ -609,31 +479,6 @@ class BaseHomeExteriordataForm(forms.ModelForm):
 class HomeExteriordataForm(BaseHomeExteriordataForm):
     class Meta(BaseHomeExteriordataForm.Meta):
         fields = ['title', 'type_description']
-
-
-
-#Working
-# class BaseHomeInteriorDifferentRoomForm(forms.ModelForm):
-#     image = forms.ImageField(required=False)
-
-#     class Meta:
-#         model = Home
-#         fields = ['title', 'type_description', 'image']
-
-#     def save(self, commit=True):
-#         instance = super().save(commit=False)
-
-#         # If an image is uploaded, store its URL in `category_images`
-#         image = self.cleaned_data.get('image')
-#         if image:
-#             image_url = default_storage.save(f'home/{image.name}', image)
-#             full_url = default_storage.url(image_url)
-#             instance.category_images = {'image': full_url}
-
-#         if commit:
-#             instance.save()
-#         return instance
-
 
 
 class BaseHomeInteriorDifferentRoomForm(forms.ModelForm):
@@ -707,35 +552,9 @@ class BannerImageInline(admin.TabularInline):
     image_preview.short_description = "Preview"
 
 
-# =============================================color pallet ==============================================
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class GalleryBannerForm(BaseBannerForm):
     class Meta(BaseBannerForm.Meta):
         fields = ['banner_image']
-
-
-
-
-
-
-
-
-# ==========================================Home banner======================================================================
 
 
 class HomeBannerImageForm(forms.ModelForm):
@@ -747,11 +566,6 @@ class GalleryBannerImageForm(forms.ModelForm):
     class Meta:
         model = GalleryBanner
         fields = []  
-
-
-# ==================================================================================================================
-
-# ====================================================About Uss================================================================
 
 class AboutUsAdminForm(forms.ModelForm):
     lower_title = forms.CharField(
@@ -811,14 +625,6 @@ class AboutUsAdminForm(forms.ModelForm):
 
 
 
-
-
-
-# ===============================================================================================================================
-
-# =========================================================Additional info Inspiration==============================================
-
-
 class InspirationForm(forms.ModelForm):
     image = forms.ImageField(required=False)
 
@@ -840,12 +646,6 @@ class InspirationForm(forms.ModelForm):
             instance.save()
         return instance
 
-
-
-
-# ========================================================================================================================================
-
-# =============================================================additional info testimonial=================================================
 
 class TestimonialAdminForm(forms.ModelForm):
     name = forms.CharField(max_length=200, required=True, label="Name")
@@ -885,80 +685,11 @@ class TestimonialAdminForm(forms.ModelForm):
         return instance
 
 
-
-
-
-
-
-# ===========================================================================================================================================
-
-
-#  ===========================================================additional info paint budgt calculator================================================================================
-# class CalculatorAdminForm(forms.ModelForm):
-#     product = forms.CharField(required=True, label="Enter Product Name")
-#     area = forms.FloatField(required=True, label="Enter Area (sq ft)")
-
-#     class Meta:
-#         model = Calculator
-#         fields = '__all__'
-
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         if self.instance:
-#             self.fields['product'].initial = self.instance.details.get('product', '')
-#             self.fields['area'].initial = self.instance.details.get('area', '')
-
-#     def save(self, commit=True):
-#         instance = super().save(commit=False)
-#         instance.details = {
-#             'product': self.cleaned_data.get('product'),
-#             'area': self.cleaned_data.get('area'),
-#         }
-#         if commit:
-#             instance.save()
-#         return instance
-
-# class waterAdminForm(forms.ModelForm):
-#     product = forms.CharField(required=True, label="Enter Product Name")
-#     area = forms.FloatField(required=True, label="Enter Area (sq ft)")
-
-#     class Meta:
-#         model = Calculator
-#         fields = '__all__'
-
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         if self.instance:
-#             self.fields['product'].initial = self.instance.details.get('product', '')
-#             self.fields['area'].initial = self.instance.details.get('area', '')
-
-#     def save(self, commit=True):
-#         instance = super().save(commit=False)
-#         instance.details = {
-#             'product': self.cleaned_data.get('product'),
-#             'area': self.cleaned_data.get('area'),
-#         }
-#         if commit:
-#             instance.save()
-        # return instance
-
-# ===========================================================================================================================================
-# ===================================================water calculator==========================================================================
-
-
-
-
-# ================================================================================================================================================
-
-
-
-
-# class GalleryBannerForm(BaseBannerForm):
-#     class Meta(BaseBannerForm.Meta):
-#         fields = ['banner_image']
-
-
 class HomeInteriorBannerForm(BaseBannerForm):
+    class Meta(BaseBannerForm.Meta):
+        fields = ['title', 'short_description', 'banner_image']
+
+class PaintCalculatorBannerForm(BaseBannerForm):
     class Meta(BaseBannerForm.Meta):
         fields = ['title', 'short_description', 'banner_image']
 
@@ -992,10 +723,6 @@ class ContactUsBannerForm(BaseBannerForm):
     class Meta(BaseBannerForm.Meta):
         fields = ['title', 'short_description', 'banner_image']
 
-
-# class AboutUsBottomVideoBannerForm(BaseBannerForm):
-#     class Meta(BaseBannerForm.Meta):
-#         fields = ['banner_video']
 
 class AboutUsBottomVideoBannerForm(forms.ModelForm):
     video_file = forms.FileField(
@@ -1044,45 +771,6 @@ class AboutUsBottomVideoBannerForm(forms.ModelForm):
             instance.save()
 
         return instance
-# class AboutUsBottomVideoBannerForm(BaseBannerForm):
-#     video_file = forms.FileField(required=False, label='Upload Video')
-
-#     class Meta(BaseBannerForm.Meta):
-#         fields = [ 'video_file']
-
-#     def _init_(self, *args, **kwargs):
-#         super()._init_(*args, **kwargs)
-
-#         url = self.instance.url or {}
-#         video_url = url.get('video')
-
-#         if video_url:
-#             self.fields['video_file'].help_text = mark_safe(
-#                 f'<br><strong>Video Preview:</strong><br>'
-#                 f'<video width="320" height="240" controls>'
-#                 f'<source src="{video_url}" type="video/mp4">'
-#                 f'Your browser does not support the video tag.'
-#                 f'</video><br>'
-#                 f'<strong>URL:</strong> <a href="{video_url}" target="_blank">{video_url}</a>'
-#             )
-
-#     def save(self, commit=True):
-#         instance = super().save(commit=False)
-#         url_data = instance.url or {}
-
-#         # Upload logic for video
-#         if self.cleaned_data.get('video_file'):
-#             path = default_storage.save(
-#                 f'banners/video/{self.cleaned_data["video_file"].name}',
-#                 self.cleaned_data["video_file"]
-#             )
-#             url_data['video'] = default_storage.url(path)
-
-#         instance.url = url_data
-#         if commit:
-#             instance.save()
-
-#         return  instance
 
 
 class HomeInteriorForm(forms.ModelForm):
@@ -1165,22 +853,26 @@ class HomeWaterProofForm(forms.ModelForm):
 
         return cleaned_data
 
+ 
+
+
     def save(self, commit=True):
         instance = super().save(commit=False)
 
-        # Save the sideimage URL and category
-        instance.sideimage_url = self.cleaned_data.get('sideimage_url', "")
-        instance.category = self.cleaned_data.get('category', [])
+    # Save category_name as comma-separated string
+        category_list = self.cleaned_data.get('category', [])
+        instance.category_name = ", ".join(category_list)
+
+        # Save image URL into category_images JSON field
+        sideimage_url = self.cleaned_data.get('sideimage_url', "")
+        if sideimage_url:
+            instance.category_images = {"sideimage": sideimage_url}
+        else:
+            instance.category_images = {}
 
         if commit:
             instance.save()
         return instance
 
 
-
-
-
-# class ProductForm(forms.Form):
-#     product_name = forms.CharField(label="Product Name", max_length=255)
-#     area = forms.FloatField(label="Area (sq.m)")
 

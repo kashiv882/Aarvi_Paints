@@ -59,7 +59,7 @@ class SettingSerializer(serializers.ModelSerializer):
 class ColourPaletteSerializer(serializers.ModelSerializer):
     class Meta:
         model = ColourPalette
-        fields = ['title', 'description', 'url', 'side_Title', 'side_description', 'details']
+        fields = ['title', 'description', 'url', 'side_Title', 'side_description', 'details','type']
 
 
 

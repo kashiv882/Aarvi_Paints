@@ -143,11 +143,17 @@ class ColourPaletteViewSet(viewsets.ModelViewSet):
     serializer_class = ColourPaletteSerializer
 
     def get_queryset(self):
-
         queryset = ColourPalette.objects.all()
-        if not queryset.exists():
-            raise NotFound({"error": "No parallax objects found."})
+        type_param = self.request.query_params.get('type')
+        if type_param:
+            queryset = queryset.filter(type=type_param)
         return queryset
+        
+
+        # queryset = ColourPalette.objects.all()
+        # if not queryset.exists():
+        #     raise NotFound({"error": "No parallax objects found."})
+        # return queryset
 
         
     
@@ -237,6 +243,8 @@ class UserInfoViewSet(viewsets.ModelViewSet):
                 "message": "An unexpected error occurred.",
                 "error": str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 class HomeViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['type']
@@ -255,7 +263,7 @@ class HomeViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         home_type = self.request.query_params.get('type', '').strip().lower()
 
-        if home_type == 'waterprof':
+        if home_type == 'WaterProf':
             return HomeWaterProfSerializer
         elif home_type == 'Exterior':
             return HomeExteriorSerializer

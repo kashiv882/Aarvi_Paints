@@ -81,6 +81,15 @@ class ColourPalette(TimeStampedModel):
     side_description = RichTextField(null=True, blank=True)
     type = models.CharField(max_length=200, editable=False, null=True, blank=True)
 
+    def save(self, *args, **kwargs):
+        # If the instance is one of the proxy types, set the appropriate `type`
+        if isinstance(self, MultiColorPalette):
+            self.type = 'multi-color-palette'
+        elif isinstance(self, ColourPaletteWithImages):
+            self.type = 'color-palette-with-images'
+
+        super().save(*args, **kwargs)
+
     
 
 class ColourCode(models.Model):
@@ -172,32 +181,6 @@ class ColourPaletteWithImages(ColourPalette):
     
 
 
-# class ColourPaletteProxy(ColourPalette):
-#     class Meta:
-#         proxy = True
-#         verbose_name = "Colour Palette (Enhanced)"
-#         verbose_name_plural = "Colour Palettes (Enhanced)"
-
-#     @property
-#     def colour_mappings(self):
-#         try:
-#             codes = json.loads(self.colour_code or "[]")
-#             categories = json.loads(self.colour_code_category or "[]")
-#             return list(zip(codes, categories))
-#         except Exception:
-#             return []
-
-#     @colour_mappings.setter
-#     def colour_mappings(self, value):
-#         """
-#         Accepts a list of tuples: [(code1, cat1), (code2, cat2)]
-#         """
-#         codes, cats = zip(*value) if value else ([], [])
-#         self.colour_code = json.dumps(list(codes))
-#         self.colour_code_category = json.dumps(list(cats))
-
-
-
 
 class Parallax(TimeStampedModel):
 
@@ -278,6 +261,7 @@ class PaintProduct(models.Model):
     def __str__(self):
         return f"{self.product_name} - {self.area} sq.m"
 
+
 class PaintCalculator(AdditionalInfo):
     class Meta:
         proxy = True
@@ -299,24 +283,6 @@ class PaintCalculator(AdditionalInfo):
             parts.append(f"Products: {summary}")
         return " | ".join(filter(None, parts))
 
-
-# class Calculator(AdditionalInfo):
-#     class Meta:
-#         proxy = True
-#         verbose_name = "Paint Calculator"
-#         verbose_name_plural = "Paint Calculators"
-
-#     def save(self, *args, **kwargs):
-#         self.type = "PAINT_BUDGET_CALCULATOR"  # Automatically set type
-#         super().save(*args, **kwargs)
-
-#     @property
-#     def product(self):
-#         return self.details.get('product', '')
-
-#     @property
-#     def area(self):
-#         return self.details.get('area', '')
 
 class WaterProduct(models.Model):
     additional_info = models.ForeignKey(
@@ -340,15 +306,19 @@ class WaterCalculator(AdditionalInfo):
         super().save(*args, **kwargs)
     
     def __str__(self):
-        details = []
-        if self.title:
-            details.append(self.title)
-        if self.details.get('subtitle'):
-            details.append(self.details['subtitle'])
-        if self.water_products.exists():
-            products = ", ".join([str(p) for p in self.water_products.all()])
-            details.append(f"Products: {products}")
-        return " | ".join(details) if details else super().__str__()
+        parts = [self.title]
+        subtitle = self.details.get("subtitle")
+        if subtitle:
+            parts.append(subtitle)
+        products = self.details.get("products", [])
+        if products:
+            summary = ", ".join([f"{p['product_name']} ({p['area']} sqm)" for p in products])
+            parts.append(f"Products: {summary}")
+        return " | ".join(filter(None, parts))
+
+
+
+
 
 class AdminContactDetails(TimeStampedModel):
 
@@ -472,44 +442,6 @@ class ExteriorCategoryImage(models.Model):
 
 
 
-
-# class ColorCategory(models.Model):
-#     name = models.CharField(max_length=100)
-
-#     def __str__(self):
-#         return self.name
-
-
-# class CategoryImage(models.Model):
-#     category = models.ForeignKey(Home, on_delete=models.CASCADE, related_name='images')
-#     image = models.ImageField(upload_to='category_images/')
-
-#     def __str__(self):
-#         return f"{self.category.name} - Image"
-
-
-# class HomeCategory(models.Model):
-#     home = models.ForeignKey(Home, on_delete=models.CASCADE)
-#     category = models.ForeignKey(ColorCategory, on_delete=models.CASCADE)
-
-#     class Meta:
-#         unique_together = ('home', 'category')
-
-
-
-# class HomeExteriorImage(models.Model):
-#     home_exterior = models.ForeignKey(Home, related_name='images', on_delete=models.CASCADE)
-#     image = models.ImageField(upload_to='home_exterior_images/')
-
-#     def save(self, *args, **kwargs):
-#         super().save(*args, **kwargs)
-
-#         # After saving the image, update the related Home's category_images field
-#         if self.home_exterior:
-#             images = list(self.home_exterior.images.values_list('image', flat=True))
-#             self.home_exterior.category_images = {f"img{i+1}": image_url for i, image_url in enumerate(images)}
-#             self.home_exterior.save()
-
 class TypeImage(models.Model):
     home = models.ForeignKey(Home, on_delete=models.CASCADE, related_name="type_images_relation")
     image = models.ImageField(upload_to="type_images/")
@@ -538,44 +470,6 @@ class CategoryImage(models.Model):
 
     
 
-class HomeProxy(Home):
-    class Meta:
-        proxy = True
-        verbose_name = "Home Custom View"
-        verbose_name_plural = "Homes Custom View"
-
-class WaterproofHome(Home):
-    class Meta:
-        proxy = True
-        verbose_name = "Waterproof Home"
-        verbose_name_plural = "Waterproof Homes"
-
-    def __str__(self):
-        return f"Waterproof: {self.title}"
-
-    def save(self, *args, **kwargs):
-        # Ensure we're working with waterproof type
-        self.type = "Waterproof"  # Assuming 'Waterproof' is in your Home_Type_CHOICES
-        super().save(*args, **kwargs)
-
-
-# class HomeProxy(Home):
-#     class Meta:
-#         proxy = True  # <- Tells Django this is a proxy, not a new table
-#         verbose_name = "Custom Home Entry"
-#         verbose_name_plural = "Custom Home Entries"
-
-
-class HomeInteriorColorCategory(Home):
-    class Meta:
-        proxy = True
-        verbose_name = 'Home Interior Color Category'
-        verbose_name_plural = 'home interior color categories'
-
-    def save(self, *args, **kwargs):
-        self.type = 'home-interior-color-category'
-        super().save(*args, **kwargs)
-
 
 class HomeInterior(Home):
     class Meta:
@@ -589,42 +483,6 @@ class HomeInterior(Home):
         super().save(*args, **kwargs)
 
 
-class HomeInteriorDifferentRoom(Home):
-    class Meta:
-        proxy = True
-        verbose_name = 'Home Interior Different Room'
-        verbose_name_plural = 'home interiors Different Rooms'
-
-    def save(self, *args, **kwargs):
-        self.type = 'home-interior-different-room'
-        super().save(*args, **kwargs)
-
-# class HomeExteriorData(Home):
-#     class Meta:
-#         proxy = True
-#         verbose_name = 'Home Exterior Data'
-#         verbose_name_plural = 'home exterior datas'
-
-#     def save(self, *args, **kwargs):
-#         self.type = 'home-exterior-data'
-#         super().save(*args, **kwargs)
-
-
-
-#     banners = models.ForeignKey(Banner,on_delete=models.CASCADE,related_name="homes")
-#     category_name = models.CharField(max_length=100 , null =True)
-#     subcategory_name = models.CharField(max_length=100 , null = True)
-#     category_images = models.JSONField(default=dict, null=True ,  blank=True)
-#     side_images = models.JSONField(default=dict, null=True ,  blank=True)
-#     type_images = models.JSONField(default=dict, blank=True , null = True)
-#     type_description = RichTextField()
-#     title_type = models.CharField(max_length=200 , null=True)
-
-# class HomeInterior(Home):
-#     class Meta:
-#         proxy = True
-#         verbose_name = "Home Interior"
-#         verbose_name_plural = "Home Interiors"
 
 class HomeExterior(Home):
     class Meta:
@@ -636,14 +494,17 @@ class HomeExterior(Home):
         self.type = 'Exterior'
         super().save(*args, **kwargs)
 
-        
-
+    
 
 class HomeWaterProof(Home):
     class Meta:
         proxy = True
         verbose_name = "Home Waterproof"
         verbose_name_plural = "Home Waterproof"
+
+    def save(self, *args, **kwargs):
+        self.type = 'WaterProf'
+        super().save(*args, **kwargs)
 
 
 
@@ -723,25 +584,6 @@ class HomeBanner(Banner):
         return self.images.first()
 
 
-
-
-
-
-
-
-
-# ====================================================================================================================================
-# class HomeBanner(Banner):
-#     class Meta:
-#         proxy = True
-#         verbose_name = 'Home Banner'
-#         verbose_name_plural = 'Home Banners'
-
-#     def save(self, *args, **kwargs):
-#         self.type = 'home-banner'
-#         super().save(*args, **kwargs)
-
-
 class HomeInteriorBanner(Banner):
     class Meta:
         proxy = True
@@ -750,6 +592,17 @@ class HomeInteriorBanner(Banner):
 
     def save(self, *args, **kwargs):
         self.type = 'home-interior-banner'
+        super().save(*args, **kwargs)
+
+
+class PaintCalculatorBanner(Banner):
+    class Meta:
+        proxy = True
+        verbose_name = 'Paint Calculator Banner'
+        verbose_name_plural = 'Paint Calculator Banners'
+
+    def save(self, *args, **kwargs):
+        self.type = 'paint-calculator-banner'
         super().save(*args, **kwargs)
 
 
