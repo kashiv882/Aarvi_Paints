@@ -1,6 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from .views import CustomTokenObtainPairView, CustomTokenRefreshView
 
 from django.views.decorators.csrf import csrf_exempt
 
@@ -41,7 +42,6 @@ urlpatterns = [
     path('home-interior/', create_home_interior, name='create_home_interior'),
     path('upload-image-url/', views.upload_image_url, name='upload_image_url'),
     
-    path('api/token/', csrf_exempt(TokenObtainPairView.as_view()), name='token_obtain_pair'),
-    path('api/token/refresh/', csrf_exempt(TokenRefreshView.as_view()), name='token_refresh'),
-    
+    path('api/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', CustomTokenRefreshView.as_view(), name='token_refresh'),
 ]

@@ -388,10 +388,10 @@ def upload_image_url(request):
         return JsonResponse({'url': url})
     return JsonResponse({'error': 'No file uploaded'}, status=400)
 
-# @method_decorator(csrf_exempt, name='dispatch')
-# class CustomTokenObtainPairView(TokenObtainPairView):
-#     pass
+@method_decorator(csrf_exempt, name='dispatch')
+class CustomTokenObtainPairView(TokenObtainPairView):
+    pass
 
-# @method_decorator(csrf_exempt, name='dispatch')
-# class CustomTokenRefreshView(TokenRefreshView):
-#     pass
+@method_decorator(csrf_exempt, name='dispatch')
+class CustomTokenRefreshView(TokenRefreshView):
+    pass
