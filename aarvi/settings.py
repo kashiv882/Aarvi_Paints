@@ -54,12 +54,6 @@ REST_FRAMEWORK = {
     ),
 }
 
-CSRF_COOKIE_SECURE = False  
-CSRF_TRUSTED_ORIGINS = [
-    "https://aarvi-paints.onrender.com",
-]
-
-
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -72,6 +66,12 @@ MIDDLEWARE = [
 
 ]
 
+
+
+CSRF_COOKIE_SECURE = False  
+CSRF_TRUSTED_ORIGINS = [
+    "https://aarvi-paints.onrender.com",
+]
 
 
 
