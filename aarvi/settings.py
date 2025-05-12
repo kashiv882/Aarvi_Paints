@@ -24,18 +24,27 @@ load_dotenv()
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-$yewdg-kn&x7upb4=%egufu$k4!r_i-7n4fs3g5m$^ncd%eq&&'
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = ['aarvi-paints.onrender.com', 'localhost', '127.0.0.1']
-CSRF_TRUSTED_ORIGINS = ['https://aarvi-paints.onrender.com']
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://aarvi-paints.onrender.com',
+]
+
+CORS_ALLOWED_ORIGINS = [
+    'https://aarvi-paints.onrender.com',
+]
+
+CORS_ALLOW_CREDENTIALS = True
+
+CSRF_COOKIE_SECURE = False  # Fine for development; True for production
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')  # Needed for HTTPS on Render
 
 # Application definition
-
 INSTALLED_APPS = [
     'jazzmin',
-
-
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -48,8 +57,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'ckeditor',
     'nested_admin',
-    
 ]
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -57,34 +66,16 @@ REST_FRAMEWORK = {
 }
 
 MIDDLEWARE = [
-     'corsheaders.middleware.CorsMiddleware', 
+    'corsheaders.middleware.CorsMiddleware',  # Should be near the top
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware', 
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',  # ✅ DO NOT REMOVE THIS!
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-
 ]
-
-if DEBUG:
-    if 'django.middleware.csrf.CsrfViewMiddleware' in MIDDLEWARE:
-        MIDDLEWARE.remove('django.middleware.csrf.CsrfViewMiddleware')
-        
-CORS_ALLOWED_ORIGINS = [
-    "https://aarvi-paints.onrender.com",  # Allow your frontend
-]
-
-CORS_ALLOW_CREDENTIALS = True 
-
-CSRF_COOKIE_SECURE = False 
-CSRF_TRUSTED_ORIGINS = [
-    "https://aarvi-paints.onrender.com",
-]
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
-
 
 
 ROOT_URLCONF = 'aarvi.urls'
