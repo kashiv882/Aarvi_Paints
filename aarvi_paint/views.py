@@ -390,7 +390,9 @@ def upload_image_url(request):
 
 @method_decorator(csrf_exempt, name='dispatch')
 class CustomTokenObtainPairView(TokenObtainPairView):
-    pass
+    def post(self, request, *args, **kwargs):
+        print("CustomTokenObtainPairView hit")
+        return super().post(request, *args, **kwargs)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class CustomTokenRefreshView(TokenRefreshView):
