@@ -8,6 +8,9 @@ from rest_framework.exceptions import ValidationError, NotFound
 from rest_framework . response import Response
 from rest_framework import status
 from django_filters.rest_framework import DjangoFilterBackend
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from .common import create_user_info, validate_request_data
 from .forms import HomeInteriorForm
@@ -381,3 +384,10 @@ def upload_image_url(request):
         return JsonResponse({'url': url})
     return JsonResponse({'error': 'No file uploaded'}, status=400)
 
+@method_decorator(csrf_exempt, name='dispatch')
+class CustomTokenObtainPairView(TokenObtainPairView):
+    pass
+
+@method_decorator(csrf_exempt, name='dispatch')
+class CustomTokenRefreshView(TokenRefreshView):
+    pass
