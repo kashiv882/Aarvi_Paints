@@ -50,6 +50,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -155,6 +156,7 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'aarvi_paint/static')]
 
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -164,9 +166,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 JAZZMIN_SETTINGS = {
     "site_title": "Aarvi Paints Admin",
     "site_header": "Aarvi Paints",
+    "site_logo": "images/logo.jpg",
     "site_brand": "Aarvi Paints",
     "welcome_sign": "Welcome to Aarvi Paints Admin Panel",
     "copyright": "Aarvi Paints",
+    "custom_css": "css/admin_logo.css",
 
 
     # Optional: top menu and sidebar tweaks

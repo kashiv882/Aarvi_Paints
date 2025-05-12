@@ -1,0 +1,13 @@
+/* Fix logo sizing and alignment */
+.brand-link {
+    padding: 0.5rem !important;
+    display: flex;
+    align-items: center;
+}
+
+.brand-image {
+    height: 40px !important;      /* Adjust as needed */
+    width: auto !important;       /* Maintain aspect ratio */
+    max-width: 160px !important;  /* Prevent overflow */
+    object-fit: contain !important;
+}
