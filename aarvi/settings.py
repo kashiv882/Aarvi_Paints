@@ -44,9 +44,15 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'aarvi_paint',
     'rest_framework',
+    'rest_framework_simplejwt',
     'ckeditor',
     'nested_admin',
 ]
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
