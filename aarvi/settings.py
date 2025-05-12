@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'aarvi_paint',
     'rest_framework',
     'rest_framework_simplejwt',
+    'corsheaders',
     'ckeditor',
     'nested_admin',
     
@@ -56,7 +57,7 @@ REST_FRAMEWORK = {
 }
 
 MIDDLEWARE = [
-     
+     'corsheaders.middleware.CorsMiddleware', 
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -68,7 +69,11 @@ MIDDLEWARE = [
 
 ]
 
+CORS_ALLOWED_ORIGINS = [
+    "https://aarvi-paints.onrender.com",  # Allow your frontend
+]
 
+CORS_ALLOW_CREDENTIALS = True 
 
 CSRF_COOKIE_SECURE = True  
 CSRF_TRUSTED_ORIGINS = [
