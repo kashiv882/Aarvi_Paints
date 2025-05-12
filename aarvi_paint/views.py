@@ -11,6 +11,9 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework.permissions import AllowAny
+
+
 
 from .common import create_user_info, validate_request_data
 from .forms import HomeInteriorForm
@@ -103,6 +106,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
 class SettingViewSet(viewsets.ModelViewSet):
     queryset = Setting.objects.all()
     serializer_class = SettingSerializer
+    permission_classes = [AllowAny] 
 
     def get_queryset(self):
         queryset = Setting.objects.all().order_by('name')
@@ -384,10 +388,10 @@ def upload_image_url(request):
         return JsonResponse({'url': url})
     return JsonResponse({'error': 'No file uploaded'}, status=400)
 
-@method_decorator(csrf_exempt, name='dispatch')
-class CustomTokenObtainPairView(TokenObtainPairView):
-    pass
+# @method_decorator(csrf_exempt, name='dispatch')
+# class CustomTokenObtainPairView(TokenObtainPairView):
+#     pass
 
-@method_decorator(csrf_exempt, name='dispatch')
-class CustomTokenRefreshView(TokenRefreshView):
-    pass
+# @method_decorator(csrf_exempt, name='dispatch')
+# class CustomTokenRefreshView(TokenRefreshView):
+#     pass
