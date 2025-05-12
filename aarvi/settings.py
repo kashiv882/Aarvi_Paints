@@ -68,9 +68,10 @@ MIDDLEWARE = [
 
 ]
 
-if DEBUG:  # In development mode, you can disable CSRF
-    MIDDLEWARE.remove('django.middleware.csrf.CsrfViewMiddleware')
-
+if DEBUG:
+    if 'django.middleware.csrf.CsrfViewMiddleware' in MIDDLEWARE:
+        MIDDLEWARE.remove('django.middleware.csrf.CsrfViewMiddleware')
+        
 CORS_ALLOWED_ORIGINS = [
     "https://aarvi-paints.onrender.com",  # Allow your frontend
 ]
