@@ -75,7 +75,7 @@ CORS_ALLOWED_ORIGINS = [
 
 CORS_ALLOW_CREDENTIALS = True 
 
-CSRF_COOKIE_SECURE = True  
+CSRF_COOKIE_SECURE = False 
 CSRF_TRUSTED_ORIGINS = [
     "https://aarvi-paints.onrender.com",
 ]
