@@ -41,7 +41,7 @@ urlpatterns = [
     path('home-interior/', create_home_interior, name='create_home_interior'),
     path('upload-image-url/', views.upload_image_url, name='upload_image_url'),
     
-    # path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    # path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     
 ]
