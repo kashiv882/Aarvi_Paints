@@ -68,7 +68,7 @@ MIDDLEWARE = [
 
 
 
-CSRF_COOKIE_SECURE = False  
+CSRF_COOKIE_SECURE = True  
 CSRF_TRUSTED_ORIGINS = [
     "https://aarvi-paints.onrender.com",
 ]
