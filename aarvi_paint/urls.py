@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .views import CustomTokenObtainPairView, CustomTokenRefreshView
+from .views import CustomTokenObtainPairView, CustomTokenRefreshView ,print_product_schema_view
 
 from django.views.decorators.csrf import csrf_exempt
 
@@ -44,4 +44,5 @@ urlpatterns = [
     
     path('token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', CustomTokenRefreshView.as_view(), name='token_refresh'),
+    path('product-schema/', print_product_schema_view),
 ]
