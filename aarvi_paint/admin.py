@@ -1231,16 +1231,16 @@ class ProductAdmin(admin.ModelAdmin):
     # ---------- Helpers for details fields ----------
     def get_detail_type(self, obj):
     # Check if details is not None and is a dictionary before accessing the type key
-        details = obj.details if isinstance(obj.details, dict) else {}
+        details = obj.detail if isinstance(obj.detail, dict) else {}
         return details.get("type", "")  # Safely get 'type', or return empty string if not present
     get_detail_type.short_description = "Type"
 
     def get_detail_quantity(self, obj):
-        return obj.details.get("quantity", "") if obj.details else ""
+        return obj.detail.get("quantity", "") if obj.detail else ""
     get_detail_quantity.short_description = "Quantity"
 
     def get_detail_finish(self, obj):
-        return obj.details.get("finish", "") if obj.details else ""
+        return obj.detail.get("finish", "") if obj.detail else ""
     get_detail_finish.short_description = "Finish"
 
     def delete_link(self, obj):
@@ -1255,11 +1255,11 @@ class ProductAdmin(admin.ModelAdmin):
     
 
     def get_detail_sqft(self, obj):
-        return obj.details.get("Sqft_lt", "") if obj.details else ""
+        return obj.detail.get("Sqft_lt", "") if obj.detail else ""
     get_detail_sqft.short_description = "Sqft / lt"
 
     def get_detail_warranty(self, obj):
-        return obj.details.get("warranty", "") if obj.details else ""
+        return obj.detail.get("warranty", "") if obj.detail else ""
     get_detail_warranty.short_description = "Warranty"
 
     # ---------- Other helpers ----------

@@ -370,18 +370,18 @@ class ProductForm(BaseImageForm):
             self.fields['subcategory'].choices = [(None, 'Select category first')]
 
         # Set initial values for 'details' if editing an instance
-        if self.instance and self.instance.details:
-            self.fields['type'].initial = self.instance.details.get('type', '')
-            self.fields['quantity'].initial = self.instance.details.get('quantity', '')
-            self.fields['finish'].initial = self.instance.details.get('finish', '')
-            self.fields['Sqft_lt'].initial = self.instance.details.get('Sqft_lt', '')
-            self.fields['warranty'].initial = self.instance.details.get('warranty', '')
+        if self.instance and self.instance.detail:
+            self.fields['type'].initial = self.instance.detail.get('type', '')
+            self.fields['quantity'].initial = self.instance.detail.get('quantity', '')
+            self.fields['finish'].initial = self.instance.detail.get('finish', '')
+            self.fields['Sqft_lt'].initial = self.instance.detail.get('Sqft_lt', '')
+            self.fields['warranty'].initial = self.instance.detail.get('warranty', '')
 
     def clean(self):
         cleaned_data = super().clean()
 
         # Collect new fields into a dictionary
-        cleaned_data['details'] = {
+        cleaned_data['detail'] = {
             'type': cleaned_data.get('type', ''),
             'quantity': cleaned_data.get('quantity', ''),
             'finish': cleaned_data.get('finish', ''),
@@ -395,7 +395,7 @@ class ProductForm(BaseImageForm):
         instance = super().save(commit=False)
 
         # Save JSON data into instance.details
-        instance.details = self.cleaned_data['details']
+        instance.detail = self.cleaned_data['detail']
 
         if commit:
             instance.save()

@@ -50,7 +50,7 @@ class Product(TimeStampedModel):
     url = models.JSONField()
     colour_palate1 = models.CharField(max_length=100, blank=True)
     colour_palate2 = models.CharField(max_length=100, blank=True)
-    details = models.JSONField(default=dict, null=True, blank=True)
+    detail = models.JSONField(default=dict, null=True, blank=True)
     
 
 
