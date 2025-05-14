@@ -68,8 +68,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'ckeditor',
     'nested_admin',
-    'tailwind',
-    # 'theme',
+
 ]
 
 REST_FRAMEWORK = {
