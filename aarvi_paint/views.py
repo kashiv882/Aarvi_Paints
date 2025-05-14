@@ -394,17 +394,17 @@ def upload_image_url(request):
         return JsonResponse({'url': url})
     return JsonResponse({'error': 'No file uploaded'}, status=400)
 
-# @method_decorator(csrf_exempt, name='dispatch')
-# class CustomTokenObtainPairView(TokenObtainPairView):
-#     # @csrf_exempt
-#     def post(self, request, *args, **kwargs):
-#         breakpoint()
-#         print("CustomTokenObtainPairView hit")
-#         return super().post(request, *args, **kwargs)
+@method_decorator(csrf_exempt, name='dispatch')
+class CustomTokenObtainPairView(TokenObtainPairView):
+    # @csrf_exempt
+    def post(self, request, *args, **kwargs):
+        print("Raw body:", request.body)  # Raw data before DRF tries to parse it
+        print("Parsed data:", request.data) 
+        return super().post(request, *args, **kwargs)
 
-# @method_decorator(csrf_exempt, name='dispatch')
-# class CustomTokenRefreshView(TokenRefreshView):
-#     pass
+@method_decorator(csrf_exempt, name='dispatch')
+class CustomTokenRefreshView(TokenRefreshView):
+    pass
 
 
 # @csrf_exempt  # Disable CSRF for this specific view
@@ -416,17 +416,17 @@ def upload_image_url(request):
 #     if serializer.is_valid():
 #         return Response(serializer.validated_data, status=status.HTTP_200_OK)
 #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-@csrf_exempt
-@api_view(['POST'])
-def generate_jwt_token(request):
-    username = request.data.get('username')
-    password = request.data.get('password')
+# @csrf_exempt
+# @api_view(['POST'])
+# def generate_jwt_token(request):
+#     username = request.data.get('username')
+#     password = request.data.get('password')
 
-    user = authenticate(username=username, password=password)
-    if user is not None:
-        refresh = RefreshToken.for_user(user)
-        return Response({
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
-        })
-    return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+#     user = authenticate(username=username, password=password)
+#     if user is not None:
+#         refresh = RefreshToken.for_user(user)
+#         return Response({
+#             'refresh': str(refresh),
+#             'access': str(refresh.access_token),
+#         })
+#     return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)

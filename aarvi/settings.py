@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure-$yewdg-kn&x7upb4=%egufu$k4!r_i-7n4fs3g5m$^ncd%eq&&
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['aarvi-paints.onrender.com', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['aarvi-paints.onrender.com', 'localhost', '127.0.0.1','kubernetes.docker.internal',]
 
 CSRF_TRUSTED_ORIGINS = [
     'https://aarvi-paints.onrender.com',
