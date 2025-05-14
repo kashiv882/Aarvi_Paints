@@ -335,7 +335,7 @@ class ProductForm(BaseImageForm):
     long_description = forms.CharField(widget=CKEditorWidget())
 
     # ➕ Add new fields for 'details' JSONField
-    product_type = forms.CharField(required=False, label="Type")
+    type = forms.CharField(required=False, label="Type")
     quantity = forms.CharField(required=False, label="Quantity")
     finish = forms.CharField(required=False, label="Finish ")
     Sqft_lt = forms.CharField(required=False, label="sqft_lt")

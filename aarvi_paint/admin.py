@@ -1230,7 +1230,9 @@ class ProductAdmin(admin.ModelAdmin):
 
     # ---------- Helpers for details fields ----------
     def get_detail_type(self, obj):
-        return obj.details.get("type", "") if obj.details else ""
+    # Check if details is not None and is a dictionary before accessing the type key
+        details = obj.details if isinstance(obj.details, dict) else {}
+        return details.get("type", "")  # Safely get 'type', or return empty string if not present
     get_detail_type.short_description = "Type"
 
     def get_detail_quantity(self, obj):
