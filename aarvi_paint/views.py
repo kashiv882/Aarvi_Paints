@@ -430,3 +430,10 @@ class CustomTokenRefreshView(TokenRefreshView):
 #             'access': str(refresh.access_token),
 #         })
 #     return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+
+def print_product_schema_view(request):
+    schema = {
+        field.name: field.get_internal_type()
+        for field in Product._meta.fields
+    }
+    return JsonResponse(schema)
