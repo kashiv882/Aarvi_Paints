@@ -1,0 +1,27 @@
+/* admin_custom.css */
+.nested-inline {
+    background: #f9f9f9;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+}
+
+.nested-inline .form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: center;
+}
+
+.nested-inline input[type="text"],
+.nested-inline textarea,
+.nested-inline select {
+    max-width: 400px;
+    width: 100%;
+}
+
+.nested-inline label {
+    font-weight: 600;
+    margin-bottom: 4px;
+}

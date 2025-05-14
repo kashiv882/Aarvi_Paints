@@ -31,21 +31,23 @@ ALLOWED_HOSTS = ['aarvi-paints.onrender.com', 'localhost', '127.0.0.1']
 
 CSRF_TRUSTED_ORIGINS = [
     'https://aarvi-paints.onrender.com',
-    'http://localhost:8000',  # Add localhost for development
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',  # Add localhost for development
 ]
 
 # Keep these as is
 CORS_ALLOWED_ORIGINS = [
     'https://aarvi-paints.onrender.com',
     'http://localhost:8000',
+    'http://127.0.0.1:8000',
 ]
     
-CSRF_COOKIE_HTTPONLY = False
+# CSRF_COOKIE_HTTPONLY = False
 
 CORS_ALLOW_CREDENTIALS = True
 
-CSRF_COOKIE_SAMESITE = 'Lax'  # Or 'None' if you need cross-site requests
-SESSION_COOKIE_SECURE = True  
+# CSRF_COOKIE_SAMESITE = 'Lax'  # Or 'None' if you need cross-site requests
+# SESSION_COOKIE_SECURE = True  
 
 CSRF_COOKIE_SECURE = False  # Fine for development; True for production
 
@@ -66,6 +68,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'ckeditor',
     'nested_admin',
+    'tailwind',
+    # 'theme',
 ]
 
 REST_FRAMEWORK = {
@@ -133,24 +137,24 @@ WSGI_APPLICATION = 'aarvi.wsgi.application'
 #     }
 # }
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',  # Ensure PostgreSQL is set as the backend
-#         'NAME': os.getenv('DB_NAME'),  # Get the database name from the environment variable
-#         'USER': os.getenv('DB_USER'),  # Get the database user from the environment variable
-#         'PASSWORD': os.getenv('DB_PASSWORD'),  # Get the database password from the environment variable
-#         'HOST': os.getenv('DB_HOST'),  # Get the host from the environment variable
-#         'PORT': os.getenv('DB_PORT'),  # Get the port from the environment variable
-#     }
-# }    
-import dj_database_url
-import os
-
 DATABASES = {
-    'default': dj_database_url.config(
-        default=os.getenv('DATABASE_URL')
-    )
-}
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',  # Ensure PostgreSQL is set as the backend
+        'NAME': os.getenv('DB_NAME'),  # Get the database name from the environment variable
+        'USER': os.getenv('DB_USER'),  # Get the database user from the environment variable
+        'PASSWORD': os.getenv('DB_PASSWORD'),  # Get the database password from the environment variable
+        'HOST': os.getenv('DB_HOST'),  # Get the host from the environment variable
+        'PORT': os.getenv('DB_PORT'),  # Get the port from the environment variable
+    }
+}    
+# import dj_database_url
+# import os
+
+# DATABASES = {
+#     'default': dj_database_url.config(
+#         default=os.getenv('DATABASE_URL')
+#     )
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators

@@ -1,0 +1,83 @@
+/* ✅ admin_custom.css — Normalize nested inline UI to match Jazzmin */
+
+.nested-inline {
+    font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 14px;  /* Match Jazzmin default font size */
+    color: #212529;
+}
+
+/* ✅ Normalize headers like “Exterior home category: #1” */
+.nested-inline h3,
+.nested-inline h3.inline_label {
+    font-size: 16px;
+    font-weight: 600;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    color: #343a40;
+}
+
+/* ✅ Fieldset headings like “Exterior category images” */
+nested-inline h2 {
+    font-size: 15px;
+    font-weight: 500;
+    background-color: #f8f9fa;
+    padding: 8px 12px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+    color: #212529;
+}
+
+/* ✅ Fix label sizes */
+.nested-inline label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #212529;
+}
+
+/* ✅ Normalize input sizes */
+.nested-inline input[type="text"],
+.nested-inline input[type="url"],
+.nested-inline input[type="file"],
+.nested-inline textarea,
+.nested-inline select {
+    font-size: 14px;
+    padding: 6px 10px;
+    margin-top: 10px;
+    border-radius: 4px;
+    border: 1px solid #ced4da;
+    max-width: 100%;
+    width: 100%;
+}
+
+/* ✅ Fix "Remove" button styling */
+.nested-inline .inline-deletelink {
+    font-size: 13px;
+    padding: 4px 10px;
+    color: #fff !important;
+    background-color: #dc3545 !important;
+    border: none !important;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 10px;
+    display: inline-block;
+}
+
+/* ✅ Add spacing between inputs and labels */
+.nested-inline .form-row,
+.nested-inline .form-group {
+    margin-bottom: 15px;
+}
+
+/* ✅ Normalize "Add another" links */
+.add-row a,
+.nested-inline .add-row a {
+    font-size: 13px;
+    padding: 6px 12px;
+    background-color: #007bff;
+    color: rgb(180, 140, 140);
+    text-decoration: none;
+    border-radius: 4px;
+    display: inline-block;
+    margin-top: 10px;
+}

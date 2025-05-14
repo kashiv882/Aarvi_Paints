@@ -39,7 +39,7 @@ class Product(TimeStampedModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=200)
     subtitle = models.CharField(max_length=255, blank=True)
-    short_description = RichTextField()
+    short_description = models.TextField()
     long_description = RichTextField()
     keyfeature = models.TextField()
     category = models.ForeignKey(
@@ -49,6 +49,7 @@ class Product(TimeStampedModel):
     url = models.JSONField()
     colour_palate1 = models.CharField(max_length=100, blank=True)
     colour_palate2 = models.CharField(max_length=100, blank=True)
+    details = models.JSONField(default=dict, null=True, blank=True)
     
 
 
@@ -74,11 +75,11 @@ class ColourPalette(TimeStampedModel):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=200, null=True, blank=True)
-    description = RichTextField(null=True, blank=True)
+    description = models.TextField()
     details = models.JSONField(default=dict, null=True, blank=True)
     url = models.JSONField(default=dict, null=True, blank=True)
     side_Title = models.CharField(max_length=200, null=True, blank=True)
-    side_description = RichTextField(null=True, blank=True)
+    side_description = models.TextField()
     type = models.CharField(max_length=200, editable=False, null=True, blank=True)
 
     def save(self, *args, **kwargs):
@@ -187,7 +188,7 @@ class Parallax(TimeStampedModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=200)
     sub_title = models.CharField(max_length=200)
-    description = RichTextField()
+    description = models.TextField()
     url = models.JSONField(default=dict, blank=True)
     priority = models.IntegerField()
 
@@ -345,7 +346,7 @@ class Banner(TimeStampedModel):
     title = models.CharField(max_length=200, null=True, blank=True)
     type = models.CharField(max_length=200, editable=False, null=True, blank=True)
     placement_location = models.CharField(max_length=200, null=True, blank=True)
-    short_description = RichTextField()
+    short_description = models.TextField()
     url = models.JSONField(default=dict, blank=True)
 
 
@@ -388,7 +389,7 @@ class Home(TimeStampedModel):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=200, null = True )
-    description = RichTextField()
+    description = models.TextField()
     type = models.CharField(max_length=200 , choices=Home_Type_CHOICES)
     # type = models.CharField(max_length=200, null=True, blank=True)
     # banners = models.ForeignKey(Banner,on_delete=models.CASCADE,related_name="homes", null=True, blank=True)

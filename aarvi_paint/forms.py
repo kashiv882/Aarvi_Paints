@@ -97,11 +97,12 @@ class ParallaxForm(forms.ModelForm):
         return instance
 
 
+
+
+
 class BrochureForm(forms.ModelForm):
     image_field = forms.ImageField(required=False, label="Upload Image")
-
     pdf_field = forms.FileField(required=False, label="Upload PDF")
-
 
     class Meta:
         model = Brochure
@@ -109,40 +110,14 @@ class BrochureForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        url = self.instance.url or {}
-        image_url = url.get('image')
-
-        # Set help text for preview image if available
-        if image_url:
-            self.fields['image_field'].help_text = mark_safe(
-                f'<br><strong>Preview Image:</strong><br>'
-                f'<img src="{image_url}" style="max-height: 100px;" /><br>'
-                f'<strong>URL:</strong> <a href="{image_url}" target="_blank">{image_url}</a>'
-            )
-
-        # Set help text for uploaded PDF if available
-        if self.instance.uploaded_pdf:
-            self.fields['pdf_field'].help_text = mark_safe(
-                f'<br><strong>Uploaded PDF:</strong><br>'
-                f'<a href="/media/brochures/{self.instance.uploaded_pdf}" target="_blank">'
-                f'{self.instance.uploaded_pdf}</a>'
-            )
+        # ✅ Do NOT add preview HTML here to avoid duplicate UI
+        # Just use label and field cleanly
+        pass
 
     def save(self, commit=True):
         instance = super().save(commit=False)
         url_data = instance.url or {}
 
-        # Delete the image if "delete_image" is checked
-        if self.cleaned_data.get('delete_image'):
-            url_data.pop('image', None)
-            if instance.image:
-                instance.image.delete()
-
-        # Delete the PDF if "delete_pdf" is checked
-        if self.cleaned_data.get('delete_pdf'):
-            instance.uploaded_pdf = ""
-
-        # Save the new image if an image is provided
         if self.cleaned_data.get('image_field'):
             image_path = default_storage.save(
                 f'brochures/images/{self.cleaned_data["image_field"].name}',
@@ -150,7 +125,6 @@ class BrochureForm(forms.ModelForm):
             )
             url_data['image'] = default_storage.url(image_path)
 
-        # Save the new PDF if a PDF is provided
         if self.cleaned_data.get('pdf_field'):
             pdf_path = default_storage.save(
                 f'brochures/{self.cleaned_data["pdf_field"].name}',
@@ -163,6 +137,75 @@ class BrochureForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
+
+
+
+# class BrochureForm(forms.ModelForm):
+#     image_field = forms.ImageField(required=False, label="Upload Image")
+
+#     pdf_field = forms.FileField(required=False, label="Upload PDF")
+
+
+#     class Meta:
+#         model = Brochure
+#         fields = ['image_field', 'pdf_field']
+
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         url = self.instance.url or {}
+#         image_url = url.get('image')
+
+#         # Set help text for preview image if available
+#         if image_url:
+#             self.fields['image_field'].help_text = mark_safe(
+#                 f'<br><strong>Preview Image:</strong><br>'
+#                 f'<img src="{image_url}" style="max-height: 100px;" /><br>'
+#                 f'<strong>URL:</strong> <a href="{image_url}" target="_blank">{image_url}</a>'
+#             )
+
+#         # Set help text for uploaded PDF if available
+#         if self.instance.uploaded_pdf:
+#             self.fields['pdf_field'].help_text = mark_safe(
+#                 f'<br><strong>Uploaded PDF:</strong><br>'
+#                 f'<a href="/media/brochures/{self.instance.uploaded_pdf}" target="_blank">'
+#                 f'{self.instance.uploaded_pdf}</a>'
+#             )
+
+#     def save(self, commit=True):
+#         instance = super().save(commit=False)
+#         url_data = instance.url or {}
+
+#         # Delete the image if "delete_image" is checked
+#         if self.cleaned_data.get('delete_image'):
+#             url_data.pop('image', None)
+#             if instance.image:
+#                 instance.image.delete()
+
+#         # Delete the PDF if "delete_pdf" is checked
+#         if self.cleaned_data.get('delete_pdf'):
+#             instance.uploaded_pdf = ""
+
+#         # Save the new image if an image is provided
+#         if self.cleaned_data.get('image_field'):
+#             image_path = default_storage.save(
+#                 f'brochures/images/{self.cleaned_data["image_field"].name}',
+#                 self.cleaned_data["image_field"]
+#             )
+#             url_data['image'] = default_storage.url(image_path)
+
+#         # Save the new PDF if a PDF is provided
+#         if self.cleaned_data.get('pdf_field'):
+#             pdf_path = default_storage.save(
+#                 f'brochures/{self.cleaned_data["pdf_field"].name}',
+#                 self.cleaned_data["pdf_field"]
+#             )
+#             instance.uploaded_pdf = self.cleaned_data["pdf_field"].name
+
+#         instance.url = url_data
+
+#         if commit:
+#             instance.save()
+#         return instance
 
 
 
@@ -304,15 +347,24 @@ class ProductForm(BaseImageForm):
     subcategory = forms.MultipleChoiceField(
         required=False,
         choices=[('', 'Select category first')],
-        widget=SelectMultiple
+        widget=forms.SelectMultiple
     )
     short_description = forms.CharField(widget=CKEditorWidget())
     long_description = forms.CharField(widget=CKEditorWidget())
 
+    # ➕ Add new fields for 'details' JSONField
+    product_type = forms.CharField(required=False, label="Type")
+    quantity = forms.CharField(required=False, label="Quantity")
+    finish = forms.CharField(required=False, label="Finish ")
+    Sqft_lt = forms.CharField(required=False, label="sqft_lt")
+    warranty = forms.CharField(required=False, label="Warranty")
+
     class Meta:
         model = Product
-        fields = ['title', 'subtitle', 'short_description', 'long_description', 'keyfeature',
-                  'category', 'subcategory', 'colour_palate1', 'colour_palate2']
+        fields = [
+            'title', 'subtitle', 'short_description', 'long_description', 'keyfeature',
+            'category', 'subcategory', 'colour_palate1', 'colour_palate2'
+        ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -333,8 +385,40 @@ class ProductForm(BaseImageForm):
             self.fields['subcategory'].choices = choices
             self.fields['subcategory'].widget.attrs['data-selected'] = self.data.get('subcategory', '')
         else:
-            self.fields['subcategory'].choices = [('', 'Select category first')]
+            self.fields['subcategory'].choices = [(None, 'Select category first')]
 
+        # Set initial values for 'details' if editing an instance
+        if self.instance and self.instance.details:
+            self.fields['type'].initial = self.instance.details.get('type', '')
+            self.fields['quantity'].initial = self.instance.details.get('quantity', '')
+            self.fields['finish'].initial = self.instance.details.get('finish', '')
+            self.fields['Sqft_lt'].initial = self.instance.details.get('Sqft_lt', '')
+            self.fields['warranty'].initial = self.instance.details.get('warranty', '')
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        # Collect new fields into a dictionary
+        cleaned_data['details'] = {
+            'type': cleaned_data.get('type', ''),
+            'quantity': cleaned_data.get('quantity', ''),
+            'finish': cleaned_data.get('finish', ''),
+            'Sqft_lt': cleaned_data.get('Sqft_lt', ''),
+            'warranty': cleaned_data.get('warranty', ''),
+        }
+
+        return cleaned_data
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+
+        # Save JSON data into instance.details
+        instance.details = self.cleaned_data['details']
+
+        if commit:
+            instance.save()
+        return instance
+    
 class HomeForm(forms.ModelForm):
     category_image_field = forms.ImageField(required=False, label="Category Image")
     type_image_field = forms.ImageField(required=False, label="Type Image")
@@ -409,7 +493,7 @@ class HomeForm(forms.ModelForm):
 
 class BaseBannerForm(forms.ModelForm):
     banner_image = forms.ImageField(required=False)
-    delete_image = forms.BooleanField(required=False, label='Delete banner Image')
+    # delete_image = forms.BooleanField(required=False, label='Delete banner Image')
 
     class Meta:
         model = Banner
@@ -438,8 +522,8 @@ class BaseBannerForm(forms.ModelForm):
         url_data = instance.url or {}
 
         # Delete logic
-        if self.cleaned_data.get('delete_image'):
-            url_data.pop('image', None)
+        # if self.cleaned_data.get('delete_image'):
+        #     url_data.pop('image', None)
 
 
         # Upload logic
@@ -586,12 +670,17 @@ class AboutUsAdminForm(forms.ModelForm):
         label="Lower Description",
         help_text="Description for the lower section"
     )
-    extra_info = forms.CharField(
-        widget=forms.Textarea, 
-        required=False, 
-        label="Extra Info",
-        help_text="Additional information to display"
-    )
+    # extra_info = forms.CharField(
+    #     widget=forms.Textarea, 
+    #     required=False, 
+    #     label="Extra Info",
+    #     help_text="Additional information to display"
+    # )
+
+    happy_client = forms.CharField(max_length=200, required=False, label="Happy Client")
+    work_job = forms.CharField(max_length=200, required=False, label="Work Job")
+    location = forms.CharField(max_length=200, required=False, label="Location")
+    work_member = forms.CharField(max_length=200, required=False, label="Work Member")
 
     class Meta:
         model = AboutUs
@@ -604,7 +693,11 @@ class AboutUsAdminForm(forms.ModelForm):
             self.fields['lower_title'].initial = details.get('lower_title', '')
             self.fields['lower_sub_title'].initial = details.get('lower_sub_title', '')
             self.fields['lower_description'].initial = details.get('lower_description', '')
-            self.fields['extra_info'].initial = details.get('extra_info', '')
+            # self.fields['extra_info'].initial = details.get('extra_info', '')
+            self.fields['happy_client'].initial = details.get('happy_client', '')
+            self.fields['work_job'].initial = details.get('work_job', '')
+            self.fields['location'].initial = details.get('location', '')
+            self.fields['work_member'].initial = details.get('work_member', '')
 
     def clean(self):
         cleaned_data = super().clean()
@@ -612,7 +705,11 @@ class AboutUsAdminForm(forms.ModelForm):
             'lower_title': cleaned_data.get('lower_title', ''),
             'lower_sub_title': cleaned_data.get('lower_sub_title', ''),
             'lower_description': cleaned_data.get('lower_description', ''),
-            'extra_info': cleaned_data.get('extra_info', ''),
+            # 'extra_info': cleaned_data.get('extra_info', ''),
+            'happy_client': cleaned_data.get('happy_client', ''),
+            'work_job': cleaned_data.get('work_job', ''),
+            'location': cleaned_data.get('location', ''),
+            'work_member': cleaned_data.get('work_member', ''),
         }
         return cleaned_data
 
@@ -828,7 +925,8 @@ class HomeExteriorForm(forms.ModelForm):
 
 class HomeWaterProofForm(forms.ModelForm):
     category = forms.CharField(
-        widget=forms.Textarea,
+        # widget=forms.Textarea,
+        widget=forms.Textarea(attrs={'rows': 2}),
         help_text="Comma-separated category names"
     )
     sideimage = forms.ImageField(required=False, label="Side Image")
