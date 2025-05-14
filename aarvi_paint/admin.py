@@ -16,7 +16,7 @@ from django.template.response import TemplateResponse
 from django.contrib.auth.models import User, Group
 from .forms import  HomeInteriorBannerForm,PaintCalculatorBannerForm,SettingAdminForm, HomeExteriorBannerForm, ColourPaletteForm, ParallaxForm,HomeBannerImageForm,AboutUsAdminForm,TestimonialAdminForm,\
     BrochureForm, AdditionalInfoForm, AdminContactDetailsForm, CategoryForm, ProductForm, HomeForm, GalleryBannerForm,GalleryBannerImageForm,InspirationForm,AboutUsForm, HomeWaterProofForm,\
-    AboutUsTopBannerForm, ColorPalletsBannerForm, ProductBannerForm, ContactUsBannerForm, HomeWaterproofingBannerForm,HomeAdminForm,HomeExteriorForm,ColourPaletteImageInlineForm,WaterCalculatorAdminForm, PaintCalculatorAdminForm,\
+    AboutUsTopBannerForm, ColorPalletsBannerForm, ProductBannerForm, ContactUsBannerForm, HomeWaterproofingBannerForm,HomeExteriorForm,ColourPaletteImageInlineForm,WaterCalculatorAdminForm, PaintCalculatorAdminForm,\
     AboutUsBottomVideoBannerForm, BaseBannerForm,HomeInteriorForm, BaseHomeInteriorForm,HomeExteriordataForm,BannerImageInline,MultiColorPaletteForm
 from .models import PaintCalculatorBanner,AboutUsBottomVideoBanner, PaintProduct,PaintCalculator,ColourCode,HomeExteriorBanner,WaterProduct, Testimonial,HomeInteriorBanner,  PaintBudgetCalculator, ColourPalette,Inspiration, \
     Parallax, Brochure, AdditionalInfo, AdminContactDetails, WaterProofCalculator, Category, Product, UserInfo, Home,CategoryImage, TypeImage,HomeExterior,\
