@@ -2,6 +2,7 @@ import uuid
 from django.db import models
 from .choices import *
 import json
+from django.utils.safestring import mark_safe
 
 from ckeditor.fields import RichTextField
 
@@ -156,7 +157,7 @@ class MultiColorPalette(ColourPalette):
 
 class ColourPaletteImage(models.Model):
     palette = models.ForeignKey(ColourPalette, on_delete=models.CASCADE, related_name='images')
-    image = models.ImageField(upload_to='colour_palette_images/')
+    image = models.ImageField(upload_to='colour_palette_images/',help_text='Upload an image (must be less than 10 MB).')
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)

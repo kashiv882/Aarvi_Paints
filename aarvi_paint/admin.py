@@ -16,8 +16,8 @@ from django.template.response import TemplateResponse
 from django.contrib.auth.models import User, Group
 from .forms import  HomeInteriorBannerForm,PaintCalculatorBannerForm,SettingAdminForm, HomeExteriorBannerForm, ColourPaletteForm, ParallaxForm,HomeBannerImageForm,AboutUsAdminForm,TestimonialAdminForm,\
     BrochureForm, AdditionalInfoForm, AdminContactDetailsForm, CategoryForm, ProductForm, HomeForm, GalleryBannerForm,GalleryBannerImageForm,InspirationForm,AboutUsForm, HomeWaterProofForm,\
-    AboutUsTopBannerForm, ColorPalletsBannerForm, ProductBannerForm, ContactUsBannerForm, HomeWaterproofingBannerForm,HomeAdminForm,HomeExteriorForm, \
-    AboutUsBottomVideoBannerForm, BaseBannerForm,HomeInteriorForm, BaseHomeInteriorForm,HomeExteriordataForm,BannerImageInline
+    AboutUsTopBannerForm, ColorPalletsBannerForm, ProductBannerForm, ContactUsBannerForm, HomeWaterproofingBannerForm,HomeAdminForm,HomeExteriorForm,ColourPaletteImageInlineForm,WaterCalculatorAdminForm, PaintCalculatorAdminForm,\
+    AboutUsBottomVideoBannerForm, BaseBannerForm,HomeInteriorForm, BaseHomeInteriorForm,HomeExteriordataForm,BannerImageInline,MultiColorPaletteForm
 from .models import PaintCalculatorBanner,AboutUsBottomVideoBanner, PaintProduct,PaintCalculator,ColourCode,HomeExteriorBanner,WaterProduct, Testimonial,HomeInteriorBanner,  PaintBudgetCalculator, ColourPalette,Inspiration, \
     Parallax, Brochure, AdditionalInfo, AdminContactDetails, WaterProofCalculator, Category, Product, UserInfo, Home,CategoryImage, TypeImage,HomeExterior,\
     Banner, GalleryBanner,CategoryImage,AboutUsTopBanner, ColorPalletsBanner, ProductBanner, ContactUsBanner, Category, CategoryImage,AboutUs, WaterCalculator,HomeWaterProof,\
@@ -91,11 +91,24 @@ class AboutUsAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         return AboutUs.objects.count() < 1
+    
+    def delete_link(self, obj):
+      url = reverse('admin:aarvi_paint_aboutus_delete', args=[obj.pk])
+      return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
+
+    delete_link.short_description = 'Delete'
 
     list_display = [
         'title',
         'short_description',
-        'short_details',  # Now rendered as preview
+        'get_lower_title',
+        'get_lower_sub_title',
+        'get_lower_description',
+        'get_happy_client',
+        'get_work_job',
+        'get_location',
+        'get_work_member',
+        'delete_link',
     ]
 
     fieldsets = (
@@ -112,34 +125,40 @@ class AboutUsAdmin(admin.ModelAdmin):
         }),
     )
 
+    # Show preview of 'description'
     def short_description(self, obj):
         return obj.description[:50] + '...' if obj.description else '—'
     short_description.short_description = 'Description'
 
-    def short_details(self, obj):
-        if not obj.details:
-            return "—"
+    # -- Individual accessors for details fields --
+    def get_lower_title(self, obj):
+        return obj.details.get('lower_title', '') if obj.details else ''
+    get_lower_title.short_description = 'Lower Title'
 
-        # Human-readable titles for preview
-        field_map = {
-            'lower_title': 'Lower Title',
-            'lower_sub_title': 'Lower Sub Title',
-            'lower_description': 'Lower Description',
-            'happy_client': 'Happy Client',
-            'work_job': 'Work Job',
-            'location': 'Location',
-            'work_member': 'Work Member',
-        }
+    def get_lower_sub_title(self, obj):
+        return obj.details.get('lower_sub_title', '') if obj.details else ''
+    get_lower_sub_title.short_description = 'Lower Sub Title'
 
-        html = ""
-        for key, label in field_map.items():
-            value = obj.details.get(key)
-            if value:
-                html += f"<strong>{label}</strong><br>{value}<br><br>"
+    def get_lower_description(self, obj):
+        return obj.details.get('lower_description', '') if obj.details else ''
+    get_lower_description.short_description = 'Lower Description'
 
-        return format_html(html)
+    def get_happy_client(self, obj):
+        return obj.details.get('happy_client', '') if obj.details else ''
+    get_happy_client.short_description = 'Happy Client'
 
-    short_details.short_description = 'Details'
+    def get_work_job(self, obj):
+        return obj.details.get('work_job', '') if obj.details else ''
+    get_work_job.short_description = 'Work Job'
+
+    def get_location(self, obj):
+        return obj.details.get('location', '') if obj.details else ''
+    get_location.short_description = 'Location'
+
+    def get_work_member(self, obj):
+        return obj.details.get('work_member', '') if obj.details else ''
+    get_work_member.short_description = 'Work Member'
+
 
 
 
@@ -195,9 +214,10 @@ class AboutUsAdmin(admin.ModelAdmin):
 
 # ==================Home Banner======================================
 
-class BannerImageInline(admin.TabularInline):
+class BannerImageInline(admin.StackedInline):
     model = BannerImage
     extra = 1
+    form = HomeBannerImageForm
     readonly_fields = ['image_preview']
     fields = ['image', 'image_preview']  # Only image upload here
 
@@ -210,24 +230,14 @@ class BannerImageInline(admin.TabularInline):
         return "No image"
     image_preview.short_description = 'Preview'
 
-class BannerImageInline(admin.TabularInline):
-    model = BannerImage
-    extra = 1
-    readonly_fields = ['image_preview']
-    fields = ['image', 'image_preview']
-
-    def image_preview(self, obj):
-        if obj.image and hasattr(obj.image, 'url'):
-            return format_html('<img src="{}" style="height: 100px;" />', obj.image.url)
-        return "No image"
-    image_preview.short_description = 'Preview'
 
 
 @admin.register(HomeBanner)
 class HomeBannerAdmin(admin.ModelAdmin):
-    form = HomeBannerImageForm
+    
+
     inlines = [BannerImageInline]
-    list_display = ['banner_preview', 'image_count']
+    list_display = ['banner_preview', 'image_count','delete_link']
     list_display_links = ['banner_preview']
     actions = []  
 
@@ -236,6 +246,18 @@ class HomeBannerAdmin(admin.ModelAdmin):
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
+    
+    def delete_link(self, obj):
+        url = reverse(
+            f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete",
+            args=[obj.pk]
+        )
+        return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
+
+
+    
+    delete_link.short_description = 'Delete'    
+
 
     def image_count(self, obj):
         count = obj.images.count()
@@ -290,7 +312,7 @@ class HomeBannerAdmin(admin.ModelAdmin):
 @admin.register(Inspiration)
 class InspirationAdmin(admin.ModelAdmin):
     form = InspirationForm
-    list_display = ('title', 'description', 'image_preview')
+    list_display = ('title', 'description', 'image_preview','delete_link')
     readonly_fields = ('image_preview',)
     exclude = ('type', 'url', 'details')  # hide raw JSON
     actions = []  
@@ -307,6 +329,16 @@ class InspirationAdmin(admin.ModelAdmin):
         return "No image"
     image_preview.short_description = 'Image Preview'
 
+    def delete_link(self, obj):
+        url = reverse(
+            f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete",
+            args=[obj.pk]
+        )
+        return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
+
+
+    delete_link.short_description = 'Delete'
+
     def get_queryset(self, request):
         return super().get_queryset(request).filter(type='inspiration')
 
@@ -321,7 +353,7 @@ class InspirationAdmin(admin.ModelAdmin):
 @admin.register(Testimonial)
 class TestimonialAdmin(admin.ModelAdmin):
     form = TestimonialAdminForm
-    list_display = ('name', 'description','image_preview')
+    list_display = ('name', 'description','image_preview','delete_link')
     readonly_fields = ['image_display']
     actions = []  
 
@@ -338,7 +370,7 @@ class TestimonialAdmin(admin.ModelAdmin):
                 'description',
                 'image',
                 'image_display',
-                'delete_image',
+                
             )
         }),
     )
@@ -352,6 +384,20 @@ class TestimonialAdmin(admin.ModelAdmin):
             return format_html('<img src="{}" style="max-height: 100px;" />', url)
         return "No image"
     image_preview.short_description = "Image Preview"
+
+
+    def delete_link(self, obj):
+        url = reverse(
+            f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete",
+            args=[obj.pk]
+        )
+        return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
+
+
+    delete_link.short_description = 'Delete'
+
+
+    
 
     def image_display(self, obj):
         url = obj.url.get('image')
@@ -370,27 +416,6 @@ class WaterProductInline(admin.TabularInline):
     extra = 1
 
 
-class WaterCalculatorAdminForm(forms.ModelForm):
-    subtitle = forms.CharField(required=False, label="Subtitle")
-
-    class Meta:
-        model = WaterCalculator
-        fields = ['title', 'description']
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if self.instance and self.instance.details:
-            self.fields['subtitle'].initial = self.instance.details.get('subtitle', '')
-
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-        subtitle = self.cleaned_data.get("subtitle", "")
-        details = instance.details or {}
-        details['subtitle'] = subtitle
-        instance.details = details
-        if commit:
-            instance.save()
-        return instance
 
 
 @admin.register(WaterCalculator)
@@ -412,11 +437,23 @@ class WaterCalculatorAdmin(admin.ModelAdmin):
         qs = super().get_queryset(request)
         return qs.filter(type="WATER_CALCULATOR")
 
-    list_display = ['title', 'get_subtitle', 'short_description', 'display_products']
+    list_display = ['title', 'get_subtitle', 'short_description', 'display_products','delete_link']
 
     def get_subtitle(self, obj):
         return obj.details.get('subtitle', '—')
     get_subtitle.short_description = 'Subtitle'
+    
+    def delete_link(self, obj):
+        url = reverse(
+            f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete",
+            args=[obj.pk]
+        )
+        return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
+
+
+    delete_link.short_description = 'Delete'
+
+    
 
     def short_description(self, obj):
         return (obj.description[:50] + '...') if obj.description and len(obj.description) > 50 else obj.description or '—'
@@ -444,16 +481,16 @@ class WaterCalculatorAdmin(admin.ModelAdmin):
 
 
 
-class BannerImageInline(admin.TabularInline):
-    model = BannerImage
-    extra = 1
+# class BannerImageInline(admin.TabularInline):
+#     model = BannerImage
+#     extra = 1
 
 
 
 class GalleryBannerAdmin(admin.ModelAdmin):
     form = GalleryBannerImageForm
     inlines = [BannerImageInline]
-    list_display = ['banner_preview', 'image_count']
+    list_display = ['banner_preview', 'image_count','delete_link']
     list_display_links = ['banner_preview']
 
     def image_count(self, obj):
@@ -464,6 +501,17 @@ class GalleryBannerAdmin(admin.ModelAdmin):
             f"{count} image{'s' if count != 1 else ''}"
         )
     image_count.short_description = 'Images'
+
+    def delete_link(self, obj):
+        url = reverse(
+            f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete",
+            args=[obj.pk]
+        )
+        return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
+
+
+    delete_link.short_description = 'Delete'
+
 
     def banner_preview(self, obj):
         images = obj.images.all()
@@ -506,7 +554,7 @@ admin.site.register(GalleryBanner,GalleryBannerAdmin)
 @admin.register(HomeInteriorBanner)
 class HomeInteriorBannerAdmin(admin.ModelAdmin):
     form = HomeInteriorBannerForm
-    list_display = ['title', 'type', 'short_description', 'display_image_urls']
+    list_display = ['title', 'type', 'short_description', 'display_image_urls','delete_link']
     readonly_fields = ['display_image_urls']
     actions = []  
 
@@ -515,6 +563,17 @@ class HomeInteriorBannerAdmin(admin.ModelAdmin):
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
+    
+    def delete_link(self, obj):
+        url = reverse(
+            f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete",
+            args=[obj.pk]
+        )
+        return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
+
+
+    delete_link.short_description = 'Delete'
+
 
     def has_add_permission(self, request):
         return HomeInteriorBanner.objects.filter(type="home-interior-banner").count() < 1
@@ -528,7 +587,7 @@ class HomeInteriorBannerAdmin(admin.ModelAdmin):
 @admin.register(PaintCalculatorBanner)
 class PaintCalculatorBannerAdmin(admin.ModelAdmin):
     form = PaintCalculatorBannerForm
-    list_display = ['title', 'type', 'short_description', 'display_image_urls']
+    list_display = ['title', 'type', 'short_description', 'display_image_urls','delete_link']
     readonly_fields = ['display_image_urls']
     actions = []  
 
@@ -537,6 +596,17 @@ class PaintCalculatorBannerAdmin(admin.ModelAdmin):
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
+    
+    def delete_link(self, obj):
+        url = reverse(
+            f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete",
+            args=[obj.pk]
+        )
+        return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
+
+
+    delete_link.short_description = 'Delete'
+
 
     def has_add_permission(self, request):
         return PaintCalculatorBanner.objects.filter(type="paint-calculator-banner").count() < 1
@@ -551,7 +621,7 @@ class PaintCalculatorBannerAdmin(admin.ModelAdmin):
 @admin.register(HomeExteriorBanner)
 class HomeExteriorBannerAdmin(admin.ModelAdmin):
     form = HomeExteriorBannerForm
-    list_display = ['title', 'type', 'short_description', 'display_image_urls']
+    list_display = ['title', 'type', 'short_description', 'display_image_urls','delete_link']
     exclude = ['url']
     readonly_fields = ['display_image_urls']
     actions = []  
@@ -564,6 +634,17 @@ class HomeExteriorBannerAdmin(admin.ModelAdmin):
     
     def has_add_permission(self, request):
         return HomeExteriorBanner.objects.filter(type="home-exterior-banner").count() < 1
+    
+    def delete_link(self, obj):
+        url = reverse(
+            f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete",
+            args=[obj.pk]
+        )
+        return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
+
+
+    delete_link.short_description = 'Delete'
+
 
     def get_queryset(self, request):
         return super().get_queryset(request).filter(type='home-exterior-banner')
@@ -574,7 +655,7 @@ class HomeExteriorBannerAdmin(admin.ModelAdmin):
 @admin.register(HomeWaterproofingBanner)
 class HomeWaterproofingBannerAdmin(admin.ModelAdmin):
     form = HomeWaterproofingBannerForm
-    list_display = ['title', 'type', 'short_description', 'display_image_urls']
+    list_display = ['title', 'type', 'short_description', 'display_image_urls','delete_link']
     exclude = ['url']
     readonly_fields = ['display_image_urls']
     actions = []  
@@ -584,6 +665,17 @@ class HomeWaterproofingBannerAdmin(admin.ModelAdmin):
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
+    
+    def delete_link(self, obj):
+        url = reverse(
+            f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete",
+            args=[obj.pk]
+        )
+        return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
+
+
+    delete_link.short_description = 'Delete'
+
     
     def has_add_permission(self, request):
         return HomeWaterproofingBanner.objects.filter(type="home-waterproofing-banner").count() < 1
@@ -597,7 +689,7 @@ class HomeWaterproofingBannerAdmin(admin.ModelAdmin):
 @admin.register(AboutUsTopBanner)
 class AboutUsTopBannerAdmin(admin.ModelAdmin):
     form = AboutUsTopBannerForm
-    list_display = ['title', 'type', 'short_description', 'display_image_urls']
+    list_display = ['title', 'type', 'short_description', 'display_image_urls','delete_link']
     exclude = ['url']
     readonly_fields = ['display_image_urls']
     actions = []  
@@ -607,6 +699,18 @@ class AboutUsTopBannerAdmin(admin.ModelAdmin):
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
+    
+    def delete_link(self, obj):
+        url = reverse(
+            f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete",
+            args=[obj.pk]
+        )
+        return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
+
+
+    delete_link.short_description = 'Delete'
+
+    
     
     def has_add_permission(self, request):
         return AboutUsTopBanner.objects.filter(type="about-us-top-banner").count() < 1
@@ -620,7 +724,7 @@ class AboutUsTopBannerAdmin(admin.ModelAdmin):
 @admin.register(ColorPalletsBanner)
 class ColorPalletsBannerAdmin(admin.ModelAdmin):
     form = ColorPalletsBannerForm
-    list_display = ['title', 'type', 'short_description', 'display_image_urls']
+    list_display = ['title', 'type', 'short_description', 'display_image_urls','delete_link']
     exclude = ['url']
     readonly_fields = ['display_image_urls']
     actions = []  
@@ -630,6 +734,18 @@ class ColorPalletsBannerAdmin(admin.ModelAdmin):
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
+    
+    def delete_link(self, obj):
+        url = reverse(
+            f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete",
+            args=[obj.pk]
+        )
+        return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
+
+
+    delete_link.short_description = 'Delete'
+
+    
     
     def has_add_permission(self, request):
         return ColorPalletsBanner.objects.filter(type="color-pallets-banner").count() < 1
@@ -643,7 +759,7 @@ class ColorPalletsBannerAdmin(admin.ModelAdmin):
 @admin.register(ProductBanner)
 class ProductBannerAdmin(admin.ModelAdmin):
     form = ProductBannerForm
-    list_display = ['title', 'type', 'short_description', 'display_image_urls']
+    list_display = ['title', 'type', 'short_description', 'display_image_urls','delete_link']
     exclude = ['url']
     readonly_fields = ['display_image_urls']
     actions = []  
@@ -653,6 +769,18 @@ class ProductBannerAdmin(admin.ModelAdmin):
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
+    
+    def delete_link(self, obj):
+        url = reverse(
+            f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete",
+            args=[obj.pk]
+        )
+        return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
+
+
+    delete_link.short_description = 'Delete'
+
+    
     
     def has_add_permission(self, request):
         return ProductBanner.objects.filter(type="product-banner").count() < 1
@@ -666,7 +794,7 @@ class ProductBannerAdmin(admin.ModelAdmin):
 @admin.register(ContactUsBanner)
 class ContactUsBannerAdmin(admin.ModelAdmin):
     form = ContactUsBannerForm
-    list_display = ['title', 'type', 'short_description', 'display_image_urls']
+    list_display = ['title', 'type', 'short_description', 'display_image_urls','delete_link']
     exclude = ['url']
     readonly_fields = ['display_image_urls']
     actions = []  
@@ -676,6 +804,18 @@ class ContactUsBannerAdmin(admin.ModelAdmin):
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
+    
+    def delete_link(self, obj):
+        url = reverse(
+            f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete",
+            args=[obj.pk]
+        )
+        return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
+
+
+    delete_link.short_description = 'Delete'
+
+    
     
     def has_add_permission(self, request):
         return ContactUsBanner.objects.filter(type="contact-us-banner").count() < 1
@@ -688,7 +828,7 @@ class ContactUsBannerAdmin(admin.ModelAdmin):
 @admin.register(AboutUsBottomVideoBanner)
 class AboutUsBottomVideoBannerAdmin(admin.ModelAdmin):
     form = AboutUsBottomVideoBannerForm
-    list_display = ['type', 'display_video_urls']
+    list_display = ['type', 'display_video_urls','delete_link']
     exclude = ['url']
     readonly_fields = ['display_video_urls']
     actions = []  
@@ -698,6 +838,19 @@ class AboutUsBottomVideoBannerAdmin(admin.ModelAdmin):
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
+    
+    def delete_link(self, obj):
+        url = reverse(
+            f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete",
+            args=[obj.pk]
+        )
+        return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
+
+
+    delete_link.short_description = 'Delete'
+
+
+    
     
     def has_add_permission(self, request):
         return AboutUsBottomVideoBanner.objects.filter(type='about-us-bottom-video-banner').count() < 1
@@ -724,6 +877,7 @@ class PaintBudgetCalculatorAdmin(admin.ModelAdmin):
         'get_user_type',
         'get_user_description',
         'get_user_source',
+        'delete_link',
     ]
     readonly_fields = [f.name for f in PaintBudgetCalculator._meta.fields]
     # actions = None
@@ -734,6 +888,17 @@ class PaintBudgetCalculatorAdmin(admin.ModelAdmin):
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
+    
+    def delete_link(self, obj):
+        url = reverse(
+            f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete",
+            args=[obj.pk]
+        )
+        return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
+
+
+    delete_link.short_description = 'Delete'
+    
 
     def has_add_permission(self, request):
         return False
@@ -779,7 +944,7 @@ class PaintBudgetCalculatorAdmin(admin.ModelAdmin):
 class ParallaxAdmin(admin.ModelAdmin):
     form = ParallaxForm
     exclude = ('url',)
-    list_display = ['title', 'sub_title', 'description', 'priority', 'get_desktop_preview', 'get_mobile_preview']
+    list_display = ['title', 'sub_title', 'description', 'priority', 'get_desktop_preview', 'get_mobile_preview','delete_link']
     search_fields = ['title', 'sub_title']
     list_filter = ['priority']
     readonly_fields = ['get_desktop_preview', 'get_mobile_preview']
@@ -790,6 +955,17 @@ class ParallaxAdmin(admin.ModelAdmin):
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
+    
+    def delete_link(self, obj):
+        url = reverse(
+            f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete",
+            args=[obj.pk]
+        )
+        return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
+
+
+    delete_link.short_description = 'Delete'
+    
 
     def get_desktop_preview(self, obj):
         if obj.url and 'desktop' in obj.url:
@@ -812,7 +988,7 @@ class ParallaxAdmin(admin.ModelAdmin):
 class BrochureAdmin(admin.ModelAdmin):
     form = BrochureForm
     readonly_fields = ['preview_image', 'preview_pdf']
-    list_display = ['uploaded_pdf', 'preview_image']
+    list_display = ['uploaded_pdf', 'preview_image','delete_link']
     actions = []
 
     def get_actions(self, request):
@@ -820,6 +996,17 @@ class BrochureAdmin(admin.ModelAdmin):
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
+    
+    def delete_link(self, obj):
+        url = reverse(
+            f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete",
+            args=[obj.pk]
+        )
+        return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
+
+
+    delete_link.short_description = 'Delete'
+    
 
     def preview_image(self, obj):
         image_url = obj.url.get('image') if obj.url else None
@@ -879,13 +1066,16 @@ class AdminContactDetailsAdmin(admin.ModelAdmin):
     
     def has_add_permission(self, request):
         return AdminContactDetails.objects.count() < 1
+    
+    
 
     list_display = [
         'location',
         'phone_number',
         'email',
         'google_link',
-        'display_social_media_links'
+        'display_social_media_links',
+        'delete_link',
     ]
 
     search_fields = [
@@ -894,6 +1084,16 @@ class AdminContactDetailsAdmin(admin.ModelAdmin):
         'email',
         'google_link',
     ]
+    def delete_link(self, obj):
+        url = reverse(
+            f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete",
+            args=[obj.pk]
+        )
+        return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
+
+
+    delete_link.short_description = 'Delete'
+    
 
     def display_social_media_links(self, obj):
         links = obj.social_media_links or {}
@@ -917,6 +1117,17 @@ class SettingAdmin(admin.ModelAdmin):
     
     def has_add_permission(self, request):
         return Setting.objects.count() < 1
+    
+    def delete_link(self, obj):
+        url = reverse(
+            f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete",
+            args=[obj.pk]
+        )
+        return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
+
+
+    delete_link.short_description = 'Delete'
+    
 
     list_display = [
         'name',
@@ -925,6 +1136,7 @@ class SettingAdmin(admin.ModelAdmin):
         'get_logo_preview',  # Preview for logo
         'get_side_image_preview',  # Preview for side image
         'hide',
+        'delete_link',
     ]
 
     search_fields = [
@@ -958,7 +1170,7 @@ class SettingAdmin(admin.ModelAdmin):
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     form = CategoryForm
-    list_display = ['name' ,'subcategory_name']
+    list_display = ['name' ,'subcategory_name','delete_link']
     search_fields = ['name','subcategory_name' ]
     form = CategoryForm  # your custom form that handles comma-separated subcategories
     list_display = ['name', 'display_subcategories']
@@ -970,6 +1182,17 @@ class CategoryAdmin(admin.ModelAdmin):
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
+    
+    def delete_link(self, obj):
+        url = reverse(
+            f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete",
+            args=[obj.pk]
+        )
+        return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
+
+
+    delete_link.short_description = 'Delete'
+    
     
     def has_add_permission(self, request):
         return Category.objects.count() < 1
@@ -998,6 +1221,7 @@ class ProductAdmin(admin.ModelAdmin):
         'get_detail_sqft',
         'get_detail_warranty',
         'get_image_preview',
+        'delete_link'
     ]
 
     search_fields = ['title', 'keyfeature']
@@ -1016,6 +1240,17 @@ class ProductAdmin(admin.ModelAdmin):
     def get_detail_finish(self, obj):
         return obj.details.get("finish", "") if obj.details else ""
     get_detail_finish.short_description = "Finish"
+
+    def delete_link(self, obj):
+        url = reverse(
+            f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete",
+            args=[obj.pk]
+        )
+        return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
+
+
+    delete_link.short_description = 'Delete'
+    
 
     def get_detail_sqft(self, obj):
         return obj.details.get("Sqft_lt", "") if obj.details else ""
@@ -1043,8 +1278,8 @@ class ProductAdmin(admin.ModelAdmin):
             del actions['delete_selected']
         return actions
 
-    def has_add_permission(self, request):
-        return Product.objects.count() < 1
+    # def has_add_permission(self, request):
+    #     return Product.objects.count() < 1
 
     class Media:
         js = ('js/product_subcategory.js',)
@@ -1064,6 +1299,7 @@ class WaterProofCalculatorAdmin(admin.ModelAdmin):
         'get_user_type',
         'get_user_description',
         'get_user_source',
+        'delete_link'
     ]
     readonly_fields = [f.name for f in WaterProofCalculator._meta.fields]
     # actions = None
@@ -1074,6 +1310,17 @@ class WaterProofCalculatorAdmin(admin.ModelAdmin):
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
+    
+    def delete_link(self, obj):
+        url = reverse(
+            f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete",
+            args=[obj.pk]
+        )
+        return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
+
+
+    delete_link.short_description = 'Delete'
+    
 
     def has_add_permission(self, request):
         return False
@@ -1154,15 +1401,24 @@ class HomeInteriorCategoryInline(NestedStackedInline):
     inlines = [HomeInteriorSubCategoryInline]
     extra = 1
 
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+
 class HomeInteriorFeatureInline(NestedStackedInline):
     model = HomeInteriorFeature
     extra = 1
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
 
 
 @admin.register(HomeInterior)
 class HomeInteriorAdmin(NestedModelAdmin):
     inlines = [HomeInteriorCategoryInline, HomeInteriorFeatureInline]
-    list_display = ['title', 'description', 'display_data_preview']
+    list_display = ['title', 'description', 'display_data_preview','delete_link']
     readonly_fields = ['display_data_preview']
     actions = []  
 
@@ -1174,6 +1430,17 @@ class HomeInteriorAdmin(NestedModelAdmin):
     
     def has_add_permission(self, request):
         return HomeInterior.objects.filter(type="Interior").count() < 1
+    
+    def delete_link(self, obj):
+        url = reverse(
+            f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete",
+            args=[obj.pk]
+        )
+        return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
+
+
+    delete_link.short_description = 'Delete'
+    
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -1383,7 +1650,7 @@ class HomeInteriorAdmin(NestedModelAdmin):
 
 
 
-class ExteriorCategoryImageInline(NestedTabularInline):
+class ExteriorCategoryImageInline(NestedStackedInline):
     model = ExteriorCategoryImage
     extra = 1
 
@@ -1409,7 +1676,7 @@ class ExteriorHomeCategoryInline(NestedStackedInline):
 @admin.register(HomeExterior)
 class HomeExteriorAdmin(NestedModelAdmin):
     inlines = [ExteriorHomeCategoryInline]
-    list_display = ['title', 'description', 'display_data_preview']
+    list_display = ['title', 'description', 'display_data_preview','delete_link']
     readonly_fields = ['display_data_preview']
     actions = []  
 
@@ -1419,12 +1686,24 @@ class HomeExteriorAdmin(NestedModelAdmin):
             del actions['delete_selected']
         return actions
     
+    
     def has_add_permission(self, request):
         return HomeExterior.objects.filter(type="Exterior").count() < 1
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.filter(type="Exterior")
+    
+    def delete_link(self, obj):
+        url = reverse(
+            f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete",
+            args=[obj.pk]
+        )
+        return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
+
+
+    delete_link.short_description = 'Delete'
+    
 
 
     def get_fields(self, request, obj=None):
@@ -1490,7 +1769,7 @@ class HomeExteriorAdmin(NestedModelAdmin):
 @admin.register(HomeWaterProof)
 class HomeWaterProofAdmin(admin.ModelAdmin):
     form = HomeWaterProofForm
-    list_display = ['title', 'category_name_display', 'sideimage_preview', 'description']
+    list_display = ['title', 'category_name_display', 'sideimage_preview', 'description','delete_link']
     actions = []  
 
     def get_actions(self, request):
@@ -1501,6 +1780,17 @@ class HomeWaterProofAdmin(admin.ModelAdmin):
     
     def has_add_permission(self, request):
         return HomeWaterProof.objects.filter(type="WaterProf").count() < 1
+    
+    def delete_link(self, obj):
+        url = reverse(
+            f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete",
+            args=[obj.pk]
+        )
+        return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
+
+
+    delete_link.short_description = 'Delete'
+    
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -1529,27 +1819,6 @@ class PaintProductInline(admin.TabularInline):
     model = PaintProduct
     extra = 1
 
-class PaintCalculatorAdminForm(forms.ModelForm):
-    subtitle = forms.CharField(required=False, label="Subtitle")
-
-    class Meta:
-        model = PaintCalculator
-        fields = ['title', 'description']
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if self.instance and self.instance.details:
-            self.fields['subtitle'].initial = self.instance.details.get('subtitle', '')
-
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-        subtitle = self.cleaned_data.get("subtitle", "")
-        details = instance.details or {}
-        details['subtitle'] = subtitle
-        instance.details = details
-        if commit:
-            instance.save()
-        return instance
 
 
 
@@ -1573,11 +1842,22 @@ class PaintCalculatorAdmin(admin.ModelAdmin):
         qs = super().get_queryset(request)
         return qs.filter(type="PAINT_CALCULATOR")
 
-    list_display = ['title', 'get_subtitle', 'short_description', 'display_products']
+    list_display = ['title', 'get_subtitle', 'short_description', 'display_products','delete_link']
 
     def get_subtitle(self, obj):
         return obj.details.get('subtitle', '—')
     get_subtitle.short_description = 'Subtitle'
+
+    def delete_link(self, obj):
+        url = reverse(
+            f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete",
+            args=[obj.pk]
+        )
+        return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
+
+
+    delete_link.short_description = 'Delete'
+    
 
     def short_description(self, obj):
         return (obj.description[:50] + '...') if obj.description and len(obj.description) > 50 else obj.description or '—'
@@ -1652,15 +1932,18 @@ class PaintCalculatorAdmin(admin.ModelAdmin):
 #         ])
 #         return mark_safe(images_html)
 #     image_preview.short_description = 'Image Previews'
-class ColourPaletteImageInline(admin.TabularInline):
+class ColourPaletteImageInline(admin.StackedInline):
     model = ColourPaletteImage
+    form = ColourPaletteImageInlineForm
     extra = 1
     max_num = 10
+
+
 
 @admin.register(ColourPaletteWithImages)
 class ColourPaletteWithImagesAdmin(admin.ModelAdmin):
     inlines = [ColourPaletteImageInline]
-    list_display = ['title', 'description_preview', 'image_preview']
+    list_display = ['title', 'description_preview', 'image_preview','delete_link']
     actions = []  
 
     def get_actions(self, request):
@@ -1671,6 +1954,17 @@ class ColourPaletteWithImagesAdmin(admin.ModelAdmin):
     
     def has_add_permission(self, request):
         return ColourPaletteWithImages.objects.filter(type="color-palette-with-images").count() < 1
+    
+    def delete_link(self, obj):
+        url = reverse(
+            f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete",
+            args=[obj.pk]
+        )
+        return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
+
+
+    delete_link.short_description = 'Delete'
+    
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -1711,31 +2005,22 @@ class ColourCodeInline(admin.TabularInline):
     model = ColourCode
     extra = 1
 
-class MultiColorPaletteForm(forms.ModelForm):
-    side_Title = forms.CharField(required=False, label="Side Title")
-
-    class Meta:
-        model = MultiColorPalette
-        fields = ['side_Title', 'side_description']
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if self.instance and self.instance.side_Title:
-            self.fields['side_Title'].initial = self.instance.side_Title
-
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-        instance.side_Title = self.cleaned_data.get("side_Title", "")
-        if commit:
-            instance.save()
-        return instance
 
 @admin.register(MultiColorPalette)
 class MultiColorPaletteAdmin(admin.ModelAdmin):
     form = MultiColorPaletteForm
     inlines = [ColourCodeInline]
-    list_display = ['side_Title', 'short_description', 'display_colour_codes']
-    actions = []  
+
+    list_display = [
+        'side_Title',
+        'short_description',
+        'colourcode',
+        'category',
+        'colorshade',
+        'delete_link'
+    ]
+
+    actions = []
 
     def get_actions(self, request):
         actions = super().get_actions(request)
@@ -1743,6 +2028,17 @@ class MultiColorPaletteAdmin(admin.ModelAdmin):
             del actions['delete_selected']
         return actions
     
+    def delete_link(self, obj):
+        url = reverse(
+            f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete",
+            args=[obj.pk]
+        )
+        return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
+
+
+    delete_link.short_description = 'Delete'
+
+
     def has_add_permission(self, request):
         return MultiColorPalette.objects.filter(type="multi-color-palette").count() < 1
 
@@ -1754,17 +2050,21 @@ class MultiColorPaletteAdmin(admin.ModelAdmin):
         return (obj.side_description[:50] + '...') if obj.side_description and len(obj.side_description) > 50 else obj.side_description or '—'
     short_description.short_description = 'Side Description'
 
-    def display_colour_codes(self, obj):
-        codes = obj.colour_codes.all()
-        if not codes:
-            return '—'
+    # Show first colour code values
+    def colourcode(self, obj):
+        first = obj.colour_codes.first()
+        return first.code if first else '—'
+    colourcode.short_description = 'Colour Code'
 
-        code_data = [
-            {"code": c.code, "category": c.category, "colorshade": c.colorshade}
-            for c in codes
-        ]
-        return mark_safe(f'<pre>{json.dumps(code_data, indent=4)}</pre>')
-    display_colour_codes.short_description = 'Colour Codes'
+    def category(self, obj):
+        first = obj.colour_codes.first()
+        return first.category if first else '—'
+    category.short_description = 'Category'
+
+    def colorshade(self, obj):
+        first = obj.colour_codes.first()
+        return first.colorshade if first else '—'
+    colorshade.short_description = 'Color Shade'
 
     def save_model(self, request, obj, form, change):
         obj.type = 'multi-color-palette'

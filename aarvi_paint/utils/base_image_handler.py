@@ -4,7 +4,7 @@ from django.utils.safestring import mark_safe
 
 
 class BaseImageForm(forms.ModelForm):
-    image_field = forms.ImageField(required=False, label='Upload Image')
+    image_field = forms.ImageField(required=False, label='Upload Image',help_text='Upload an image (must be less than 10 MB)')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

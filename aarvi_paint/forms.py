@@ -8,7 +8,7 @@ from .models import Banner, Parallax, ColourPalette, Brochure, AdditionalInfo, A
 from django.forms import Select, SelectMultiple
 
 from .models import Banner, Parallax, ColourPalette, Brochure, AdditionalInfo, AdminContactDetails, Category, Product, \
-    Home, AboutUs, Setting, HomeExterior, HomeWaterProof,GalleryBanner,PaintCalculator
+    Home, AboutUs, Setting, HomeExterior, HomeWaterProof,GalleryBanner,PaintCalculator,ColourPaletteImage,MultiColorPalette
 
 from django.core.files.storage import default_storage
 from django.utils.safestring import mark_safe
@@ -24,25 +24,6 @@ from urllib.parse import urlparse
 # ===================================================Home enterior=========================================================
 
 
-class HomeAdminForm(forms.ModelForm):
-    class Meta:
-        model = Home
-        fields = '__all__'
-
-    def clean_type(self):
-        type_value = self.cleaned_data['type']
-        valid_types = dict(Home_Type_CHOICES).keys()
-        if type_value not in valid_types:
-            raise forms.ValidationError("Invalid home type selected.")
-        return type_value
-
-    def clean(self):
-        cleaned_data = super().clean()
-        title_type = cleaned_data.get('title_type')
-        type_description = cleaned_data.get('type_description')
-
-        if title_type and not type_description:
-            raise forms.ValidationError("Type description is required when title_type is set.")
 
 
 class ColourPaletteForm(BaseImageForm):
@@ -53,8 +34,8 @@ class ColourPaletteForm(BaseImageForm):
         fields = ['title', 'description']
 
 class ParallaxForm(forms.ModelForm):
-    desktop = forms.ImageField(required=False, label="Desktop Image")
-    mobile = forms.ImageField(required=False, label="Mobile Image")
+    desktop = forms.ImageField(required=False, label="Desktop Image",help_text='Upload an image (must be less than 10 MB)')
+    mobile = forms.ImageField(required=False, label="Mobile Image",help_text='Upload an image (must be less than 10 MB)')
     description = forms.CharField(widget=CKEditorWidget())
 
     class Meta:
@@ -101,7 +82,7 @@ class ParallaxForm(forms.ModelForm):
 
 
 class BrochureForm(forms.ModelForm):
-    image_field = forms.ImageField(required=False, label="Upload Image")
+    image_field = forms.ImageField(required=False, label="Upload Image",help_text='Upload an image (must be less than 10 MB)')
     pdf_field = forms.FileField(required=False, label="Upload PDF")
 
     class Meta:
@@ -347,7 +328,8 @@ class ProductForm(BaseImageForm):
     subcategory = forms.MultipleChoiceField(
         required=False,
         choices=[('', 'Select category first')],
-        widget=forms.SelectMultiple
+        widget=forms.SelectMultiple,
+        
     )
     short_description = forms.CharField(widget=CKEditorWidget())
     long_description = forms.CharField(widget=CKEditorWidget())
@@ -492,7 +474,10 @@ class HomeForm(forms.ModelForm):
 
 
 class BaseBannerForm(forms.ModelForm):
-    banner_image = forms.ImageField(required=False)
+    banner_image = forms.ImageField(
+        required=False,
+        help_text='Images should be less than 10 MB.'
+    )
     # delete_image = forms.BooleanField(required=False, label='Delete banner Image')
 
     class Meta:
@@ -619,7 +604,8 @@ class BaseBannerMultipleImageForm(forms.ModelForm):
 class BannerImageInlineForm(forms.ModelForm):
     class Meta:
         model = BannerImage
-        fields = ['image']  # Only allow uploading images
+        fields = ['image']
+          # Only allow uploading images
 
 # Inline model for BannerImage
 class BannerImageInline(admin.TabularInline):
@@ -642,9 +628,13 @@ class GalleryBannerForm(BaseBannerForm):
 
 
 class HomeBannerImageForm(forms.ModelForm):
+
     class Meta:
         model = HomeBanner
         fields = []  
+        help_texts = {
+            'image': 'Upload an image (must be less than 10 MB).'
+        }
 
 class GalleryBannerImageForm(forms.ModelForm):
     class Meta:
@@ -723,7 +713,7 @@ class AboutUsAdminForm(forms.ModelForm):
 
 
 class InspirationForm(forms.ModelForm):
-    image = forms.ImageField(required=False)
+    image = forms.ImageField(required=False,help_text='Upload an image (must be less than 10 MB)')
 
     class Meta:
         model = Inspiration
@@ -748,7 +738,7 @@ class TestimonialAdminForm(forms.ModelForm):
     name = forms.CharField(max_length=200, required=True, label="Name")
     description = forms.CharField(widget=forms.Textarea, required=True, label="Description")
     image = forms.ImageField(required=False, label="Upload Image")
-    delete_image = forms.BooleanField(required=False, label="Delete Existing Image")
+    
 
     class Meta:
         model = Testimonial
@@ -767,8 +757,8 @@ class TestimonialAdminForm(forms.ModelForm):
         instance.description = self.cleaned_data['description']
 
         # Handle image deletion
-        if self.cleaned_data.get('delete_image'):
-            instance.url = {}
+        # if self.cleaned_data.get('delete_image'):
+        #     instance.url = {}
 
         # Handle image upload
         image_file = self.cleaned_data.get('image')
@@ -972,5 +962,74 @@ class HomeWaterProofForm(forms.ModelForm):
             instance.save()
         return instance
 
+class ColourPaletteImageInlineForm(forms.ModelForm):
+    class Meta:
+        model = ColourPaletteImage
+        fields = '__all__'
+        
+        help_texts = {
+            'image': 'Upload an image (must be less than 10 MB).'
+        }
 
+class WaterCalculatorAdminForm(forms.ModelForm):
+    subtitle = forms.CharField(required=False, label="Subtitle")
 
+    class Meta:
+        model = WaterCalculator
+        fields = ['title', 'description']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.details:
+            self.fields['subtitle'].initial = self.instance.details.get('subtitle', '')
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        subtitle = self.cleaned_data.get("subtitle", "")
+        details = instance.details or {}
+        details['subtitle'] = subtitle
+        instance.details = details
+        if commit:
+            instance.save()
+        return instance
+
+class PaintCalculatorAdminForm(forms.ModelForm):
+    subtitle = forms.CharField(required=False, label="Subtitle")
+
+    class Meta:
+        model = PaintCalculator
+        fields = ['title', 'description']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.details:
+            self.fields['subtitle'].initial = self.instance.details.get('subtitle', '')
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        subtitle = self.cleaned_data.get("subtitle", "")
+        details = instance.details or {}
+        details['subtitle'] = subtitle
+        instance.details = details
+        if commit:
+            instance.save()
+        return instance
+
+class MultiColorPaletteForm(forms.ModelForm):
+    side_Title = forms.CharField(required=False, label="Side Title")
+
+    class Meta:
+        model = MultiColorPalette
+        fields = ['side_Title', 'side_description']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.side_Title:
+            self.fields['side_Title'].initial = self.instance.side_Title
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.side_Title = self.cleaned_data.get("side_Title", "")
+        if commit:
+            instance.save()
+        return instance

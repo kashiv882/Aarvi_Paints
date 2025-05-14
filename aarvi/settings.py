@@ -204,6 +204,7 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+
 JAZZMIN_SETTINGS = {
     "site_title": "Aarvi Paints Admin",
     "site_header": "Aarvi Paints",
@@ -213,23 +214,38 @@ JAZZMIN_SETTINGS = {
     "copyright": "Aarvi Paints",
     "custom_css": "css/admin_logo.css",
 
-
     # Optional: top menu and sidebar tweaks
     "show_sidebar": True,
     "navigation_expanded": True,
     "hide_apps": [],
     "hide_models": [],
-
     "order_with_respect_to": [],
 
+    # Group models under the 'Banners' section
+    "group_models": {
+        "Banners": [
+            "aarvi_paint.GalleryBanner",
+            "aarvi_paint.HomeInteriorBanner",
+            "aarvi_paint.HomeExteriorBanner",
+            "aarvi_paint.HomeWaterproofingBanner",
+            "aarvi_paint.AboutUsTopBanner",
+            "aarvi_paint.ColorPalletsBanner",
+            "aarvi_paint.ProductBanner",
+            "aarvi_paint.ContactUsBanner",
+            "aarvi_paint.AboutUsBottomVideoBanner",
+        ],
+    },
 
-
+    # Optional: Icons for your models
     "icons": {
         "auth.User": "fas fa-user",
         "auth.Group": "fas fa-users",
-
     },
 }
+
+
+
+
 JAZZMIN_UI_TWEAKS = {
     "theme": "minty",
     "accent": "accent-teal",
@@ -253,7 +269,6 @@ JAZZMIN_UI_TWEAKS = {
     "table_stripe_color": "#ffebcc",
     "table_stripe_hover_color": "#ffdd99",
 }
-
 
 
 # settings.py
