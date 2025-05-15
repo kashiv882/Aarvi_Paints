@@ -1,117 +1,206 @@
-/* ✅ Base: Apply clean font and sizing */
+/* Base: Apply clean font and sizing */
+:root {
+  background-color: #fff !important;
+  color: #fff !important;
+}
+body {
+  background-color: #fff !important;
+  color: #000 !important;
+}
+.card-body,
+.card,
+.nav-item a {
+  background-color: #fff !important;
+  color: #000 !important;
+}
 .nested-inline {
-    font-family: "Inter", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-size: 14px;
-    color: #212529;
-    line-height: 1.5;
+  font-family: "Inter", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 13px; /* Reduced from 14px for compact UI */
+  color: #212529;
+  line-height: 1.5;
+  padding: 5px;
 }
 
-/* ✅ Section headers like “Exterior home category: #1” */
+/* Section headers like “Exterior home category: #1” */
 .nested-inline h3,
 .nested-inline h3.inline_label {
-    font-size: 16px;
-    font-weight: 600;
-    margin: 10px 0;
-    color: #343a40;
+  font-size: 13px; /* Reduced the font size of this specific header */
+  font-weight: 600;
+  margin: 6px 0; /* Reduced margin for compactness */
+  color: #343a40;
+  text-transform: capitalize; /* Optional: To maintain consistent header style */
 }
 
-/* ✅ Fieldset headers like “Exterior category images” */
+/* Additional section headers like “Exterior home category” */
 .nested-inline h2 {
-    font-size: 15px;
-    font-weight: 500;
-    background-color: #f1f3f5;
-    padding: 8px 12px;
-    margin: 15px 0 10px 0;
-    border-left: 4px solid #3f51b5;
-    color: #2c2c2c;
-    border-radius: 4px;
+  font-size: 13px; /* Reduced font size for better alignment */
+  font-weight: 500;
+  background-color: #f1f3f5;
+  padding: 6px 10px;
+  margin: 10px 0 8px 0;
+  border-left: 4px solid #3f51b5;
+  color: #2c2c2c;
+  border-radius: 4px;
+  text-transform: uppercase;
 }
 
-/* ✅ Label normalization */
+/* Label normalization */
 .nested-inline label {
-    font-size: 14px;
-    font-weight: 500;
-    color: #212529;
-    display: block;
-    margin-bottom: 6px;
+  font-size: 12px; /* Slightly smaller label size for consistency */
+  font-weight: 500;
+  color: #212529;
+  display: block;
+  margin-bottom: 6px;
 }
 
-/* ✅ Input fields */
+/* Input fields */
 .nested-inline input[type="text"],
 .nested-inline input[type="url"],
 .nested-inline input[type="file"],
 .nested-inline textarea,
 .nested-inline select {
-    font-size: 14px;
-    padding: 8px 10px;
-    border-radius: 4px;
-    border: 1px solid #ced4da;
-    width: 100%;
-    box-sizing: border-box;
-    background-color: #fff;
-    transition: border-color 0.2s ease-in-out;
+  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid #ced4da;
+  width: 100%;
+  box-sizing: border-box;
+  background-color: #fff;
+  transition: border-color 0.2s ease-in-out;
 }
 
+/* Focus state for inputs */
 .nested-inline input:focus,
 .nested-inline textarea:focus,
 .nested-inline select:focus {
-    border-color: #3f51b5;
-    outline: none;
+  border-color: #3f51b5;
+  outline: none;
 }
 
-/* ✅ Form row spacing */
+/* Form row spacing */
 .nested-inline .form-row,
 .nested-inline .form-group {
-    margin-bottom: 18px;
+  margin-bottom: 14px;
 }
 
-/* ✅ "Remove" button */
+/* "Remove" button */
 .nested-inline .inline-deletelink {
-    font-size: 13px;
-    padding: 5px 12px;
-    background-color: #d32f2f;
-    color: #fff !important;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    display: inline-block;
-    margin-left: 10px;
-    transition: background-color 0.2s ease-in-out;
-}
-.nested-inline .inline-deletelink:hover {
-    background-color: #b71c1c;
+  font-size: 11px;
+  padding: 4px 10px;
+  background-color: #d32f2f;
+  color: #fff !important;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-block;
+  margin-left: 6px;
+  transition: background-color 0.2s ease-in-out;
 }
 
-/* ✅ "Add another" button/link */
+.nested-inline .inline-deletelink:hover {
+  background-color: #b71c1c;
+}
+
+/* "Add another" button/link */
 .add-row a,
 .nested-inline .add-row a {
-    font-size: 13px;
-    padding: 6px 14px;
-    background-color: #3f51b5;
-    color: white !important;
-    text-decoration: none;
-    border-radius: 4px;
-    display: inline-block;
-    margin-top: 12px;
-    transition: background-color 0.2s ease-in-out;
+  font-size: 12px;
+  padding: 6px 12px;
+  background-color: #3f51b5;
+  color: white !important;
+  text-decoration: none;
+  border-radius: 4px;
+  display: inline-block;
+  margin-top: 8px;
+  transition: background-color 0.2s ease-in-out;
 }
+
 .nested-inline .add-row a:hover {
-    background-color: #303f9f;
+  background-color: #303f9f;
 }
 
-/* ✅ File input spacing fix */
+/* File input spacing fix */
 .nested-inline input[type="file"] {
-    padding: 6px;
+  padding: 5px;
 }
 
-/* ✅ Checkbox alignment fix */
+/* Checkbox alignment fix */
 .nested-inline input[type="checkbox"] {
-    margin-top: 6px;
+  margin-top: 6px;
 }
 
-/* ✅ Compact inline delete checkbox label */
+/* Compact inline delete checkbox label */
 .nested-inline .inline-deletelink + label {
-    font-weight: 400;
-    font-size: 13px;
-    margin-left: 5px;
+  font-weight: 400;
+  font-size: 12px;
+  margin-left: 5px;
+}
+
+#exterior_categories-heading {
+  font-size: 24px !important;
+}
+h3.djn-drag-handler {
+  font-size: 18px !important;
+}
+
+h2#exterior_categories-0-exterior_images-heading {
+  font-size: 24px;
+}
+
+div#exterior_categories-0-exterior_images-group {
+  margin: 0 !important;
+}
+div.inline-related {
+  padding: 0;
+}
+a.add-handler.djn-add-handler.djn-model-aarvi_paint-exteriorhomecategory.djn-level-1.btn.btn-sm.btn-default.float-right {
+  position: absolute;
+  top: 85px;
+  right: 10px;
+}
+.nav-tabs .nav-item.show .nav-link,
+.nav-tabs .nav-link.active {
+  color: #ffffff !important;
+  background-color: #000000 !important;
+  border-color: rgba(0, 0, 0, 0.6);
+}
+.nav-tabs .nav-link:not([disabled]):not(.disabled).active,
+.nav-tabs .nav-link:not([disabled]):not(.disabled):active,
+.nav-tabs .nav-link:not([disabled]):not(.disabled):focus,
+.nav-tabs .nav-link:not([disabled]):not(.disabled):hover {
+  background-image: linear-gradient(#7a58b6, #7a58b6 40%, #7a58b6);
+  color: #fff !important;
+  background-repeat: no-repeat;
+  -webkit-filter: none;
+  filter: none;
+}
+.nav-tabs .nav-link,
+.nav-tabs .nav-link:hover {
+  color: #000000 !important;
+}
+.nav-pills .nav-link.active,
+.nav-pills .nav-link:hover {
+  background-color: transparent;
+  background-image: linear-gradient(#7a58b6, #7a58b6 40%, #7a58b6) !important;
+  color: #fff !important;
+  background-repeat: no-repeat;
+  -webkit-filter: none;
+  filter: none;
+  border: 1px solid rgba(0, 0, 0, 0.6);
+}
+
+.nav-tabs .nav-link {
+  background-image: linear-gradient(#ffffff, #d3d3d3 60%, #ffffff);
+  background-repeat: no-repeat;
+  -webkit-filter: none;
+  filter: none;
+  border: 1px solid rgba(0, 0, 0, 0.6);
+}
+
+span.brand-text.font-weight-light {
+  display: NONE !important;
+}
+
+a.nav-link {
+    background: #FFF !important;
 }

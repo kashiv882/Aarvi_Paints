@@ -145,7 +145,8 @@ WSGI_APPLICATION = 'aarvi.wsgi.application'
 #         'HOST': os.getenv('DB_HOST'),  # Get the host from the environment variable
 #         'PORT': os.getenv('DB_PORT'),  # Get the port from the environment variable
 #     }
-# }    
+# }
+
 import dj_database_url
 import os
 
@@ -215,7 +216,7 @@ JAZZMIN_SETTINGS = {
     "site_brand": "Aarvi Paints",
     "welcome_sign": "Welcome to Aarvi Paints Admin Panel",
     "copyright": "Aarvi Paints",
-    "custom_css": "css/admin_logo.css",
+    "custom_css": "css/admin_custom.css",
 
     # Optional: top menu and sidebar tweaks
     "show_sidebar": True,

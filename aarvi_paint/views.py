@@ -18,6 +18,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.decorators import api_view
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
+from .choices import Home_Type_CHOICES
 
 
 
@@ -258,15 +259,19 @@ class UserInfoViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+VALID_HOME_TYPES = [choice[0] for choice in Home_Type_CHOICES]
+
 class HomeViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['type']
 
     def get_queryset(self):
         home_type = self.request.query_params.get('type', '').strip()
-        print(home_type)
+
+        if home_type and home_type not in VALID_HOME_TYPES:
+            raise ValidationError({"error": "Invalid type provided."})
+
         queryset = Home.objects.filter(type=home_type) if home_type else Home.objects.all()
-        print(queryset)
 
         if not queryset.exists():
             raise NotFound({"error": "No homes found for the provided type."})
@@ -274,7 +279,7 @@ class HomeViewSet(viewsets.ModelViewSet):
         return queryset
 
     def get_serializer_class(self):
-        home_type = self.request.query_params.get('type', '').strip().lower()
+        home_type = self.request.query_params.get('type', '').strip()
 
         if home_type == 'WaterProf':
             return HomeWaterProfSerializer
@@ -282,8 +287,12 @@ class HomeViewSet(viewsets.ModelViewSet):
             return HomeExteriorSerializer
         elif home_type == 'Interior':
             return HomeInteriorSerializer
+        elif home_type == '':
+
+            raise ValidationError({"error": "Query parameter 'type' is required."})
         else:
-            raise ValidationError({"error": "These Type is Invalide"})
+            raise ValidationError({"error": "Invalid type provided."})
+        
 
 class WaterProofCalculatorViewSet(viewsets.ModelViewSet):
     queryset = WaterProofCalculator.objects.all()

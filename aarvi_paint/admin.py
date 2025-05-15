@@ -35,6 +35,11 @@ class CustomAdminSite(AdminSite):
     index_title = None
 
 
+
+
+    
+
+
 admin_site = CustomAdminSite(name='customadmin')
 
 # =========================================================================================================================================================================
@@ -97,6 +102,14 @@ class AboutUsAdmin(admin.ModelAdmin):
       return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
 
     delete_link.short_description = 'Delete'
+
+
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+
+
 
     list_display = [
         'title',
@@ -221,6 +234,12 @@ class BannerImageInline(admin.StackedInline):
     readonly_fields = ['image_preview']
     fields = ['image', 'image_preview']  # Only image upload here
 
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+
+
     def image_preview(self, obj):
         if obj.image:
             return format_html(
@@ -246,6 +265,12 @@ class HomeBannerAdmin(admin.ModelAdmin):
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
+    
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+
     
     def delete_link(self, obj):
         url = reverse(
@@ -317,6 +342,12 @@ class InspirationAdmin(admin.ModelAdmin):
     exclude = ('type', 'url', 'details')  # hide raw JSON
     actions = []  
 
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+
+
     def get_actions(self, request):
         actions = super().get_actions(request)
         if 'delete_selected' in actions:
@@ -356,6 +387,12 @@ class TestimonialAdmin(admin.ModelAdmin):
     list_display = ('name', 'description','image_preview','delete_link')
     readonly_fields = ['image_display']
     actions = []  
+
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+
 
     def get_actions(self, request):
         actions = super().get_actions(request)
@@ -415,6 +452,10 @@ class WaterProductInline(admin.TabularInline):
     model = WaterProduct
     extra = 1
 
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
 
 
 
@@ -429,6 +470,12 @@ class WaterCalculatorAdmin(admin.ModelAdmin):
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
+    
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+
     
     def has_add_permission(self, request):
         return WaterCalculator.objects.filter(type="WATER_CALCULATOR").count() < 1
@@ -502,6 +549,13 @@ class GalleryBannerAdmin(admin.ModelAdmin):
         )
     image_count.short_description = 'Images'
 
+
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+
+
     def delete_link(self, obj):
         url = reverse(
             f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete",
@@ -558,6 +612,12 @@ class HomeInteriorBannerAdmin(admin.ModelAdmin):
     readonly_fields = ['display_image_urls']
     actions = []  
 
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+
+
     def get_actions(self, request):
         actions = super().get_actions(request)
         if 'delete_selected' in actions:
@@ -589,7 +649,14 @@ class PaintCalculatorBannerAdmin(admin.ModelAdmin):
     form = PaintCalculatorBannerForm
     list_display = ['title', 'type', 'short_description', 'display_image_urls','delete_link']
     readonly_fields = ['display_image_urls']
-    actions = []  
+    actions = [] 
+
+
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+ 
 
     def get_actions(self, request):
         actions = super().get_actions(request)
@@ -626,6 +693,12 @@ class HomeExteriorBannerAdmin(admin.ModelAdmin):
     readonly_fields = ['display_image_urls']
     actions = []  
 
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+ 
+
     def get_actions(self, request):
         actions = super().get_actions(request)
         if 'delete_selected' in actions:
@@ -659,6 +732,12 @@ class HomeWaterproofingBannerAdmin(admin.ModelAdmin):
     exclude = ['url']
     readonly_fields = ['display_image_urls']
     actions = []  
+
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+ 
 
     def get_actions(self, request):
         actions = super().get_actions(request)
@@ -694,6 +773,12 @@ class AboutUsTopBannerAdmin(admin.ModelAdmin):
     readonly_fields = ['display_image_urls']
     actions = []  
 
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+
+
     def get_actions(self, request):
         actions = super().get_actions(request)
         if 'delete_selected' in actions:
@@ -727,7 +812,13 @@ class ColorPalletsBannerAdmin(admin.ModelAdmin):
     list_display = ['title', 'type', 'short_description', 'display_image_urls','delete_link']
     exclude = ['url']
     readonly_fields = ['display_image_urls']
-    actions = []  
+    actions = [] 
+
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+  
 
     def get_actions(self, request):
         actions = super().get_actions(request)
@@ -763,6 +854,13 @@ class ProductBannerAdmin(admin.ModelAdmin):
     exclude = ['url']
     readonly_fields = ['display_image_urls']
     actions = []  
+
+
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+ 
 
     def get_actions(self, request):
         actions = super().get_actions(request)
@@ -805,6 +903,12 @@ class ContactUsBannerAdmin(admin.ModelAdmin):
             del actions['delete_selected']
         return actions
     
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+ 
+    
     def delete_link(self, obj):
         url = reverse(
             f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete",
@@ -832,6 +936,13 @@ class AboutUsBottomVideoBannerAdmin(admin.ModelAdmin):
     exclude = ['url']
     readonly_fields = ['display_video_urls']
     actions = []  
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+
+
+    AboutUsBottomVideoBanner
 
     def get_actions(self, request):
         actions = super().get_actions(request)
@@ -888,6 +999,12 @@ class PaintBudgetCalculatorAdmin(admin.ModelAdmin):
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
+    
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+ 
     
     def delete_link(self, obj):
         url = reverse(
@@ -950,6 +1067,13 @@ class ParallaxAdmin(admin.ModelAdmin):
     readonly_fields = ['get_desktop_preview', 'get_mobile_preview']
     actions = []  
 
+
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+ 
+
     def get_actions(self, request):
         actions = super().get_actions(request)
         if 'delete_selected' in actions:
@@ -996,6 +1120,12 @@ class BrochureAdmin(admin.ModelAdmin):
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
+    
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+ 
     
     def delete_link(self, obj):
         url = reverse(
@@ -1067,6 +1197,12 @@ class AdminContactDetailsAdmin(admin.ModelAdmin):
     def has_add_permission(self, request):
         return AdminContactDetails.objects.count() < 1
     
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+ 
+    
     
 
     list_display = [
@@ -1114,6 +1250,12 @@ class SettingAdmin(admin.ModelAdmin):
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
+    
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+ 
     
     def has_add_permission(self, request):
         return Setting.objects.count() < 1
@@ -1177,6 +1319,13 @@ class CategoryAdmin(admin.ModelAdmin):
     search_fields = ['name']
     actions = []  
 
+
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+ 
+
     def get_actions(self, request):
         actions = super().get_actions(request)
         if 'delete_selected' in actions:
@@ -1234,6 +1383,12 @@ class ProductAdmin(admin.ModelAdmin):
         details = obj.detail if isinstance(obj.detail, dict) else {}
         return details.get("type", "")  # Safely get 'type', or return empty string if not present
     get_detail_type.short_description = "Type"
+
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+
 
     def get_detail_quantity(self, obj):
         return obj.detail.get("quantity", "") if obj.detail else ""
@@ -1322,6 +1477,13 @@ class WaterProofCalculatorAdmin(admin.ModelAdmin):
 
 
     delete_link.short_description = 'Delete'
+
+
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+
     
 
     def has_add_permission(self, request):
@@ -1369,6 +1531,12 @@ class TypeImageInline(admin.TabularInline):
     extra = 1
     readonly_fields = ['image_preview']
 
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+
+
     def image_preview(self, obj):
         if obj.image:
             return format_html('<img src="{}" width="60" height="60" style="margin:3px;border-radius:4px;" />', obj.image.url)
@@ -1386,6 +1554,12 @@ class CategoryImageInline(admin.TabularInline):
         return "-"
     image_preview.short_description = "Preview"
 
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+
+
 
 
 
@@ -1393,10 +1567,22 @@ class HomeInteriorSubCategoryImageInline(NestedTabularInline):
     model = HomeInteriorSubCategoryImage
     extra = 1
 
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+
+
 class HomeInteriorSubCategoryInline(NestedStackedInline):
     model = HomeInteriorSubCategory
     inlines = [HomeInteriorSubCategoryImageInline]
     extra = 1
+
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+
 
 class HomeInteriorCategoryInline(NestedStackedInline):
     model = HomeInteriorCategory
@@ -1439,6 +1625,12 @@ class HomeInteriorAdmin(NestedModelAdmin):
             args=[obj.pk]
         )
         return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
+    
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+
 
 
     delete_link.short_description = 'Delete'
@@ -1688,6 +1880,11 @@ class HomeExteriorAdmin(NestedModelAdmin):
             del actions['delete_selected']
         return actions
     
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+
     
     def has_add_permission(self, request):
         return HomeExterior.objects.filter(type="Exterior").count() < 1
@@ -1783,6 +1980,13 @@ class HomeWaterProofAdmin(admin.ModelAdmin):
     def has_add_permission(self, request):
         return HomeWaterProof.objects.filter(type="WaterProf").count() < 1
     
+
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+
+    
     def delete_link(self, obj):
         url = reverse(
             f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete",
@@ -1821,6 +2025,12 @@ class PaintProductInline(admin.TabularInline):
     model = PaintProduct
     extra = 1
 
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+
+
 
 
 
@@ -1835,6 +2045,12 @@ class PaintCalculatorAdmin(admin.ModelAdmin):
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
+    
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+
     
     def has_add_permission(self, request):
         return PaintCalculator.objects.filter(type="PAINT_CALCULATOR").count() < 1
@@ -1940,6 +2156,12 @@ class ColourPaletteImageInline(admin.StackedInline):
     extra = 1
     max_num = 10
 
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+
+
 
 
 @admin.register(ColourPaletteWithImages)
@@ -1947,6 +2169,12 @@ class ColourPaletteWithImagesAdmin(admin.ModelAdmin):
     inlines = [ColourPaletteImageInline]
     list_display = ['title', 'description_preview', 'image_preview','delete_link']
     actions = []  
+
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+
 
     def get_actions(self, request):
         actions = super().get_actions(request)
@@ -2007,6 +2235,12 @@ class ColourCodeInline(admin.TabularInline):
     model = ColourCode
     extra = 1
 
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+
+
 
 @admin.register(MultiColorPalette)
 class MultiColorPaletteAdmin(admin.ModelAdmin):
@@ -2021,6 +2255,12 @@ class MultiColorPaletteAdmin(admin.ModelAdmin):
         'colorshade',
         'delete_link'
     ]
+
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+
 
     actions = []
 
