@@ -225,11 +225,13 @@ class AdditionalInfoViewSet(viewsets.ModelViewSet):
 
 class UserInfoViewSet(viewsets.ModelViewSet):
     queryset = UserInfo.objects.all()
+    print("the queryset is ",queryset)
     serializer_class = UserInfoSerializer
 
     def create(self, request, *args, **kwargs):
         try:
             data = request.data
+            print("the data",data)
             source = data.get("source")
 
             if source not in dict(SOURCE_CHOICES):
@@ -239,6 +241,7 @@ class UserInfoViewSet(viewsets.ModelViewSet):
                 raise ValidationError(f"Creation is only allowed for source: 'quote' or 'BookAppointment'.")
 
             serializer = self.get_serializer(data=data)
+            print("serializers",serializer)
             serializer.is_valid(raise_exception=True)
 
 

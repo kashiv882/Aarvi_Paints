@@ -13,16 +13,23 @@ class UserInfoSerializer(serializers.ModelSerializer):
         model = UserInfo
         fields = ['name', 'phone_number', 'email', 'pincode', 'type', 'description','source']
 
-    def validate_no(self, value):
+    def validate_phone_number(self, value):
         
+        value=value.strip()
+        print("value we have ",value)
         if not re.match(r'^[6-9]\d{9}$', value):
             raise serializers.ValidationError("Mobile number must be 10 digits and start with 6, 7, 8, or 9.")
         return value
+    
     def validate_email(self, value):
+        value = value.strip()
 
-        if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', value):
-            raise serializers.ValidationError("Enter a valid email address.")
+        # Check for non-empty name part before @gmail.com
+        if not re.match(r'^[a-zA-Z0-9._%+-]+@gmail\.com$', value):
+            raise serializers.ValidationError("Only valid Gmail addresses with a name before @gmail.com are allowed.")
+
         return value
+    
     def validate_pincode(self, value):
         if not (value.isdigit() and len(value) == 6):
             raise serializers.ValidationError("The pin code should be exactly 6 digits.")
