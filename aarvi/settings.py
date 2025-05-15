@@ -219,6 +219,7 @@ JAZZMIN_SETTINGS = {
     "welcome_sign": "Welcome to Aarvi Paints Admin Panel",
     "copyright": "Aarvi Paints",
     "custom_css": "css/admin_custom.css",
+    "custom_js": "js/show_password.js",  # Add this line,
 
     # Optional: top menu and sidebar tweaks
     "show_sidebar": True,

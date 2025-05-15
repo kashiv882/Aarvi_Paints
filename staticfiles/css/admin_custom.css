@@ -9,6 +9,7 @@ body {
 }
 .card-body,
 .card,
+.card-header,
 .nav-item a {
   background-color: #fff !important;
   color: #000 !important;
@@ -162,7 +163,6 @@ a.add-handler.djn-add-handler.djn-model-aarvi_paint-exteriorhomecategory.djn-lev
 .nav-tabs .nav-link.active {
   color: #ffffff !important;
   background-color: #000000 !important;
-  border-color: rgba(0, 0, 0, 0.6);
 }
 .nav-tabs .nav-link:not([disabled]):not(.disabled).active,
 .nav-tabs .nav-link:not([disabled]):not(.disabled):active,
@@ -173,10 +173,12 @@ a.add-handler.djn-add-handler.djn-model-aarvi_paint-exteriorhomecategory.djn-lev
   background-repeat: no-repeat;
   -webkit-filter: none;
   filter: none;
+  border: none !important;
 }
 .nav-tabs .nav-link,
 .nav-tabs .nav-link:hover {
   color: #000000 !important;
+  border: none !important;
 }
 .nav-pills .nav-link.active,
 .nav-pills .nav-link:hover {
@@ -186,15 +188,23 @@ a.add-handler.djn-add-handler.djn-model-aarvi_paint-exteriorhomecategory.djn-lev
   background-repeat: no-repeat;
   -webkit-filter: none;
   filter: none;
-  border: 1px solid rgba(0, 0, 0, 0.6);
+  border: none !important;
 }
-
+.btn.btn-primary.btn-block {
+  background-color: transparent;
+  background-image: linear-gradient(#7a58b6, #7a58b6 40%, #7a58b6) !important;
+}
+.btn.btn-primary.btn-block:hover {
+  background-color: transparent;
+  background-image: linear-gradient(#ffffff, #ffffff 40%, #ffffff) !important;
+  color: #7a58b6 !important;
+}
 .nav-tabs .nav-link {
   background-image: linear-gradient(#ffffff, #d3d3d3 60%, #ffffff);
   background-repeat: no-repeat;
   -webkit-filter: none;
   filter: none;
-  border: 1px solid rgba(0, 0, 0, 0.6);
+  border: none !important;
 }
 
 span.brand-text.font-weight-light {
@@ -202,5 +212,61 @@ span.brand-text.font-weight-light {
 }
 
 a.nav-link {
-    background: #FFF !important;
+  background: #fff !important;
+  font-size: 18px !important;
+  padding: 10px 10px !important;
+  border: none !important;
+}
+i.nav-icon.fas.fa-circle {
+  display: none !important;
+}
+/* Fix logo sizing and alignment */
+.brand-link {
+  padding: 0.5rem !important;
+  display: flex;
+  align-items: center;
+}
+
+.brand-image {
+  width: 200px !important;
+  max-height: 150px !important; /* Adjust as needed */
+  width: auto !important; /* Maintain aspect ratio */
+  max-width: 160px !important; /* Prevent overflow */
+  object-fit: contain !important;
+  background-color: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  margin: 0 auto !important;
+}
+.user-panel,
+.nav-header {
+  display: none !important;
+}
+.main-sidebar,
+.layout-fixed .brand-link {
+  width: 300px !important;
+}
+.content-wrapper,
+.main-header,
+.main-footer {
+  margin-left: 300px !important;
+  border: 0 !important;
+}
+.nav-sidebar .nav-item > .nav-link {
+  position: relative;
+  width: 280px !important;
+}
+/* #content .card{
+    width: 55vw !important;
+} */
+.breadcrumb {
+  border: 0 !important;
+}
+
+a#jazzy-logo {
+  background: #fff;
+}
+
+.login-logo img {
+  width: 200px !important;
 }

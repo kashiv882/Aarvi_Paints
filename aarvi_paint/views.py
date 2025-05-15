@@ -38,7 +38,7 @@ from .serializers import PaintBudgetCalculatorSerializer, ProductSerializer, Cat
 
 
 logger = logging.getLogger(__name__)
-
+VALID_HOME_TYPES = [choice[0] for choice in Home_Type_CHOICES]
 
 class PaintBudgetCalculatorViewSet(viewsets.ModelViewSet):
     queryset = PaintBudgetCalculator.objects.all()
@@ -259,7 +259,7 @@ class UserInfoViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-VALID_HOME_TYPES = [choice[0] for choice in Home_Type_CHOICES]
+
 
 class HomeViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
