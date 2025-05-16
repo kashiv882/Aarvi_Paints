@@ -8,6 +8,7 @@ class Command(BaseCommand):
         User = get_user_model()
         if not User.objects.filter(username='admin').exists():
             User.objects.create_superuser('admin', 'admin@example.com', 'adminpassword')
+            print(User.objects.create_superuser('admin', 'admin@example.com', 'adminpassword'))
             self.stdout.write(self.style.SUCCESS('Admin user created'))
         else:
             self.stdout.write(self.style.WARNING('Admin user already exists'))
