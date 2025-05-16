@@ -29,7 +29,7 @@ from .models import PaintBudgetCalculator, Category, ColourPalette, Parallax, Br
     Setting  # CustomInfo ,Navbar,  AboutUs
 from .choices import ADDITIONAL_INFO_TYPE_CHOICES, SOURCE_CHOICES, ALLOWED_SOURCES
 from .serializers import PaintBudgetCalculatorSerializer, ProductSerializer, CategorySerializer, \
-    ParallaxSerializer, BrochureSerializer,ColourPaletteSerializer, \
+    ParallaxSerializer, BrochureSerializer,ColourPaletteSerializer,CustomTokenObtainPairSerializer, \
     AdditionalInfoSerializer, BannerSerializer, UserInfoSerializer, \
   AdminContactDetailsSerializer, \
     WaterProofCalculatorSerializer, AboutUsSerializer,HomeWaterProfSerializer,HomeExteriorSerializer,HomeInteriorSerializer,SettingSerializer \
@@ -408,11 +408,13 @@ def upload_image_url(request):
 
 @method_decorator(csrf_exempt, name='dispatch')
 class CustomTokenObtainPairView(TokenObtainPairView):
-    # @csrf_exempt
+    serializer_class = CustomTokenObtainPairSerializer
+
     def post(self, request, *args, **kwargs):
-        print("Raw body:", request.body)  # Raw data before DRF tries to parse it
-        print("Parsed data:", request.data) 
+        print("Raw body:", request.body)
+        print("Parsed data:", request.data)
         return super().post(request, *args, **kwargs)
+
 
 @method_decorator(csrf_exempt, name='dispatch')
 class CustomTokenRefreshView(TokenRefreshView):

@@ -1,6 +1,9 @@
 import re
 from rest_framework import serializers
 from .models import *
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from django.contrib.auth import authenticate, get_user_model
+from rest_framework.exceptions import AuthenticationFailed
 
 # class NavbarSerializer(serializers.ModelSerializer):
 #     class Meta:
@@ -137,3 +140,24 @@ class WaterProofCalculatorSerializer(serializers.ModelSerializer):
         model = WaterProofCalculator
         fields = [ 'id',
             'surface_condition','selected_product','entered_area','description','userinfo','userinfo_detail',]
+
+
+User = get_user_model()
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        username = attrs.get("username")
+        password = attrs.get("password")
+
+        user = User.objects.filter(username=username).first()
+        if not user:
+            raise AuthenticationFailed("User does not exist")
+
+        if not user.check_password(password):
+            raise AuthenticationFailed("Password is wrong")
+
+        if not user.is_active:
+            raise AuthenticationFailed("User account is disabled")
+
+        data = super().validate(attrs)
+        return data
