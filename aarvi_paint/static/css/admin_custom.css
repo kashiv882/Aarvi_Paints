@@ -270,3 +270,6 @@ a#jazzy-logo {
 .login-logo img {
   width: 200px !important;
 }
+i.fas.fa-bars {
+    display: NONE;
+}
