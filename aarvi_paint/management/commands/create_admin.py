@@ -13,9 +13,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         User = get_user_model()
-        username = 'admin'
+        username = 'aarvi'
         email = 'admin@example.com'
-        password = 'adminpassword'
+        password = 'aarvi'
 
         if options['delete']:
             # Delete admin user if exists
