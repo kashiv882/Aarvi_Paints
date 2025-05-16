@@ -15,7 +15,7 @@ class Command(BaseCommand):
         User = get_user_model()
         username = 'aarvi'
         email = 'admin@example.com'
-        password = 'aarvi'
+        password = '@Arv!2884'
 
         if options['delete']:
             # Delete admin user if exists
