@@ -162,18 +162,20 @@ a.add-handler.djn-add-handler.djn-model-aarvi_paint-exteriorhomecategory.djn-lev
 .nav-tabs .nav-item.show .nav-link,
 .nav-tabs .nav-link.active {
   color: #ffffff !important;
-  background-color: #000000 !important;
+   background-image: linear-gradient(#7a58b6, #7a58b6 40%, #7a58b6) !important;
 }
 .nav-tabs .nav-link:not([disabled]):not(.disabled).active,
 .nav-tabs .nav-link:not([disabled]):not(.disabled):active,
-.nav-tabs .nav-link:not([disabled]):not(.disabled):focus,
-.nav-tabs .nav-link:not([disabled]):not(.disabled):hover {
+.nav-tabs .nav-link:not([disabled]):not(.disabled):focus {
   background-image: linear-gradient(#7a58b6, #7a58b6 40%, #7a58b6);
-  color: #fff !important;
+  color: #fdfdfd !important;
   background-repeat: no-repeat;
   -webkit-filter: none;
   filter: none;
   border: none !important;
+}
+.nav-tabs .nav-link:not([disabled]):not(.disabled):hover {
+  color: #000 !important;
 }
 .nav-tabs .nav-link,
 .nav-tabs .nav-link:hover {
@@ -271,13 +273,17 @@ a#jazzy-logo {
   width: 200px !important;
 }
 i.fas.fa-bars {
-    display: NONE;
+  display: NONE;
 }
 
 .dataTables_info {
-    display: NONE !important;
+  display: NONE !important;
 }
 
 /* element.style {
     min-height: 90px;
 } */
+
+.content-wrapper {
+  min-height: 100vh !important;
+}
