@@ -331,6 +331,13 @@ class AdminContactDetails(TimeStampedModel):
     google_link = models.URLField()
     social_media_links = models.JSONField(default=list, blank=True)
 
+    class Meta:
+        verbose_name = 'Admin Contact detail'
+        verbose_name_plural = 'Admin Contact details'
+    
+    
+    
+
 
 class WaterProofCalculator(TimeStampedModel):
 
@@ -349,6 +356,9 @@ class Banner(TimeStampedModel):
     placement_location = models.CharField(max_length=200, null=True, blank=True)
     short_description = models.TextField()
     url = models.JSONField(default=dict, blank=True)
+
+    def __str__(self):
+        return "Banner Uploaded Successfully"
 
 
 class BannerImage(models.Model):
@@ -380,7 +390,9 @@ class AboutUs(TimeStampedModel):
    
     details = models.JSONField(default=dict, blank=True,null=True)
 
-
+    class Meta:
+        verbose_name = "About Us"
+        verbose_name_plural = "About Us"
 
     def __str__(self):
         return f"{self.title or 'Untitled'}"

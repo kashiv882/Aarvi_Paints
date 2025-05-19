@@ -25,14 +25,10 @@ class UserInfoSerializer(serializers.ModelSerializer):
         return value
     
     def validate_email(self, value):
-        value = value.strip()
-
-        # Check for non-empty name part before @gmail.com
-        if not re.match(r'^[a-zA-Z0-9._%+-]+@gmail\.com$', value):
-            raise serializers.ValidationError("Only valid Gmail addresses with a name before @gmail.com are allowed.")
-
+        if not re.match(r'^[a-zA-Z][a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', value):
+            raise serializers.ValidationError("Email must start with a letter and be a valid email address.")
         return value
-    
+            
     def validate_pincode(self, value):
         if not (value.isdigit() and len(value) == 6):
             raise serializers.ValidationError("The pin code should be exactly 6 digits.")

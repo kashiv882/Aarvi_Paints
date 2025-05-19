@@ -309,6 +309,8 @@ class CategoryForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['name'].label = 'Category'
+
         if self.instance and self.instance.subcategory_names:
             self.fields['subcategories'].initial = ', '.join(self.instance.subcategory_names)
 
@@ -811,6 +813,55 @@ class ContactUsBannerForm(BaseBannerForm):
         fields = ['title', 'short_description', 'banner_image']
 
 
+# class AboutUsBottomVideoBannerForm(forms.ModelForm):
+#     video_file = forms.FileField(
+#         required=False,
+#         label='Upload Video',
+#         help_text='Upload only MP4, WebM, or AVI format videos.'
+#     )
+
+#     class Meta:
+#         model = AboutUsBottomVideoBanner
+#         fields = ['video_file']
+
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         video_url = (self.instance.url or {}).get('video')
+
+#         # if video_url:
+#         #     self.fields['video_file'].help_text += mark_safe(
+#         #         f'<br><strong>Video Preview:</strong><br>'
+#         #         f'<video width="320" height="240" controls>'
+#         #         f'<source src="{video_url}" type="video/mp4">'
+#         #         f'Your browser does not support the video tag.'
+#         #         f'</video><br>'
+#         #         f'<strong>URL:</strong> <a href="{video_url}" target="_blank">{video_url}</a>'
+#         #     )
+
+#     def clean_video_file(self):
+#         video = self.cleaned_data.get('video_file')
+#         if video:
+#             valid_mime_types = ['video/mp4', 'video/avi', 'video/webm', 'video/quicktime']
+#             if video.content_type not in valid_mime_types:
+#                 raise forms.ValidationError('Unsupported video format.')
+#         return video
+
+#     def save(self, commit=True):
+#         instance = super().save(commit=False)
+
+#         if self.cleaned_data.get('video_file'):
+#             path = default_storage.save(
+#                 f'banners/video/{self.cleaned_data["video_file"].name}',
+#                 self.cleaned_data["video_file"]
+#             )
+#             # instance.url = {'video': default_storage.url(path)}
+
+#         if commit:
+#             instance.save()
+
+#         return instance
+
+
 class AboutUsBottomVideoBannerForm(forms.ModelForm):
     video_file = forms.FileField(
         required=False,
@@ -825,16 +876,7 @@ class AboutUsBottomVideoBannerForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         video_url = (self.instance.url or {}).get('video')
-
-        if video_url:
-            self.fields['video_file'].help_text += mark_safe(
-                f'<br><strong>Video Preview:</strong><br>'
-                f'<video width="320" height="240" controls>'
-                f'<source src="{video_url}" type="video/mp4">'
-                f'Your browser does not support the video tag.'
-                f'</video><br>'
-                f'<strong>URL:</strong> <a href="{video_url}" target="_blank">{video_url}</a>'
-            )
+       
 
     def clean_video_file(self):
         video = self.cleaned_data.get('video_file')
@@ -846,19 +888,15 @@ class AboutUsBottomVideoBannerForm(forms.ModelForm):
 
     def save(self, commit=True):
         instance = super().save(commit=False)
-
         if self.cleaned_data.get('video_file'):
             path = default_storage.save(
                 f'banners/video/{self.cleaned_data["video_file"].name}',
                 self.cleaned_data["video_file"]
             )
-            instance.url = {'video': default_storage.url(path)}
-
+            instance.url = {'video': default_storage.url(path)}  # don't forget to save the video URL
         if commit:
             instance.save()
-
         return instance
-
 
 class HomeInteriorForm(forms.ModelForm):
     category_name = forms.CharField(

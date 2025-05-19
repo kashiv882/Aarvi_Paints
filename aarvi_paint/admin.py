@@ -70,7 +70,7 @@ def display_media_urls(self, obj):
             f"<video width='320' height='240' controls>"
             f"<source src='{obj.url['video']}' type='video/mp4'>"
             f"Your browser does not support the video tag.</video><br>"
-            f"<a href='{obj.url['video']}' target='_blank'>{obj.url['video']}</a><br>"
+            # f"<a href='{obj.url['video']}' target='_blank'>{obj.url['video']}</a><br>"
         )
 
     return mark_safe(html)
@@ -101,7 +101,7 @@ class AboutUsAdmin(admin.ModelAdmin):
       url = reverse('admin:aarvi_paint_aboutus_delete', args=[obj.pk])
       return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
 
-    delete_link.short_description = 'Delete'
+    delete_link.short_description = 'Action'
 
 
     class Media:
@@ -249,6 +249,13 @@ class BannerImageInline(admin.StackedInline):
         return "No image"
     image_preview.short_description = 'Preview'
 
+    def get_fields(self, request, obj=None):
+        # If it's a new object (not saved yet), show image upload field
+        if obj and obj.pk:
+            return ['image_preview']
+        return ['image', 'image_preview']
+
+
 
 
 @admin.register(HomeBanner)
@@ -281,7 +288,7 @@ class HomeBannerAdmin(admin.ModelAdmin):
 
 
     
-    delete_link.short_description = 'Delete'    
+    delete_link.short_description = 'Action'    
 
 
     def image_count(self, obj):
@@ -305,22 +312,9 @@ class HomeBannerAdmin(admin.ModelAdmin):
         return format_html('<span style="color:red;">No images uploaded</span>')
     banner_preview.short_description = 'Banner Preview'
 
-    fieldsets = (
-        ('General Information', {
-            'fields': (),
-            'description': format_html(
-                '''
-                <div style="background:#f8f8f8; padding:20px; border-radius:5px;">
-                    <h3 style="margin-top:0">Home Banner Management</h3>
-                    <p style="margin-bottom:0">
-                        <strong>Add images using the "Banner Images" section below</strong>
-                    </p>
-                </div>
-                '''
-            ),
-        }),
-    )
-
+    def get_fieldsets(self, request, obj=None):
+        return []
+    
     def has_add_permission(self, request):
         return HomeBanner.objects.filter(type='home-banner').count() < 1
 
@@ -368,7 +362,7 @@ class InspirationAdmin(admin.ModelAdmin):
         return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
 
 
-    delete_link.short_description = 'Delete'
+    delete_link.short_description = 'Action'
 
     def get_queryset(self, request):
         return super().get_queryset(request).filter(type='inspiration')
@@ -431,7 +425,7 @@ class TestimonialAdmin(admin.ModelAdmin):
         return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
 
 
-    delete_link.short_description = 'Delete'
+    delete_link.short_description = 'Action'
 
 
     
@@ -498,7 +492,7 @@ class WaterCalculatorAdmin(admin.ModelAdmin):
         return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
 
 
-    delete_link.short_description = 'Delete'
+    delete_link.short_description = 'Action'
 
     
 
@@ -534,11 +528,101 @@ class WaterCalculatorAdmin(admin.ModelAdmin):
 
 
 
+# class GalleryBannerAdmin(admin.ModelAdmin):
+#     form = GalleryBannerImageForm
+#     inlines = [BannerImageInline]
+#     list_display = ['banner_preview', 'image_count','delete_link']
+#     list_display_links = ['banner_preview']
+#     actions = []  
+
+#     def get_actions(self, request):
+#         actions = super().get_actions(request)
+#         if 'delete_selected' in actions:
+#             del actions['delete_selected']
+#         return actions
+    
+
+#     def image_count(self, obj):
+#         count = obj.images.count()
+#         return format_html(
+#             '<span style="color:{}; font-weight: bold;">{}</span>',
+#             '#4CAF50' if count else '#F44336',
+#             f"{count} image{'s' if count != 1 else ''}"
+#         )
+#     image_count.short_description = 'Images'
+
+
+#     class Media:
+#         css = {
+#             'all': ('css/admin_custom.css',)
+#         }
+
+
+#     def delete_link(self, obj):
+#         url = reverse(
+#             f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete",
+#             args=[obj.pk]
+#         )
+#         return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
+
+
+#     delete_link.short_description = 'Action'
+
+
+#     def banner_preview(self, obj):
+#         images = obj.images.all()
+#         if images:
+#             return format_html(
+#                 ''.join(
+#                     f'<img src="{image.image.url}" style="height: 50px; margin-right: 5px; border-radius: 4px;" />'
+#                     for image in images if image.image and hasattr(image.image, 'url')
+#                 )
+#             )
+#         return format_html('<span style="color:red;">No images uploaded</span>')
+#     banner_preview.short_description = 'Banner Preview'
+
+#     fieldsets = (
+#         ('General Information', {
+#             'fields': (),
+#             'description': format_html(
+#                 '''
+#                 <div style="background:#f8f8f8; padding:20px; border-radius:5px;">
+#                     <h3 style="margin-top:0">Home Gallery Management</h3>
+#                     <p style="margin-bottom:0">
+#                         <strong>Add images using the "Gallery Images" section below</strong>
+#                     </p>
+#                 </div>
+#                 '''
+#             ),
+#         }),
+#     )
+
+#     def get_queryset(self, request):
+#         return super().get_queryset(request).filter(type='gallery-banner')
+    
+#     def has_add_permission(self, request):
+#         return HomeBanner.objects.filter(type='gallery-banner').count() < 1
+
+#     def save_model(self, request, obj, form, change):
+#         obj.type = 'gallery-banner'
+#         super().save_model(request, obj, form, change)
+# admin.site.register(GalleryBanner,GalleryBannerAdmin)
+
 class GalleryBannerAdmin(admin.ModelAdmin):
     form = GalleryBannerImageForm
     inlines = [BannerImageInline]
-    list_display = ['banner_preview', 'image_count','delete_link']
+    list_display = ['banner_preview', 'image_count', 'delete_link']
     list_display_links = ['banner_preview']
+    actions = []  
+
+    def get_fieldsets(self, request, obj=None):
+        return []
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
 
     def image_count(self, obj):
         count = obj.images.count()
@@ -549,12 +633,10 @@ class GalleryBannerAdmin(admin.ModelAdmin):
         )
     image_count.short_description = 'Images'
 
-
     class Media:
         css = {
             'all': ('css/admin_custom.css',)
         }
-
 
     def delete_link(self, obj):
         url = reverse(
@@ -562,10 +644,7 @@ class GalleryBannerAdmin(admin.ModelAdmin):
             args=[obj.pk]
         )
         return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
-
-
-    delete_link.short_description = 'Delete'
-
+    delete_link.short_description = 'Action'
 
     def banner_preview(self, obj):
         images = obj.images.all()
@@ -579,30 +658,16 @@ class GalleryBannerAdmin(admin.ModelAdmin):
         return format_html('<span style="color:red;">No images uploaded</span>')
     banner_preview.short_description = 'Banner Preview'
 
-    fieldsets = (
-        ('General Information', {
-            'fields': (),
-            'description': format_html(
-                '''
-                <div style="background:#f8f8f8; padding:20px; border-radius:5px;">
-                    <h3 style="margin-top:0">Home Gallery Management</h3>
-                    <p style="margin-bottom:0">
-                        <strong>Add images using the "Gallery Images" section below</strong>
-                    </p>
-                </div>
-                '''
-            ),
-        }),
-    )
-
     def get_queryset(self, request):
         return super().get_queryset(request).filter(type='gallery-banner')
+    
+    def has_add_permission(self, request):
+        return HomeBanner.objects.filter(type='gallery-banner').count() < 1
 
     def save_model(self, request, obj, form, change):
         obj.type = 'gallery-banner'
         super().save_model(request, obj, form, change)
 admin.site.register(GalleryBanner,GalleryBannerAdmin)
-
 
 
 @admin.register(HomeInteriorBanner)
@@ -632,7 +697,7 @@ class HomeInteriorBannerAdmin(admin.ModelAdmin):
         return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
 
 
-    delete_link.short_description = 'Delete'
+    delete_link.short_description = 'Action'
 
 
     def has_add_permission(self, request):
@@ -672,7 +737,7 @@ class PaintCalculatorBannerAdmin(admin.ModelAdmin):
         return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
 
 
-    delete_link.short_description = 'Delete'
+    delete_link.short_description = 'Action'
 
 
     def has_add_permission(self, request):
@@ -716,7 +781,7 @@ class HomeExteriorBannerAdmin(admin.ModelAdmin):
         return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
 
 
-    delete_link.short_description = 'Delete'
+    delete_link.short_description = 'Action'
 
 
     def get_queryset(self, request):
@@ -753,7 +818,7 @@ class HomeWaterproofingBannerAdmin(admin.ModelAdmin):
         return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
 
 
-    delete_link.short_description = 'Delete'
+    delete_link.short_description = 'Action'
 
     
     def has_add_permission(self, request):
@@ -793,7 +858,7 @@ class AboutUsTopBannerAdmin(admin.ModelAdmin):
         return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
 
 
-    delete_link.short_description = 'Delete'
+    delete_link.short_description = 'Action'
 
     
     
@@ -834,7 +899,7 @@ class ColorPalletsBannerAdmin(admin.ModelAdmin):
         return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
 
 
-    delete_link.short_description = 'Delete'
+    delete_link.short_description = 'Action'
 
     
     
@@ -876,7 +941,7 @@ class ProductBannerAdmin(admin.ModelAdmin):
         return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
 
 
-    delete_link.short_description = 'Delete'
+    delete_link.short_description = 'Action'
 
     
     
@@ -917,7 +982,7 @@ class ContactUsBannerAdmin(admin.ModelAdmin):
         return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
 
 
-    delete_link.short_description = 'Delete'
+    delete_link.short_description = 'Action'
 
     
     
@@ -928,6 +993,8 @@ class ContactUsBannerAdmin(admin.ModelAdmin):
         return super().get_queryset(request).filter(type='contact-us-banner')
 
     display_image_urls = display_media_urls
+
+
 
 @admin.register(AboutUsBottomVideoBanner)
 class AboutUsBottomVideoBannerAdmin(admin.ModelAdmin):
@@ -942,7 +1009,7 @@ class AboutUsBottomVideoBannerAdmin(admin.ModelAdmin):
         }
 
 
-    AboutUsBottomVideoBanner
+    # AboutUsBottomVideoBanner
 
     def get_actions(self, request):
         actions = super().get_actions(request)
@@ -958,7 +1025,7 @@ class AboutUsBottomVideoBannerAdmin(admin.ModelAdmin):
         return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
 
 
-    delete_link.short_description = 'Delete'
+    delete_link.short_description = 'Action'
 
 
     
@@ -1014,7 +1081,7 @@ class PaintBudgetCalculatorAdmin(admin.ModelAdmin):
         return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
 
 
-    delete_link.short_description = 'Delete'
+    delete_link.short_description = 'Action'
     
 
     def has_add_permission(self, request):
@@ -1088,7 +1155,7 @@ class ParallaxAdmin(admin.ModelAdmin):
         return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
 
 
-    delete_link.short_description = 'Delete'
+    delete_link.short_description = 'Action'
     
 
     def get_desktop_preview(self, obj):
@@ -1135,7 +1202,7 @@ class BrochureAdmin(admin.ModelAdmin):
         return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
 
 
-    delete_link.short_description = 'Delete'
+    delete_link.short_description = 'Action'
     
 
     def preview_image(self, obj):
@@ -1228,7 +1295,7 @@ class AdminContactDetailsAdmin(admin.ModelAdmin):
         return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
 
 
-    delete_link.short_description = 'Delete'
+    delete_link.short_description = 'Action'
     
 
     def display_social_media_links(self, obj):
@@ -1268,7 +1335,7 @@ class SettingAdmin(admin.ModelAdmin):
         return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
 
 
-    delete_link.short_description = 'Delete'
+    delete_link.short_description = 'Action'
     
 
     list_display = [
@@ -1309,22 +1376,58 @@ class SettingAdmin(admin.ModelAdmin):
 
     get_side_image_preview.short_description = "Side Image Preview"
 
+# @admin.register(Category)
+# class CategoryAdmin(admin.ModelAdmin):
+#     form = CategoryForm
+#     # list_display = ['Category' ,'subcategory_name','delete_link']
+#     # search_fields = ['Category','subcategory_name' ]
+#     form = CategoryForm  # your custom form that handles comma-separated subcategories
+#     list_display = ['name', 'display_subcategories','delete_link']
+#     search_fields = ['name']
+#     actions = []  
+
+
+#     class Media:
+#         css = {
+#             'all': ('css/admin_custom.css',)
+#         }
+ 
+
+#     def get_actions(self, request):
+#         actions = super().get_actions(request)
+#         if 'delete_selected' in actions:
+#             del actions['delete_selected']
+#         return actions
+    
+#     def delete_link(self, obj):
+#         url = reverse(
+#             f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete",
+#             args=[obj.pk]
+#         )
+#         return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
+
+
+#     delete_link.short_description = 'Action'
+    
+    
+#     def has_add_permission(self, request):
+#         return Category.objects.count() < 1
+
+#     def display_subcategories(self, obj):
+#         return ", ".join(obj.subcategory_names or [])
+#     display_subcategories.short_description = 'Subcategories'
+
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     form = CategoryForm
-    list_display = ['name' ,'subcategory_name','delete_link']
-    search_fields = ['name','subcategory_name' ]
-    form = CategoryForm  # your custom form that handles comma-separated subcategories
-    list_display = ['name', 'display_subcategories']
+    list_display = ['category', 'display_subcategories', 'delete_link']  # changed here
     search_fields = ['name']
     actions = []  
-
 
     class Media:
         css = {
             'all': ('css/admin_custom.css',)
         }
- 
 
     def get_actions(self, request):
         actions = super().get_actions(request)
@@ -1338,10 +1441,7 @@ class CategoryAdmin(admin.ModelAdmin):
             args=[obj.pk]
         )
         return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
-
-
-    delete_link.short_description = 'Delete'
-    
+    delete_link.short_description = 'Action'
     
     def has_add_permission(self, request):
         return Category.objects.count() < 1
@@ -1349,6 +1449,10 @@ class CategoryAdmin(admin.ModelAdmin):
     def display_subcategories(self, obj):
         return ", ".join(obj.subcategory_names or [])
     display_subcategories.short_description = 'Subcategories'
+
+    def category(self, obj):
+        return obj.name
+    category.short_description = 'Category'
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
@@ -1476,7 +1580,7 @@ class WaterProofCalculatorAdmin(admin.ModelAdmin):
         return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
 
 
-    delete_link.short_description = 'Delete'
+    delete_link.short_description = 'Action'
 
 
     class Media:
@@ -1633,7 +1737,7 @@ class HomeInteriorAdmin(NestedModelAdmin):
 
 
 
-    delete_link.short_description = 'Delete'
+    delete_link.short_description = 'Action'
     
 
     def get_queryset(self, request):
@@ -1901,7 +2005,7 @@ class HomeExteriorAdmin(NestedModelAdmin):
         return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
 
 
-    delete_link.short_description = 'Delete'
+    delete_link.short_description = 'Action'
     
 
 
@@ -1995,7 +2099,7 @@ class HomeWaterProofAdmin(admin.ModelAdmin):
         return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
 
 
-    delete_link.short_description = 'Delete'
+    delete_link.short_description = 'Action'
     
 
     def get_queryset(self, request):
@@ -2074,7 +2178,7 @@ class PaintCalculatorAdmin(admin.ModelAdmin):
         return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
 
 
-    delete_link.short_description = 'Delete'
+    delete_link.short_description = 'Action'
     
 
     def short_description(self, obj):
@@ -2193,7 +2297,7 @@ class ColourPaletteWithImagesAdmin(admin.ModelAdmin):
         return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
 
 
-    delete_link.short_description = 'Delete'
+    delete_link.short_description = 'Action'
     
 
     def get_queryset(self, request):
@@ -2278,7 +2382,7 @@ class MultiColorPaletteAdmin(admin.ModelAdmin):
         return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
 
 
-    delete_link.short_description = 'Delete'
+    delete_link.short_description = 'Action'
 
 
     def has_add_permission(self, request):

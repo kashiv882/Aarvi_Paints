@@ -34,8 +34,9 @@ def create_user_info(metadata, source):
             raise ValidationError("Mobile number must be 10 digits and start with 6, 7, 8, or 9.")
     
 
-    if not re.match(r'^[a-zA-Z0-9._%+-]+@gmail\.com$', email):
-            raise ValidationError("Only valid Gmail addresses with a name before @gmail.com are allowed.")
+    if not re.match(r'^[a-zA-Z][a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
+        raise ValidationError("Email must start with a letter and be a valid email address.")
+
 
     if not (pincode.isdigit() and len(pincode) == 6):
             raise ValidationError("The pin code should be exactly 6 digits.")

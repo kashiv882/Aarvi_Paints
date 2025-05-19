@@ -273,3 +273,11 @@ a#jazzy-logo {
 i.fas.fa-bars {
     display: NONE;
 }
+
+.dataTables_info {
+    display: NONE !important;
+}
+
+/* element.style {
+    min-height: 90px;
+} */
