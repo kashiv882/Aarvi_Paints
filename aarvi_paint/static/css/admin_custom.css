@@ -287,3 +287,11 @@ i.fas.fa-bars {
 .content-wrapper {
   min-height: 100vh !important;
 }
+
+.content-wrapper {
+    min-height: 200vh !important;
+}
+
+.content-wrapper {
+    min-height: 100vh !important;
+}
