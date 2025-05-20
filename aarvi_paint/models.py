@@ -33,7 +33,7 @@ class Category(TimeStampedModel):
     subcategory_names = models.JSONField(default=list)
 
     def __str__(self):
-        return self.name
+        return "Details"
 
 
 class Product(TimeStampedModel):
@@ -154,6 +154,8 @@ class MultiColorPalette(ColourPalette):
     def save(self, *args, **kwargs):
         self.type = 'multi-color-palette'
         super().save(*args, **kwargs)
+    def __str__(self):
+        return "Color Palettes"
 
 class ColourPaletteImage(models.Model):
     palette = models.ForeignKey(ColourPalette, on_delete=models.CASCADE, related_name='images')
@@ -193,12 +195,17 @@ class Parallax(TimeStampedModel):
     url = models.JSONField(default=dict, blank=True)
     priority = models.IntegerField()
 
+    def __str__(self):
+        return "parallax"
 
 class Brochure(TimeStampedModel):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     url = models.JSONField(default=dict, blank=True)
     uploaded_pdf = models.CharField(max_length=200)
+
+    def __str__(self):
+        return "Brochure"
 
 
 class AdditionalInfo(TimeStampedModel):
@@ -232,6 +239,9 @@ class Inspiration(AdditionalInfo):
     @property
     def is_exterior(self):
         return self.type == 'exterior'
+    
+    def __str__(self):
+        return "Inspiration"
 
 class Testimonial(AdditionalInfo):
     class Meta:
@@ -250,6 +260,9 @@ class Testimonial(AdditionalInfo):
     @property
     def image_url(self):
         return self.url.get('image', '')
+    
+    def __str__(self):
+        return "Testimonial"
         
 
 
@@ -275,15 +288,16 @@ class PaintCalculator(AdditionalInfo):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        parts = [self.title]
-        subtitle = self.details.get("subtitle")
-        if subtitle:
-            parts.append(subtitle)
-        products = self.details.get("products", [])
-        if products:
-            summary = ", ".join([f"{p['product_name']} ({p['area']} sqm)" for p in products])
-            parts.append(f"Products: {summary}")
-        return " | ".join(filter(None, parts))
+        # parts = [self.title]
+        # subtitle = self.details.get("subtitle")
+        # if subtitle:
+        #     parts.append(subtitle)
+        # products = self.details.get("products", [])
+        # if products:
+        #     summary = ", ".join([f"{p['product_name']} ({p['area']} sqm)" for p in products])
+        #     parts.append(f"Products: {summary}")
+        # return " | ".join(filter(None, parts))
+        return "Calculator"
 
 
 class WaterProduct(models.Model):
@@ -308,15 +322,7 @@ class WaterCalculator(AdditionalInfo):
         super().save(*args, **kwargs)
     
     def __str__(self):
-        parts = [self.title]
-        subtitle = self.details.get("subtitle")
-        if subtitle:
-            parts.append(subtitle)
-        products = self.details.get("products", [])
-        if products:
-            summary = ", ".join([f"{p['product_name']} ({p['area']} sqm)" for p in products])
-            parts.append(f"Products: {summary}")
-        return " | ".join(filter(None, parts))
+        return "Calculator"
 
 
 
@@ -334,6 +340,11 @@ class AdminContactDetails(TimeStampedModel):
     class Meta:
         verbose_name = 'Admin Contact detail'
         verbose_name_plural = 'Admin Contact details'
+
+    # def __str__(self):
+    #     return "Contact Details"
+    def __str__(self):
+        return f"Details"
     
     
     
@@ -357,8 +368,8 @@ class Banner(TimeStampedModel):
     short_description = models.TextField()
     url = models.JSONField(default=dict, blank=True)
 
-    def __str__(self):
-        return "Banner Uploaded Successfully"
+    # def __str__(self):
+    #     return self.title
 
 
 class BannerImage(models.Model):
@@ -394,8 +405,10 @@ class AboutUs(TimeStampedModel):
         verbose_name = "About Us"
         verbose_name_plural = "About Us"
 
+    # def __str__(self):
+    #     return f"{self.title or 'Untitled'}"
     def __str__(self):
-        return f"{self.title or 'Untitled'}"
+        return "Details"
 
 
 class Home(TimeStampedModel):
@@ -495,6 +508,8 @@ class HomeInterior(Home):
         # self.type = 'home-interior'
         self.type = 'Interior'
         super().save(*args, **kwargs)
+    def __str__(self):
+        return "Interior"
 
 
 
@@ -507,6 +522,8 @@ class HomeExterior(Home):
     def save(self, *args, **kwargs):
         self.type = 'Exterior'
         super().save(*args, **kwargs)
+    def __str__(self):
+        return "Exterior"
 
     
 
@@ -519,7 +536,8 @@ class HomeWaterProof(Home):
     def save(self, *args, **kwargs):
         self.type = 'WaterProf'
         super().save(*args, **kwargs)
-
+    def __str__(self):
+        return "WaterProof"
 
 
 
@@ -531,6 +549,8 @@ class Setting(models.Model):
     app_download_links = models.JSONField(default=dict)
     hide = models.BooleanField(null=False, default=False)
 
+    def __str__(self):
+        return "setting details"
 # class CustomInfo(models.Model):
 #
 #     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -579,6 +599,8 @@ class GalleryBanner(Banner):
     def main_image(self):
         """Get the first uploaded image"""
         return self.images.first()
+    def __str__(self):
+        return "Gallery"
 
 
 # ==========================================Home Bannner============================================================================
@@ -596,6 +618,9 @@ class HomeBanner(Banner):
     def main_image(self):
         """Get the first uploaded image"""
         return self.images.first()
+    
+    def __str__(self):
+        return "Home Banner"
 
 
 class HomeInteriorBanner(Banner):
@@ -608,6 +633,9 @@ class HomeInteriorBanner(Banner):
         self.type = 'home-interior-banner'
         super().save(*args, **kwargs)
 
+    def __str__(self):
+        return "Interior Banner"
+
 
 class PaintCalculatorBanner(Banner):
     class Meta:
@@ -619,6 +647,9 @@ class PaintCalculatorBanner(Banner):
         self.type = 'paint-calculator-banner'
         super().save(*args, **kwargs)
 
+    def __str__(self):
+        return "Paint Calculate Banner"
+
 
 class HomeExteriorBanner(Banner):
     class Meta:
@@ -629,6 +660,9 @@ class HomeExteriorBanner(Banner):
     def save(self, *args, **kwargs):
         self.type = 'home-exterior-banner'
         super().save(*args, **kwargs)
+    
+    def __str__(self):
+        return "Exterior Banner"
 
 
 # more proxy models
@@ -643,6 +677,8 @@ class HomeWaterproofingBanner(Banner):
     def save(self, *args, **kwargs):
         self.type = 'home-waterproofing-banner'
         super().save(*args, **kwargs)
+    def __str__(self):
+        return "WaterProof Banner"
 
 
 class AboutUsTopBanner(Banner):
@@ -655,6 +691,9 @@ class AboutUsTopBanner(Banner):
         self.type = 'about-us-top-banner'
         super().save(*args, **kwargs)
 
+    def __str__(self):
+        return "About Us Top Banner"
+
 
 class AboutUsBottomVideoBanner(Banner):
     class Meta:
@@ -666,6 +705,10 @@ class AboutUsBottomVideoBanner(Banner):
         self.type = 'about-us-bottom-video-banner'
         super().save(*args, **kwargs)
 
+    def __str__(self):
+        return "About Us Video"
+   
+
 
 class ColorPalletsBanner(Banner):
     class Meta:
@@ -676,6 +719,8 @@ class ColorPalletsBanner(Banner):
     def save(self, *args, **kwargs):
         self.type = 'color-pallets-banner'
         super().save(*args, **kwargs)
+    def __str__(self):
+        return "Color Pallet Banner"
 
 
 class ProductBanner(Banner):
@@ -687,7 +732,9 @@ class ProductBanner(Banner):
     def save(self, *args, **kwargs):
         self.type = 'product-banner'
         super().save(*args, **kwargs)
-
+    
+    def __str__(self):
+        return "Product Banner"
 
 
 class ContactUsBanner(Banner):
@@ -699,4 +746,7 @@ class ContactUsBanner(Banner):
     def save(self, *args, **kwargs):
         self.type = 'contact-us-banner'
         super().save(*args, **kwargs)
+    
+    def __str__(self):
+        return "Contact Us Banner"
 

@@ -1,5 +1,5 @@
 from pyexpat.errors import messages
-from django.contrib import admin
+from django.contrib import admin,messages
 from django.contrib.admin import AdminSite
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
@@ -8,6 +8,7 @@ from django.urls import path, reverse
 from django.utils.html import format_html
 from django.forms.models import BaseInlineFormSet
 import nested_admin
+from .admin_mixins import NoSuccessMessageAdminMixin  
 from nested_admin import NestedStackedInline, NestedTabularInline, NestedModelAdmin
 from django.utils.safestring import mark_safe
 from django import forms
@@ -27,6 +28,22 @@ from .models import PaintCalculatorBanner,AboutUsBottomVideoBanner, PaintProduct
 # Unregister default auth models (optional if you only want superuser access)
 admin.site.unregister(User)
 admin.site.unregister(Group)
+# ===================================Remove change messages ====================================
+# class NoSuccessMessageAdminMixin:
+#     def response_add(self, request, obj, post_url_continue=None):
+#         url = reverse(f"admin:{obj._meta.app_label}_{obj._meta.model_name}_changelist")
+#         return HttpResponseRedirect(url)
+
+#     def response_change(self, request, obj):
+#         url = reverse(f"admin:{obj._meta.app_label}_{obj._meta.model_name}_changelist")
+#         return HttpResponseRedirect(url)
+
+#     def response_delete(self, request, obj_display, obj_id):
+#         url = reverse(f"admin:{self.model._meta.app_label}_{self.model._meta.model_name}_changelist")
+#         return HttpResponseRedirect(url)
+# ========================================================================
+
+
 
 
 class CustomAdminSite(AdminSite):
@@ -84,7 +101,7 @@ display_media_urls.short_description = "Media URLs"
 
 
 @admin.register(AboutUs)
-class AboutUsAdmin(admin.ModelAdmin):
+class AboutUsAdmin(NoSuccessMessageAdminMixin, admin.ModelAdmin):
     form = AboutUsAdminForm
     actions = []
 
@@ -109,6 +126,21 @@ class AboutUsAdmin(admin.ModelAdmin):
             'all': ('css/admin_custom.css',)
         }
 
+    
+    # def response_add(self, request, obj, post_url_continue=None):
+    #     # Redirect to changelist page (list view) without messages
+    #     url = reverse(f"admin:{obj._meta.app_label}_{obj._meta.model_name}_changelist")
+    #     return HttpResponseRedirect(url)
+
+    # def response_change(self, request, obj):
+    #     # Redirect to changelist page (list view) without messages
+    #     url = reverse(f"admin:{obj._meta.app_label}_{obj._meta.model_name}_changelist")
+    #     return HttpResponseRedirect(url)
+
+    # def response_delete(self, request, obj_display, obj_id):
+    #     # Redirect to changelist page after delete, no success message
+    #     url = reverse(f"admin:{self.model._meta.app_label}_{self.model._meta.model_name}_changelist")
+    #     return HttpResponseRedirect(url)
 
 
     list_display = [
@@ -247,19 +279,44 @@ class BannerImageInline(admin.StackedInline):
                 obj.image.url
             )
         return "No image"
-    image_preview.short_description = 'Preview'
+    # image_preview.short_description = 'Preview'
 
+    # def get_fields(self, request, obj=None):
+    #     # If it's a new object (not saved yet), show image upload field
+    #     if obj and obj.pk:
+    #         return ['image_preview']
+    #     return ['image', 'image_preview']
     def get_fields(self, request, obj=None):
-        # If it's a new object (not saved yet), show image upload field
-        if obj and obj.pk:
-            return ['image_preview']
-        return ['image', 'image_preview']
+         return ['image', 'image_preview'] 
 
+# class BannerImageInline(admin.StackedInline):
+#     model = BannerImage
+#     extra = 1
+#     form = HomeBannerImageForm
+#     readonly_fields = ['image_preview']
+#     fields = ['image', 'image_preview']  # Always include both fields
 
+#     class Media:
+#         css = {
+#             'all': ('css/admin_custom.css',)
+#         }
+
+#     def image_preview(self, obj):
+#         if obj.image:
+#             return format_html(
+#                 '<img src="{}" style="max-height: 100px;"/>',
+#                 obj.image.url
+#             )
+#         return "No image"
+#     # image_preview.short_description = 'Preview'
+
+#     def get_fields(self, request, obj=None):
+#         return ['image', 'image_preview'] 
+    
 
 
 @admin.register(HomeBanner)
-class HomeBannerAdmin(admin.ModelAdmin):
+class HomeBannerAdmin(NoSuccessMessageAdminMixin,admin.ModelAdmin):
     
 
     inlines = [BannerImageInline]
@@ -329,7 +386,7 @@ class HomeBannerAdmin(admin.ModelAdmin):
 
 
 @admin.register(Inspiration)
-class InspirationAdmin(admin.ModelAdmin):
+class InspirationAdmin(NoSuccessMessageAdminMixin, admin.ModelAdmin):
     form = InspirationForm
     list_display = ('title', 'description', 'image_preview','delete_link')
     readonly_fields = ('image_preview',)
@@ -376,7 +433,7 @@ class InspirationAdmin(admin.ModelAdmin):
 
 
 @admin.register(Testimonial)
-class TestimonialAdmin(admin.ModelAdmin):
+class TestimonialAdmin(NoSuccessMessageAdminMixin,admin.ModelAdmin):
     form = TestimonialAdminForm
     list_display = ('name', 'description','image_preview','delete_link')
     readonly_fields = ['image_display']
@@ -454,7 +511,7 @@ class WaterProductInline(admin.TabularInline):
 
 
 @admin.register(WaterCalculator)
-class WaterCalculatorAdmin(admin.ModelAdmin):
+class WaterCalculatorAdmin(NoSuccessMessageAdminMixin,admin.ModelAdmin):
     form = WaterCalculatorAdminForm
     inlines = [WaterProductInline]
     actions = []  
@@ -505,10 +562,27 @@ class WaterCalculatorAdmin(admin.ModelAdmin):
         if not products:
             return '—'
 
-        product_data = [
-            {"product_name": p.product_name, "area": p.area} for p in products
-        ]
-        return mark_safe(f'<pre>{json.dumps(product_data, indent=4)}</pre>')
+        rows = ''.join([
+            f'<tr>'
+            f'<td style="border:1px solid #ccc;padding:4px;">{p.product_name}</td>'
+            f'<td style="border:1px solid #ccc;padding:4px;">{p.area}</td>'
+            f'</tr>'
+            for p in products
+        ])
+
+        return mark_safe(f'''
+            <table style="border:1px solid #ccc; border-collapse:collapse;">
+                <thead>
+                    <tr>
+                        <th style="border:1px solid #ccc;padding:4px;">Product Name</th>
+                        <th style="border:1px solid #ccc;padding:4px;">Area</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {rows}
+                </tbody>
+            </table>
+        ''')
     display_products.short_description = 'Products'
 
     def save_related(self, request, form, formsets, change):
@@ -608,7 +682,7 @@ class WaterCalculatorAdmin(admin.ModelAdmin):
 #         super().save_model(request, obj, form, change)
 # admin.site.register(GalleryBanner,GalleryBannerAdmin)
 
-class GalleryBannerAdmin(admin.ModelAdmin):
+class GalleryBannerAdmin(NoSuccessMessageAdminMixin,admin.ModelAdmin):
     form = GalleryBannerImageForm
     inlines = [BannerImageInline]
     list_display = ['banner_preview', 'image_count', 'delete_link']
@@ -637,6 +711,21 @@ class GalleryBannerAdmin(admin.ModelAdmin):
         css = {
             'all': ('css/admin_custom.css',)
         }
+    
+    def response_add(self, request, obj, post_url_continue=None):
+        # Redirect to changelist page (list view) without messages
+        url = reverse(f"admin:{obj._meta.app_label}_{obj._meta.model_name}_changelist")
+        return HttpResponseRedirect(url)
+
+    def response_change(self, request, obj):
+        # Redirect to changelist page (list view) without messages
+        url = reverse(f"admin:{obj._meta.app_label}_{obj._meta.model_name}_changelist")
+        return HttpResponseRedirect(url)
+
+    def response_delete(self, request, obj_display, obj_id):
+        # Redirect to changelist page after delete, no success message
+        url = reverse(f"admin:{self.model._meta.app_label}_{self.model._meta.model_name}_changelist")
+        return HttpResponseRedirect(url)
 
     def delete_link(self, obj):
         url = reverse(
@@ -671,7 +760,7 @@ admin.site.register(GalleryBanner,GalleryBannerAdmin)
 
 
 @admin.register(HomeInteriorBanner)
-class HomeInteriorBannerAdmin(admin.ModelAdmin):
+class HomeInteriorBannerAdmin(NoSuccessMessageAdminMixin,admin.ModelAdmin):
     form = HomeInteriorBannerForm
     list_display = ['title', 'type', 'short_description', 'display_image_urls','delete_link']
     readonly_fields = ['display_image_urls']
@@ -710,7 +799,7 @@ class HomeInteriorBannerAdmin(admin.ModelAdmin):
 
 
 @admin.register(PaintCalculatorBanner)
-class PaintCalculatorBannerAdmin(admin.ModelAdmin):
+class PaintCalculatorBannerAdmin(NoSuccessMessageAdminMixin,admin.ModelAdmin):
     form = PaintCalculatorBannerForm
     list_display = ['title', 'type', 'short_description', 'display_image_urls','delete_link']
     readonly_fields = ['display_image_urls']
@@ -721,8 +810,7 @@ class PaintCalculatorBannerAdmin(admin.ModelAdmin):
         css = {
             'all': ('css/admin_custom.css',)
         }
- 
-
+  
     def get_actions(self, request):
         actions = super().get_actions(request)
         if 'delete_selected' in actions:
@@ -751,7 +839,7 @@ class PaintCalculatorBannerAdmin(admin.ModelAdmin):
 
 
 @admin.register(HomeExteriorBanner)
-class HomeExteriorBannerAdmin(admin.ModelAdmin):
+class HomeExteriorBannerAdmin(NoSuccessMessageAdminMixin,admin.ModelAdmin):
     form = HomeExteriorBannerForm
     list_display = ['title', 'type', 'short_description', 'display_image_urls','delete_link']
     exclude = ['url']
@@ -763,7 +851,6 @@ class HomeExteriorBannerAdmin(admin.ModelAdmin):
             'all': ('css/admin_custom.css',)
         }
  
-
     def get_actions(self, request):
         actions = super().get_actions(request)
         if 'delete_selected' in actions:
@@ -791,7 +878,7 @@ class HomeExteriorBannerAdmin(admin.ModelAdmin):
 
 
 @admin.register(HomeWaterproofingBanner)
-class HomeWaterproofingBannerAdmin(admin.ModelAdmin):
+class HomeWaterproofingBannerAdmin(NoSuccessMessageAdminMixin,admin.ModelAdmin):
     form = HomeWaterproofingBannerForm
     list_display = ['title', 'type', 'short_description', 'display_image_urls','delete_link']
     exclude = ['url']
@@ -802,8 +889,7 @@ class HomeWaterproofingBannerAdmin(admin.ModelAdmin):
         css = {
             'all': ('css/admin_custom.css',)
         }
- 
-
+    
     def get_actions(self, request):
         actions = super().get_actions(request)
         if 'delete_selected' in actions:
@@ -831,7 +917,7 @@ class HomeWaterproofingBannerAdmin(admin.ModelAdmin):
 
 
 @admin.register(AboutUsTopBanner)
-class AboutUsTopBannerAdmin(admin.ModelAdmin):
+class AboutUsTopBannerAdmin(NoSuccessMessageAdminMixin,admin.ModelAdmin):
     form = AboutUsTopBannerForm
     list_display = ['title', 'type', 'short_description', 'display_image_urls','delete_link']
     exclude = ['url']
@@ -842,8 +928,8 @@ class AboutUsTopBannerAdmin(admin.ModelAdmin):
         css = {
             'all': ('css/admin_custom.css',)
         }
-
-
+    
+    
     def get_actions(self, request):
         actions = super().get_actions(request)
         if 'delete_selected' in actions:
@@ -872,7 +958,7 @@ class AboutUsTopBannerAdmin(admin.ModelAdmin):
 
 
 @admin.register(ColorPalletsBanner)
-class ColorPalletsBannerAdmin(admin.ModelAdmin):
+class ColorPalletsBannerAdmin(NoSuccessMessageAdminMixin,admin.ModelAdmin):
     form = ColorPalletsBannerForm
     list_display = ['title', 'type', 'short_description', 'display_image_urls','delete_link']
     exclude = ['url']
@@ -883,7 +969,6 @@ class ColorPalletsBannerAdmin(admin.ModelAdmin):
         css = {
             'all': ('css/admin_custom.css',)
         }
-  
 
     def get_actions(self, request):
         actions = super().get_actions(request)
@@ -913,7 +998,7 @@ class ColorPalletsBannerAdmin(admin.ModelAdmin):
 
 
 @admin.register(ProductBanner)
-class ProductBannerAdmin(admin.ModelAdmin):
+class ProductBannerAdmin(NoSuccessMessageAdminMixin,admin.ModelAdmin):
     form = ProductBannerForm
     list_display = ['title', 'type', 'short_description', 'display_image_urls','delete_link']
     exclude = ['url']
@@ -925,8 +1010,7 @@ class ProductBannerAdmin(admin.ModelAdmin):
         css = {
             'all': ('css/admin_custom.css',)
         }
- 
-
+   
     def get_actions(self, request):
         actions = super().get_actions(request)
         if 'delete_selected' in actions:
@@ -955,7 +1039,7 @@ class ProductBannerAdmin(admin.ModelAdmin):
 
 
 @admin.register(ContactUsBanner)
-class ContactUsBannerAdmin(admin.ModelAdmin):
+class ContactUsBannerAdmin(NoSuccessMessageAdminMixin,admin.ModelAdmin):
     form = ContactUsBannerForm
     list_display = ['title', 'type', 'short_description', 'display_image_urls','delete_link']
     exclude = ['url']
@@ -997,7 +1081,7 @@ class ContactUsBannerAdmin(admin.ModelAdmin):
 
 
 @admin.register(AboutUsBottomVideoBanner)
-class AboutUsBottomVideoBannerAdmin(admin.ModelAdmin):
+class AboutUsBottomVideoBannerAdmin(NoSuccessMessageAdminMixin,admin.ModelAdmin):
     form = AboutUsBottomVideoBannerForm
     list_display = ['type', 'display_video_urls','delete_link']
     exclude = ['url']
@@ -1008,9 +1092,7 @@ class AboutUsBottomVideoBannerAdmin(admin.ModelAdmin):
             'all': ('css/admin_custom.css',)
         }
 
-
-    # AboutUsBottomVideoBanner
-
+    
     def get_actions(self, request):
         actions = super().get_actions(request)
         if 'delete_selected' in actions:
@@ -1125,12 +1207,10 @@ class PaintBudgetCalculatorAdmin(admin.ModelAdmin):
 
 
 @admin.register(Parallax)
-class ParallaxAdmin(admin.ModelAdmin):
+class ParallaxAdmin(NoSuccessMessageAdminMixin,admin.ModelAdmin):
     form = ParallaxForm
     exclude = ('url',)
     list_display = ['title', 'sub_title', 'description', 'priority', 'get_desktop_preview', 'get_mobile_preview','delete_link']
-    search_fields = ['title', 'sub_title']
-    list_filter = ['priority']
     readonly_fields = ['get_desktop_preview', 'get_mobile_preview']
     actions = []  
 
@@ -1176,11 +1256,12 @@ class ParallaxAdmin(admin.ModelAdmin):
 
 
 @admin.register(Brochure)
-class BrochureAdmin(admin.ModelAdmin):
+class BrochureAdmin(NoSuccessMessageAdminMixin,admin.ModelAdmin):
     form = BrochureForm
     readonly_fields = ['preview_image', 'preview_pdf']
     list_display = ['uploaded_pdf', 'preview_image','delete_link']
     actions = []
+
 
     def get_actions(self, request):
         actions = super().get_actions(request)
@@ -1220,38 +1301,9 @@ class BrochureAdmin(admin.ModelAdmin):
     preview_pdf.short_description = "Uploaded PDF"
 
 
-# @admin.register(Brochure)
-# class BrochureAdmin(admin.ModelAdmin):
-#     form = BrochureForm
-#     readonly_fields = ['preview_image', 'preview_pdf']
-#     list_display = ['uploaded_pdf', 'preview_image']
-#     actions = []  
-
-#     def get_actions(self, request):
-#         actions = super().get_actions(request)
-#         if 'delete_selected' in actions:
-#             del actions['delete_selected']
-#         return actions
-
-#     def preview_image(self, obj):
-#         image_url = obj.url.get('image') if obj.url else None
-#         if image_url:
-#             return mark_safe(f'<img src="{image_url}" style="max-height: 100px;" />')
-#         return "No preview image"
-
-#     def preview_pdf(self, obj):
-#         if obj.uploaded_pdf:
-#             return mark_safe(f'<a href="/media/brochures/{obj.uploaded_pdf}" target="_blank">View PDF</a>')
-#         return "No PDF uploaded"
-
-#     preview_image.short_description = "Preview Image"
-#     preview_pdf.short_description = "Uploaded PDF"
-
-
-
 
 @admin.register(AdminContactDetails)
-class AdminContactDetailsAdmin(admin.ModelAdmin):
+class AdminContactDetailsAdmin(NoSuccessMessageAdminMixin,admin.ModelAdmin):
     form = AdminContactDetailsForm
     actions = []  
 
@@ -1281,12 +1333,12 @@ class AdminContactDetailsAdmin(admin.ModelAdmin):
         'delete_link',
     ]
 
-    search_fields = [
-        'location',
-        'phone_number',
-        'email',
-        'google_link',
-    ]
+    # search_fields = [
+    #     'location',
+    #     'phone_number',
+    #     'email',
+    #     'google_link',
+    # ]
     def delete_link(self, obj):
         url = reverse(
             f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete",
@@ -1308,25 +1360,25 @@ class AdminContactDetailsAdmin(admin.ModelAdmin):
     display_social_media_links.short_description = "Social Media Links"
 
 @admin.register(Setting)
-class SettingAdmin(admin.ModelAdmin):
+class SettingAdmin(NoSuccessMessageAdminMixin,admin.ModelAdmin):
     form = SettingAdminForm
-    actions = []  
+    actions = []
+    readonly_fields = ['logo_preview', 'side_image_preview']
+
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
 
     def get_actions(self, request):
         actions = super().get_actions(request)
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
-    
-    class Media:
-        css = {
-            'all': ('css/admin_custom.css',)
-        }
- 
-    
+
     def has_add_permission(self, request):
         return Setting.objects.count() < 1
-    
+
     def delete_link(self, obj):
         url = reverse(
             f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete",
@@ -1334,23 +1386,45 @@ class SettingAdmin(admin.ModelAdmin):
         )
         return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
 
-
     delete_link.short_description = 'Action'
-    
 
     list_display = [
         'name',
         'copyright',
         'display_app_download_links',
-        'get_logo_preview',  # Preview for logo
-        'get_side_image_preview',  # Preview for side image
+        'get_logo_preview',
+        'get_side_image_preview',
         'hide',
         'delete_link',
     ]
 
-    search_fields = [
-        'name',
-    ]
+   
+
+    # ========== PREVIEW METHODS ==========
+
+    def logo_preview(self, obj):
+        return self.get_logo_preview(obj)
+
+    logo_preview.short_description = 'Logo Preview'
+
+    def side_image_preview(self, obj):
+        return self.get_side_image_preview(obj)
+
+    side_image_preview.short_description = 'Side Image Preview'
+
+    def get_logo_preview(self, obj):
+        url_data = obj.url if isinstance(obj.url, dict) else {}
+        logo_url = url_data.get('logo')
+        if logo_url:
+            return mark_safe(f'<img src="{logo_url}" style="max-height: 50px; border: 1px solid #ccc;" />')
+        return "No logo available"
+
+    def get_side_image_preview(self, obj):
+        url_data = obj.url if isinstance(obj.url, dict) else {}
+        side_image_url = url_data.get('side_image')
+        if side_image_url:
+            return mark_safe(f'<img src="{side_image_url}" style="max-height: 50px; border: 1px solid #ccc;" />')
+        return "No side image available"
 
     def display_app_download_links(self, obj):
         links = obj.app_download_links or {}
@@ -1360,75 +1434,19 @@ class SettingAdmin(admin.ModelAdmin):
 
     display_app_download_links.short_description = "App Download Links"
 
-    def get_logo_preview(self, obj):
-        if obj.url and 'logo' in obj.url:
-            logo_url = obj.url['logo']
-            return mark_safe(f'<img src="{logo_url}" style="max-height: 50px; border: 1px solid #ccc;" />')
-        return "No logo available"
-
-    get_logo_preview.short_description = "Logo Preview"
-
-    def get_side_image_preview(self, obj):
-        if obj.url and 'side_image' in obj.url:
-            side_image_url = obj.url['side_image']
-            return mark_safe(f'<img src="{side_image_url}" style="max-height: 50px; border: 1px solid #ccc;" />')
-        return "No side image available"
-
-    get_side_image_preview.short_description = "Side Image Preview"
-
-# @admin.register(Category)
-# class CategoryAdmin(admin.ModelAdmin):
-#     form = CategoryForm
-#     # list_display = ['Category' ,'subcategory_name','delete_link']
-#     # search_fields = ['Category','subcategory_name' ]
-#     form = CategoryForm  # your custom form that handles comma-separated subcategories
-#     list_display = ['name', 'display_subcategories','delete_link']
-#     search_fields = ['name']
-#     actions = []  
-
-
-#     class Media:
-#         css = {
-#             'all': ('css/admin_custom.css',)
-#         }
- 
-
-#     def get_actions(self, request):
-#         actions = super().get_actions(request)
-#         if 'delete_selected' in actions:
-#             del actions['delete_selected']
-#         return actions
-    
-#     def delete_link(self, obj):
-#         url = reverse(
-#             f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete",
-#             args=[obj.pk]
-#         )
-#         return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
-
-
-#     delete_link.short_description = 'Action'
-    
-    
-#     def has_add_permission(self, request):
-#         return Category.objects.count() < 1
-
-#     def display_subcategories(self, obj):
-#         return ", ".join(obj.subcategory_names or [])
-#     display_subcategories.short_description = 'Subcategories'
-
 @admin.register(Category)
-class CategoryAdmin(admin.ModelAdmin):
+class CategoryAdmin(NoSuccessMessageAdminMixin,admin.ModelAdmin):
     form = CategoryForm
     list_display = ['category', 'display_subcategories', 'delete_link']  # changed here
-    search_fields = ['name']
+    # search_fields = ['name']
     actions = []  
 
     class Media:
         css = {
             'all': ('css/admin_custom.css',)
         }
-
+    
+    
     def get_actions(self, request):
         actions = super().get_actions(request)
         if 'delete_selected' in actions:
@@ -1455,7 +1473,7 @@ class CategoryAdmin(admin.ModelAdmin):
     category.short_description = 'Category'
 
 @admin.register(Product)
-class ProductAdmin(admin.ModelAdmin):
+class ProductAdmin(NoSuccessMessageAdminMixin,admin.ModelAdmin):
     form = ProductForm
 
     list_display = [
@@ -1708,7 +1726,7 @@ class HomeInteriorFeatureInline(NestedStackedInline):
 
 
 @admin.register(HomeInterior)
-class HomeInteriorAdmin(NestedModelAdmin):
+class HomeInteriorAdmin(NoSuccessMessageAdminMixin,NestedModelAdmin):
     inlines = [HomeInteriorCategoryInline, HomeInteriorFeatureInline]
     list_display = ['title', 'description', 'display_data_preview','delete_link']
     readonly_fields = ['display_data_preview']
@@ -1972,7 +1990,7 @@ class ExteriorHomeCategoryInline(NestedStackedInline):
 
 
 @admin.register(HomeExterior)
-class HomeExteriorAdmin(NestedModelAdmin):
+class HomeExteriorAdmin(NoSuccessMessageAdminMixin,NestedModelAdmin):
     inlines = [ExteriorHomeCategoryInline]
     list_display = ['title', 'description', 'display_data_preview','delete_link']
     readonly_fields = ['display_data_preview']
@@ -2070,27 +2088,25 @@ class HomeExteriorAdmin(NestedModelAdmin):
 
 # =========================================================================================================================
 @admin.register(HomeWaterProof)
-class HomeWaterProofAdmin(admin.ModelAdmin):
+class HomeWaterProofAdmin(NoSuccessMessageAdminMixin,admin.ModelAdmin):
     form = HomeWaterProofForm
-    list_display = ['title', 'category_name_display', 'sideimage_preview', 'description','delete_link']
-    actions = []  
+    readonly_fields = ['sideimage_preview']
+    list_display = ['title', 'category_name_display', 'sideimage_preview', 'description', 'delete_link']
+    actions = []
 
     def get_actions(self, request):
         actions = super().get_actions(request)
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
-    
-    def has_add_permission(self, request):
-        return HomeWaterProof.objects.filter(type="WaterProf").count() < 1
-    
+
+    #  return HomeWaterProof.objects.filter(type="WaterProf").count() < 1
 
     class Media:
         css = {
             'all': ('css/admin_custom.css',)
         }
 
-    
     def delete_link(self, obj):
         url = reverse(
             f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete",
@@ -2098,20 +2114,18 @@ class HomeWaterProofAdmin(admin.ModelAdmin):
         )
         return mark_safe(f'<a href="{url}" style="color:red;">Delete</a>')
 
-
     delete_link.short_description = 'Action'
-    
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.filter(type="WaterProf")
 
     def save_model(self, request, obj, form, change):
-        obj.type = 'WaterProf'  # force set during admin save
+        obj.type = 'WaterProf'
         super().save_model(request, obj, form, change)
 
     def category_name_display(self, obj):
-        return ", ".join(obj.category_name or [])
+        return obj.category_name or "-"
 
     category_name_display.short_description = "Categories"
 
@@ -2121,8 +2135,7 @@ class HomeWaterProofAdmin(admin.ModelAdmin):
             return format_html('<img src="{}" width="100" style="border-radius:4px;" />', sideimage_url)
         return "-"
 
-    sideimage_preview.short_description = "Side Image"
-
+    sideimage_preview.short_description = "Side Image Preview"
 
 
 class PaintProductInline(admin.TabularInline):
@@ -2139,7 +2152,7 @@ class PaintProductInline(admin.TabularInline):
 
 
 @admin.register(PaintCalculator)
-class PaintCalculatorAdmin(admin.ModelAdmin):
+class PaintCalculatorAdmin(NoSuccessMessageAdminMixin,admin.ModelAdmin):
     form = PaintCalculatorAdminForm
     inlines = [PaintProductInline]
     actions = []  
@@ -2190,12 +2203,24 @@ class PaintCalculatorAdmin(admin.ModelAdmin):
         if not products:
             return '—'
 
-        product_data = [
-            {"product_name": p.product_name, "area": p.area} for p in products
-        ]
-        return mark_safe(f'<pre>{json.dumps(product_data, indent=4)}</pre>')
-    display_products.short_description = 'Products'
+        table_rows = ''.join([
+            f'<tr><td>{p.product_name}</td><td>{p.area}</td></tr>' for p in products
+        ])
 
+        return mark_safe(f'''
+            <table style="border: 1px solid #ccc; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th style="border: 1px solid #ccc; padding: 4px;">Product Name</th>
+                        <th style="border: 1px solid #ccc; padding: 4px;">Area</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {table_rows}
+                </tbody>
+            </table>
+        ''')
+    display_products.short_description = 'Paint Products'
     def save_related(self, request, form, formsets, change):
         super().save_related(request, form, formsets, change)
         instance = form.instance
@@ -2264,12 +2289,12 @@ class ColourPaletteImageInline(admin.StackedInline):
         css = {
             'all': ('css/admin_custom.css',)
         }
-
-
+    
+    
 
 
 @admin.register(ColourPaletteWithImages)
-class ColourPaletteWithImagesAdmin(admin.ModelAdmin):
+class ColourPaletteWithImagesAdmin(NoSuccessMessageAdminMixin,admin.ModelAdmin):
     inlines = [ColourPaletteImageInline]
     list_display = ['title', 'description_preview', 'image_preview','delete_link']
     actions = []  
@@ -2347,16 +2372,14 @@ class ColourCodeInline(admin.TabularInline):
 
 
 @admin.register(MultiColorPalette)
-class MultiColorPaletteAdmin(admin.ModelAdmin):
+class MultiColorPaletteAdmin(NoSuccessMessageAdminMixin,admin.ModelAdmin):
     form = MultiColorPaletteForm
     inlines = [ColourCodeInline]
 
     list_display = [
         'side_Title',
         'short_description',
-        'colourcode',
-        'category',
-        'colorshade',
+        'display_colour_codes',
         'delete_link'
     ]
 
@@ -2396,21 +2419,52 @@ class MultiColorPaletteAdmin(admin.ModelAdmin):
         return (obj.side_description[:50] + '...') if obj.side_description and len(obj.side_description) > 50 else obj.side_description or '—'
     short_description.short_description = 'Side Description'
 
-    # Show first colour code values
-    def colourcode(self, obj):
-        first = obj.colour_codes.first()
-        return first.code if first else '—'
-    colourcode.short_description = 'Colour Code'
+    # # Show first colour code values
+    # def colourcode(self, obj):
+    #     first = obj.colour_codes.first()
+    #     return first.code if first else '—'
+    # colourcode.short_description = 'Colour Code'
 
-    def category(self, obj):
-        first = obj.colour_codes.first()
-        return first.category if first else '—'
-    category.short_description = 'Category'
+    # def category(self, obj):
+    #     first = obj.colour_codes.first()
+    #     return first.category if first else '—'
+    # category.short_description = 'Category'
 
-    def colorshade(self, obj):
-        first = obj.colour_codes.first()
-        return first.colorshade if first else '—'
-    colorshade.short_description = 'Color Shade'
+    # def colorshade(self, obj):
+    #     first = obj.colour_codes.first()
+    #     return first.colorshade if first else '—'
+    # colorshade.short_description = 'Color Shade'
+
+    def display_colour_codes(self, obj):
+        codes = obj.colour_codes.all()
+        if not codes:
+            return '—'
+
+        rows = ''.join([
+            f'<tr>'
+            f'<td style="border:1px solid #ccc;padding:4px;">{c.code}</td>'
+            f'<td style="border:1px solid #ccc;padding:4px;">{c.category}</td>'
+            f'<td style="border:1px solid #ccc;padding:4px;">{c.colorshade}</td>'
+            f'</tr>'
+            for c in codes
+        ])
+
+        return mark_safe(f'''
+            <table style="border:1px solid #ccc; border-collapse:collapse;">
+                <thead>
+                    <tr>
+                        <th style="border:1px solid #ccc;padding:4px;">Code</th>
+                        <th style="border:1px solid #ccc;padding:4px;">Category</th>
+                        <th style="border:1px solid #ccc;padding:4px;">Color Shade</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {rows}
+                </tbody>
+            </table>
+        ''')
+    display_colour_codes.short_description = 'All Colour Codes'
+
 
     def save_model(self, request, obj, form, change):
         obj.type = 'multi-color-palette'

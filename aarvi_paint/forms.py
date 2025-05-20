@@ -2,10 +2,12 @@ from ckeditor.widgets import CKEditorWidget
 from django import forms
 import uuid
 import os
+import json
 from django.conf import settings
+from django.core.files.uploadedfile import UploadedFile
 from .models import Banner, Parallax, ColourPalette, Brochure, AdditionalInfo, AdminContactDetails,\
          Category, Product, Home,BannerImage,Testimonial,HomeBanner,AboutUs,Inspiration,WaterCalculator,WaterProduct,AboutUsBottomVideoBanner
-from django.forms import Select, SelectMultiple
+from django.forms import Select, SelectMultiple, ValidationError
 
 from .models import Banner, Parallax, ColourPalette, Brochure, AdditionalInfo, AdminContactDetails, Category, Product, \
     Home, AboutUs, Setting, HomeExterior, HomeWaterProof,GalleryBanner,PaintCalculator,ColourPaletteImage,MultiColorPalette
@@ -58,13 +60,19 @@ class ParallaxForm(forms.ModelForm):
 
         url_data = self.instance.url or {}
 
-        if desktop:
+        if isinstance(desktop,UploadedFile):
             desktop_path = default_storage.save(f'parallax/desktop/{desktop.name}', desktop)
             url_data['desktop'] = default_storage.url(desktop_path)
 
-        if mobile:
+        elif isinstance(desktop,str):
+            url_data['desktop'] = desktop   
+
+        if isinstance(mobile,UploadedFile):
             mobile_path = default_storage.save(f'parallax/mobile/{mobile.name}', mobile)
             url_data['mobile'] = default_storage.url(mobile_path)
+
+        elif isinstance(mobile,str):
+            url_data['mobile'] = mobile    
 
         cleaned_data['url'] = url_data
 
@@ -94,6 +102,20 @@ class BrochureForm(forms.ModelForm):
         # ✅ Do NOT add preview HTML here to avoid duplicate UI
         # Just use label and field cleanly
         pass
+    
+    def clean_pdf_field(self):
+        pdf = self.cleaned_data.get('pdf_field')
+        if pdf:
+            # Check file extension
+            if not pdf.name.lower().endswith('.pdf'):
+                raise ValidationError("Only PDF files are allowed.")
+            # Optional: Check MIME type (not 100% reliable but helpful)
+            if pdf.content_type != 'application/pdf':
+                raise ValidationError("Uploaded file is not a valid PDF.")
+            # Optional: Check file size (example: max 10MB)
+            if pdf.size > 10 * 1024 * 1024:
+                raise ValidationError("PDF file size must be under 10MB.")
+        return pdf
 
     def save(self, commit=True):
         instance = super().save(commit=False)
@@ -121,76 +143,6 @@ class BrochureForm(forms.ModelForm):
 
 
 
-# class BrochureForm(forms.ModelForm):
-#     image_field = forms.ImageField(required=False, label="Upload Image")
-
-#     pdf_field = forms.FileField(required=False, label="Upload PDF")
-
-
-#     class Meta:
-#         model = Brochure
-#         fields = ['image_field', 'pdf_field']
-
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         url = self.instance.url or {}
-#         image_url = url.get('image')
-
-#         # Set help text for preview image if available
-#         if image_url:
-#             self.fields['image_field'].help_text = mark_safe(
-#                 f'<br><strong>Preview Image:</strong><br>'
-#                 f'<img src="{image_url}" style="max-height: 100px;" /><br>'
-#                 f'<strong>URL:</strong> <a href="{image_url}" target="_blank">{image_url}</a>'
-#             )
-
-#         # Set help text for uploaded PDF if available
-#         if self.instance.uploaded_pdf:
-#             self.fields['pdf_field'].help_text = mark_safe(
-#                 f'<br><strong>Uploaded PDF:</strong><br>'
-#                 f'<a href="/media/brochures/{self.instance.uploaded_pdf}" target="_blank">'
-#                 f'{self.instance.uploaded_pdf}</a>'
-#             )
-
-#     def save(self, commit=True):
-#         instance = super().save(commit=False)
-#         url_data = instance.url or {}
-
-#         # Delete the image if "delete_image" is checked
-#         if self.cleaned_data.get('delete_image'):
-#             url_data.pop('image', None)
-#             if instance.image:
-#                 instance.image.delete()
-
-#         # Delete the PDF if "delete_pdf" is checked
-#         if self.cleaned_data.get('delete_pdf'):
-#             instance.uploaded_pdf = ""
-
-#         # Save the new image if an image is provided
-#         if self.cleaned_data.get('image_field'):
-#             image_path = default_storage.save(
-#                 f'brochures/images/{self.cleaned_data["image_field"].name}',
-#                 self.cleaned_data["image_field"]
-#             )
-#             url_data['image'] = default_storage.url(image_path)
-
-#         # Save the new PDF if a PDF is provided
-#         if self.cleaned_data.get('pdf_field'):
-#             pdf_path = default_storage.save(
-#                 f'brochures/{self.cleaned_data["pdf_field"].name}',
-#                 self.cleaned_data["pdf_field"]
-#             )
-#             instance.uploaded_pdf = self.cleaned_data["pdf_field"].name
-
-#         instance.url = url_data
-
-#         if commit:
-#             instance.save()
-#         return instance
-
-
-
-
 class SettingAdminForm(forms.ModelForm):
     playstore = forms.URLField(required=False, label="Play Store Link")
     appstore = forms.URLField(required=False, label="App Store Link")
@@ -199,10 +151,12 @@ class SettingAdminForm(forms.ModelForm):
 
     class Meta:
         model = Setting
-        fields = ['name', 'copyright', 'logo', 'side_image','hide']
+        fields = ['name', 'copyright', 'logo', 'side_image', 'hide']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        # Set initial values for download links
         if self.instance and self.instance.app_download_links:
             links = self.instance.app_download_links
             self.fields['playstore'].initial = links.get('playstore', '')
@@ -211,28 +165,28 @@ class SettingAdminForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
 
-        # Handle logo and side image uploads
+        # Extract image fields
+        logo = cleaned_data.get('logo')
+        side_image = cleaned_data.get('side_image')
+
+        # Use copy of existing URLs to avoid overwriting others
+        url_data = self.instance.url.copy() if self.instance and isinstance(self.instance.url, dict) else {}
+
+        # Save uploaded images and update URL dict
+        if logo:
+            logo_path = default_storage.save(f'logos/{logo.name}', logo)
+            url_data['logo'] = default_storage.url(logo_path)
+
+        if side_image:
+            side_image_path = default_storage.save(f'side_images/{side_image.name}', side_image)
+            url_data['side_image'] = default_storage.url(side_image_path)
+
+        # Save links
         app_download_links = {
             'playstore': cleaned_data.get('playstore', ''),
             'appstore': cleaned_data.get('appstore', ''),
         }
 
-        # Save logo and side image and get their URLs
-        logo = cleaned_data.get('logo')
-        side_image = cleaned_data.get('side_image')
-
-        url_data = {}
-        if logo:
-            # Save logo and get the URL
-            logo_path = default_storage.save(f'logos/{logo.name}', logo)
-            url_data['logo'] = default_storage.url(logo_path)
-
-        if side_image:
-            # Save side image and get the URL
-            side_image_path = default_storage.save(f'side_images/{side_image.name}', side_image)
-            url_data['side_image'] = default_storage.url(side_image_path)
-
-        # Save the URLs in the `url` field
         cleaned_data['url'] = url_data
         cleaned_data['app_download_links'] = app_download_links
 
@@ -240,8 +194,8 @@ class SettingAdminForm(forms.ModelForm):
 
     def save(self, commit=True):
         instance = super().save(commit=False)
-        instance.app_download_links = self.cleaned_data['app_download_links']
-        instance.url = self.cleaned_data['url']
+        instance.url = self.cleaned_data.get('url', {})
+        instance.app_download_links = self.cleaned_data.get('app_download_links', {})
         if commit:
             instance.save()
         return instance
@@ -953,7 +907,6 @@ class HomeExteriorForm(forms.ModelForm):
 
 class HomeWaterProofForm(forms.ModelForm):
     category = forms.CharField(
-        # widget=forms.Textarea,
         widget=forms.Textarea(attrs={'rows': 2}),
         help_text="Comma-separated category names"
     )
@@ -963,38 +916,48 @@ class HomeWaterProofForm(forms.ModelForm):
         model = HomeWaterProof
         fields = ['title', 'description', 'category', 'sideimage']
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Pre-fill category from instance
+        if self.instance and self.instance.category_name:
+            self.fields['category'].initial = (
+                ", ".join(self.instance.category_name)
+                if isinstance(self.instance.category_name, list)
+                else self.instance.category_name
+            )
+
     def clean(self):
         cleaned_data = super().clean()
 
-        # Handle single image upload for sideimage
+        # Get uploaded image
         sideimage_file = self.files.get('sideimage')
+
+        # Load previous image URLs from instance if they exist
+        url_data = self.instance.category_images.copy() if self.instance and self.instance.category_images else {}
+
+        # Save image if uploaded
         if sideimage_file:
             sideimage_path = default_storage.save(f'side_images/{sideimage_file.name}', sideimage_file)
-            cleaned_data['sideimage_url'] = default_storage.url(sideimage_path)
-        else:
-            cleaned_data['sideimage_url'] = ""
+            url_data['sideimage'] = default_storage.url(sideimage_path)
 
-        # Clean category as comma-separated values
-        cleaned_data['category'] = [x.strip() for x in cleaned_data.get('category', '').split(',')]
+        cleaned_data['sideimage_url'] = url_data
+
+        # Clean category into list
+        category_input = cleaned_data.get('category', '')
+        cleaned_data['category'] = [x.strip() for x in category_input.split(',') if x.strip()]
 
         return cleaned_data
-
- 
-
 
     def save(self, commit=True):
         instance = super().save(commit=False)
 
-    # Save category_name as comma-separated string
+        # Save category_name as a comma-separated string
         category_list = self.cleaned_data.get('category', [])
         instance.category_name = ", ".join(category_list)
 
-        # Save image URL into category_images JSON field
-        sideimage_url = self.cleaned_data.get('sideimage_url', "")
-        if sideimage_url:
-            instance.category_images = {"sideimage": sideimage_url}
-        else:
-            instance.category_images = {}
+        # Save image URLs
+        instance.category_images = self.cleaned_data.get('sideimage_url', {})
 
         if commit:
             instance.save()
