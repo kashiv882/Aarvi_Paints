@@ -391,6 +391,10 @@ class BannerImage(models.Model):
         return "No image"
     image_preview.short_description = 'Preview'
 
+    def __str__(self):
+        return ""
+        # return f"{self.banner.title}"
+
 
 class AboutUs(TimeStampedModel):
 

@@ -7,7 +7,7 @@ from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
 from .models import Banner, Parallax, ColourPalette, Brochure, AdditionalInfo, AdminContactDetails,\
          Category, Product, Home,BannerImage,Testimonial,HomeBanner,AboutUs,Inspiration,WaterCalculator,WaterProduct,AboutUsBottomVideoBanner
-from django.forms import Select, SelectMultiple, ValidationError
+from django.forms import ClearableFileInput, Select, SelectMultiple, ValidationError
 
 from .models import Banner, Parallax, ColourPalette, Brochure, AdditionalInfo, AdminContactDetails, Category, Product, \
     Home, AboutUs, Setting, HomeExterior, HomeWaterProof,GalleryBanner,PaintCalculator,ColourPaletteImage,MultiColorPalette
@@ -550,47 +550,60 @@ class HomeInteriorDifferentRoomForm(BaseHomeInteriorDifferentRoomForm):
         fields = ['title', 'type_description', 'image']
 
 # ==================================multiple image============================================
-class BaseBannerMultipleImageForm(forms.ModelForm):
-    class Meta:
-        model = Banner
-        fields = []  # Exclude all fields for now, except for those that are editable
-        # We don't include 'type' in the form anymore, as it's non-editable
+# from django.forms.widgets import ClearableFileInput
 
-# Form for BannerImage inline to handle multiple images
-class BannerImageInlineForm(forms.ModelForm):
-    class Meta:
-        model = BannerImage
-        fields = ['image']
-          # Only allow uploading images
+# class MultipleClearableFileInput(ClearableFileInput):
+#     allow_multiple_selected = True
 
-# Inline model for BannerImage
-class BannerImageInline(admin.TabularInline):
-    model = BannerImage
-    form = BannerImageInlineForm
-    extra = 1  # Allow adding 1 extra inline image
-    readonly_fields = ['image_preview']
-
-    def image_preview(self, obj):
-        if obj.image:
-            return format_html('<img src="{}" width="100" height="auto" style="object-fit:contain;"/>', obj.image.url)
-        return "No image"
-
-    image_preview.short_description = "Preview"
+# class MultipleImageUploadForm(forms.Form):
+#     images = forms.FileField(
+#         widget=MultipleClearableFileInput(attrs={'multiple': True})
+#     )
 
 
-class GalleryBannerForm(BaseBannerForm):
-    class Meta(BaseBannerForm.Meta):
-        fields = ['banner_image']
 
+class CustomImageWidget(ClearableFileInput):
+    template_name = 'widgets/custom_clearable_file_input.html'
 
 class HomeBannerImageForm(forms.ModelForm):
-
     class Meta:
-        model = HomeBanner
-        fields = []  
+        model = BannerImage
+        fields = ['image'] 
         help_texts = {
             'image': 'Upload an image (must be less than 10 MB).'
         }
+        widgets = {
+            'image': CustomImageWidget(),  # <-- apply widget here
+        }
+
+
+
+class BannerImageInline(admin.StackedInline):
+    model = BannerImage
+    extra = 1
+    form = HomeBannerImageForm
+    # form = MultipleImageUploadForm
+    readonly_fields = ['image_preview']
+    fields = ['image_preview']
+
+    
+
+    def image_preview(self, obj):
+        if obj.image and hasattr(obj.image, 'url'):
+            return format_html(
+                '<img src="{}" style="max-height: 100px; border: 1px solid #ccc;" />',
+                obj.image.url
+            )
+        return "No image uploaded"
+
+    image_preview.short_description = 'Image Preview'
+
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+    def get_fields(self, request, obj=None):
+        return [ 'image','image_preview'] 
 
 class GalleryBannerImageForm(forms.ModelForm):
     class Meta:

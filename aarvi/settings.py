@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'ckeditor',
     'nested_admin',
+    'modeladmin_reorder',
 
 ]
 
@@ -136,28 +137,28 @@ WSGI_APPLICATION = 'aarvi.wsgi.application'
 #     }
 # }
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',  # Ensure PostgreSQL is set as the backend
-#         'NAME': os.getenv('DB_NAME'),  # Get the database name from the environment variable
-#         'USER': os.getenv('DB_USER'),  # Get the database user from the environment variable
-#         'PASSWORD': os.getenv('DB_PASSWORD'),  # Get the database password from the environment variable
-#         'HOST': os.getenv('DB_HOST'),  # Get the host from the environment variable
-#         'PORT': os.getenv('DB_PORT'),  # Get the port from the environment variable
-#     }
-# }
-
-
-import dj_database_url
-import os
-
 DATABASES = {
-    'default': dj_database_url.config(
-        default=os.getenv('DATABASE_URL'),
-        conn_max_age=600,  
-        ssl_require=True   
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',  # Ensure PostgreSQL is set as the backend
+        'NAME': os.getenv('DB_NAME'),  # Get the database name from the environment variable
+        'USER': os.getenv('DB_USER'),  # Get the database user from the environment variable
+        'PASSWORD': os.getenv('DB_PASSWORD'),  # Get the database password from the environment variable
+        'HOST': os.getenv('DB_HOST'),  # Get the host from the environment variable
+        'PORT': os.getenv('DB_PORT'),  # Get the port from the environment variable
+    }
 }
+
+
+# import dj_database_url
+# import os
+
+# DATABASES = {
+#     'default': dj_database_url.config(
+#         default=os.getenv('DATABASE_URL'),
+#         conn_max_age=600,  
+#         ssl_require=True   
+#     )
+# }
 
 
 
@@ -208,7 +209,23 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+MODELADMIN_REORDER = [
+    {
+        'label': 'Banner Group',
+        'icon': 'fas fa-images',  # optional FontAwesome icon for the group
+        'models': [
+            'aarvi_paint.HomeBanner',
+            'aarvi_paint.GalleryBanner',
+            'aarvi_paint.PaintCalculatorBanner',
+            'aarvi_paint.ProductBanner',
+            'aarvi_paint.ContactUsBanner',
+            'aarvi_paint.ColorPalletsBanner',
+        ]
+    },
+    # You can add more app or model groups here if you want
+]
+
 
 
 JAZZMIN_SETTINGS = {
@@ -228,29 +245,79 @@ JAZZMIN_SETTINGS = {
     "hide_models": [],
     "order_with_respect_to": [],
 
+    # Custom ordering of models
+    "order_with_respect_to": [
+        # This controls the order of *apps* and *models* inside apps
+        "aarvi_paint",  # Place this app first
+        "aarvi_paint.GalleryBanner",
+        "aarvi_paint.HomeBanner",
+        "aarvi_paint.HomeInteriorBanner",
+        "aarvi_paint.PaintCalculatorBanner",
+        "aarvi_paint.HomeExteriorBanner",
+        "aarvi_paint.HomeWaterproofingBanner",
+        "aarvi_paint.AboutUsTopBanner",
+        "aarvi_paint.AboutUsBottomVideoBanner",
+        "aarvi_paint.ColorPalletsBanner",
+        "aarvi_paint.ProductBanner",
+        "aarvi_paint.ContactUsBanner",  
+    ],
+
+
     # Group models under the 'Banners' section
-    "group_models": {
-        "Banners": [
-            "aarvi_paint.GalleryBanner",
-            "aarvi_paint.HomeInteriorBanner",
-            "aarvi_paint.HomeExteriorBanner",
-            "aarvi_paint.HomeWaterproofingBanner",
-            "aarvi_paint.AboutUsTopBanner",
-            "aarvi_paint.ColorPalletsBanner",
-            "aarvi_paint.ProductBanner",
-            "aarvi_paint.ContactUsBanner",
-            "aarvi_paint.AboutUsBottomVideoBanner",
-        ],
-    },
+    # "group_models": {
+    #     "Banner Group": [
+    #         "aarvi_paint.HomeBanner",
+    #         "aarvi_paint.GalleryBanner",
+    #         "aarvi_paint.PaintCalculatorBanner",
+    #         "aarvi_paint.ProductBanner",
+    #         "aarvi_paint.ContactUsBanner",
+    #         "aarvi_paint.ColorPalletsBanner",
+        # ],
+        # "Interior & Exterior": [
+        #     "aarvi_paint.HomeInteriorBanner",
+        #     "aarvi_paint.HomeExteriorBanner",
+        #     "aarvi_paint.HomeWaterproofingBanner",
+        # ],
+        # "About Us": [
+        #     "aarvi_paint.AboutUsTopBanner",
+        #     "aarvi_paint.AboutUsBottomVideoBanner",
+        # ],
+        # Add more groups as needed:
+        # "Products": [
+        #     "aarvi_paint.Product",
+        #     "aarvi_paint.ProductCategory",
+        # ],
+        # "Users & Authentication": [
+        #     "auth.User",
+        #     "auth.Group",
+        # ],
+# },
+
 
     # Optional: Icons for your models
     "icons": {
         "auth.User": "fas fa-user",
         "auth.Group": "fas fa-users",
+
+        # "aarvi_paint.GalleryBanner": "fas fa-image",
+        # "aarvi_paint.HomeBanner": "fas fa-home",
+        # "aarvi_paint.PaintCalculatorBanner": "fas fa-paint-roller",
+        # "aarvi_paint.ContactUsBanner": "fas fa-envelope",
+        # "aarvi_paint.ProductBanner": "fas fa-box",
+        # "aarvi_paint.HomeInteriorBanner": "fas fa-couch",
+        # "aarvi_paint.HomeExteriorBanner": "fas fa-city",
+        # "aarvi_paint.AboutUsTopBanner": "fas fa-info-circle",
+        # "aarvi_paint.AboutUsBottomVideoBanner": "fas fa-video",
+        # "aarvi_paint.ColorPalletsBanner": "fas fa-palette",
+        # "aarvi_paint.HomeWaterproofingBanner": "fas fa-water",
+    },
+
+    "changeform_format": "horizontal_tabs",
+    "changeform_format_overrides": {
+        "auth.user": "collapsible",
+        "auth.group": "collapsible",
     },
 }
-
-
 
 
 JAZZMIN_UI_TWEAKS = {
