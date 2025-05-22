@@ -5,7 +5,7 @@ import os
 import json
 from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
-from .models import Banner, Parallax, ColourPalette, Brochure, AdditionalInfo, AdminContactDetails,\
+from .models import Banner, ExteriorHomeCategory, HomeInteriorFeature, HomeInteriorSubCategoryImage, Parallax, ColourPalette, Brochure, AdditionalInfo, AdminContactDetails,\
          Category, Product, Home,BannerImage,Testimonial,HomeBanner,AboutUs,Inspiration,WaterCalculator,WaterProduct,AboutUsBottomVideoBanner
 from django.forms import ClearableFileInput, Select, SelectMultiple, ValidationError
 
@@ -762,6 +762,33 @@ class AboutUsBottomVideoBannerForm(forms.ModelForm):
 
 
 # ===============================================Banner End===================================================
+class HomeImageWidget(ClearableFileInput):
+    template_name = 'widgets/home_clearable_file_input.html'
+
+
+class HomeInteriorSubCategoryImageForm(forms.ModelForm):
+    class Meta:
+        model = HomeInteriorSubCategoryImage
+        fields = '__all__'
+        widgets = {
+            'image': HomeImageWidget(),
+        }
+
+class HomeInteriorFeatureForm(forms.ModelForm):
+    class Meta:
+        model = HomeInteriorFeature
+        fields = '__all__'
+        widgets = {
+            'image': HomeImageWidget(),
+        }
+
+class ExteriorHomeCategoryForm(forms.ModelForm):
+    class Meta:
+        model = ExteriorHomeCategory
+        fields = '__all__'
+        widgets = {
+            'image': HomeImageWidget(),
+        }
 
 
 class HomeInteriorForm(forms.ModelForm):
@@ -882,6 +909,9 @@ class ColourPaletteImageInlineForm(forms.ModelForm):
         
         help_texts = {
             'image': 'Upload an image (must be less than 10 MB).'
+        }
+        widgets = {
+            'image': HomeImageWidget(),
         }
 
 class WaterCalculatorAdminForm(forms.ModelForm):

@@ -17,7 +17,7 @@ import json
 
 from django.template.response import TemplateResponse
 from django.contrib.auth.models import User, Group
-from .forms import  HomeInteriorBannerForm,PaintCalculatorBannerForm,SettingAdminForm, HomeExteriorBannerForm, ParallaxForm,HomeBannerImageForm,AboutUsAdminForm,TestimonialAdminForm,\
+from .forms import  ExteriorHomeCategoryForm, HomeInteriorBannerForm, HomeInteriorFeatureForm, HomeInteriorSubCategoryImageForm,PaintCalculatorBannerForm,SettingAdminForm, HomeExteriorBannerForm, ParallaxForm,HomeBannerImageForm,AboutUsAdminForm,TestimonialAdminForm,\
     BrochureForm, AdditionalInfoForm, AdminContactDetailsForm, CategoryForm, ProductForm,GalleryBannerImageForm,InspirationForm,AboutUsForm, HomeWaterProofForm,\
     AboutUsTopBannerForm, ColorPalletsBannerForm, ProductBannerForm, ContactUsBannerForm, HomeWaterproofingBannerForm,HomeExteriorForm,ColourPaletteImageInlineForm,WaterCalculatorAdminForm, PaintCalculatorAdminForm,\
     AboutUsBottomVideoBannerForm, BaseBannerForm,HomeExteriordataForm,BannerImageInline,MultiColorPaletteForm
@@ -91,6 +91,11 @@ class AboutUsAdmin(ButtonActionMixin, NoSuccessMessageAdminMixin, admin.ModelAdm
 
     def has_add_permission(self, request):
         return AboutUs.objects.count() < 1
+    def changeform_view(self, request, object_id=None, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        # Only show the "Save" button, hide "Save and add another"
+        extra_context['show_save_and_add_another'] = False
+        return super().changeform_view(request, object_id, form_url, extra_context=extra_context)
 
     class Media:
         css = {
@@ -224,6 +229,12 @@ class HomeBannerAdmin(ButtonActionMixin,NoSuccessMessageAdminMixin,admin.ModelAd
     
     def has_add_permission(self, request):
         return HomeBanner.objects.filter(type='home-banner').count() < 1
+    
+    def changeform_view(self, request, object_id=None, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        # Only show the "Save" button, hide "Save and add another"
+        extra_context['show_save_and_add_another'] = False
+        return super().changeform_view(request, object_id, form_url, extra_context=extra_context)
 
     def get_queryset(self, request):
         return super().get_queryset(request).filter(type='home-banner')
@@ -354,6 +365,12 @@ class WaterCalculatorAdmin(ButtonActionMixin,NoSuccessMessageAdminMixin,admin.Mo
     
     def has_add_permission(self, request):
         return WaterCalculator.objects.filter(type="WATER_CALCULATOR").count() < 1
+
+    def changeform_view(self, request, object_id=None, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        # Only show the "Save" button, hide "Save and add another"
+        extra_context['show_save_and_add_another'] = False
+        return super().changeform_view(request, object_id, form_url, extra_context=extra_context)
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -487,7 +504,13 @@ class HomeInteriorBannerAdmin(CommonAdminMixin,ButtonActionMixin,NoSuccessMessag
 
     def has_add_permission(self, request):
         return HomeInteriorBanner.objects.filter(type="home-interior-banner").count() < 1
-
+    
+    def changeform_view(self, request, object_id=None, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        # Only show the "Save" button, hide "Save and add another"
+        extra_context['show_save_and_add_another'] = False
+        return super().changeform_view(request, object_id, form_url, extra_context=extra_context)
+    
     def get_queryset(self, request):
         return super().get_queryset(request).filter(type='home-interior-banner')
 
@@ -516,6 +539,11 @@ class PaintCalculatorBannerAdmin(CommonAdminMixin,ButtonActionMixin,NoSuccessMes
     def has_add_permission(self, request):
         return PaintCalculatorBanner.objects.filter(type="paint-calculator-banner").count() < 1
     
+    def changeform_view(self, request, object_id=None, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        # Only show the "Save" button, hide "Save and add another"
+        extra_context['show_save_and_add_another'] = False
+        return super().changeform_view(request, object_id, form_url, extra_context=extra_context)
     def get_queryset(self, request):
         return super().get_queryset(request).filter(type='paint-calculator-banner')
 
@@ -543,7 +571,11 @@ class HomeExteriorBannerAdmin(CommonAdminMixin,ButtonActionMixin,NoSuccessMessag
     
     def has_add_permission(self, request):
         return HomeExteriorBanner.objects.filter(type="home-exterior-banner").count() < 1
-
+    def changeform_view(self, request, object_id=None, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        # Only show the "Save" button, hide "Save and add another"
+        extra_context['show_save_and_add_another'] = False
+        return super().changeform_view(request, object_id, form_url, extra_context=extra_context)
     def get_queryset(self, request):
         return super().get_queryset(request).filter(type='home-exterior-banner')
 
@@ -571,7 +603,13 @@ class HomeWaterproofingBannerAdmin(CommonAdminMixin,ButtonActionMixin,NoSuccessM
     
     def has_add_permission(self, request):
         return HomeWaterproofingBanner.objects.filter(type="home-waterproofing-banner").count() < 1
-
+    
+    def changeform_view(self, request, object_id=None, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        # Only show the "Save" button, hide "Save and add another"
+        extra_context['show_save_and_add_another'] = False
+        return super().changeform_view(request, object_id, form_url, extra_context=extra_context)
+    
     def get_queryset(self, request):
         return super().get_queryset(request).filter(type='home-waterproofing-banner')
 
@@ -600,7 +638,13 @@ class AboutUsTopBannerAdmin(CommonAdminMixin,ButtonActionMixin,NoSuccessMessageA
     
     def has_add_permission(self, request):
         return AboutUsTopBanner.objects.filter(type="about-us-top-banner").count() < 1
-
+    
+    def changeform_view(self, request, object_id=None, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        # Only show the "Save" button, hide "Save and add another"
+        extra_context['show_save_and_add_another'] = False
+        return super().changeform_view(request, object_id, form_url, extra_context=extra_context)
+    
     def get_queryset(self, request):
         return super().get_queryset(request).filter(type='about-us-top-banner')
 
@@ -628,6 +672,12 @@ class ColorPalletsBannerAdmin(CommonAdminMixin,ButtonActionMixin,NoSuccessMessag
 
     def has_add_permission(self, request):
         return ColorPalletsBanner.objects.filter(type="color-pallets-banner").count() < 1
+
+    def changeform_view(self, request, object_id=None, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        # Only show the "Save" button, hide "Save and add another"
+        extra_context['show_save_and_add_another'] = False
+        return super().changeform_view(request, object_id, form_url, extra_context=extra_context)
 
     def get_queryset(self, request):
         return super().get_queryset(request).filter(type='color-pallets-banner')
@@ -657,6 +707,12 @@ class ProductBannerAdmin(CommonAdminMixin,ButtonActionMixin,NoSuccessMessageAdmi
     
     def has_add_permission(self, request):
         return ProductBanner.objects.filter(type="product-banner").count() < 1
+
+    def changeform_view(self, request, object_id=None, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        # Only show the "Save" button, hide "Save and add another"
+        extra_context['show_save_and_add_another'] = False
+        return super().changeform_view(request, object_id, form_url, extra_context=extra_context)
 
     def get_queryset(self, request):
         return super().get_queryset(request).filter(type='product-banner')
@@ -690,6 +746,12 @@ class ContactUsBannerAdmin(CommonAdminMixin,ButtonActionMixin,NoSuccessMessageAd
     def get_queryset(self, request):
         return super().get_queryset(request).filter(type='contact-us-banner')
 
+    def changeform_view(self, request, object_id=None, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        # Only show the "Save" button, hide "Save and add another"
+        extra_context['show_save_and_add_another'] = False
+        return super().changeform_view(request, object_id, form_url, extra_context=extra_context)
+
     display_image_urls = display_media_urls
 
 
@@ -722,6 +784,12 @@ class AboutUsBottomVideoBannerAdmin(ButtonActionMixin,NoSuccessMessageAdminMixin
     
     def has_add_permission(self, request):
         return AboutUsBottomVideoBanner.objects.filter(type='about-us-bottom-video-banner').count() < 1
+
+    def changeform_view(self, request, object_id=None, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        # Only show the "Save" button, hide "Save and add another"
+        extra_context['show_save_and_add_another'] = False
+        return super().changeform_view(request, object_id, form_url, extra_context=extra_context)
 
     def get_queryset(self, request):
         return super().get_queryset(request).filter(type='about-us-bottom-video-banner')
@@ -815,13 +883,13 @@ class ParallaxAdmin(CommonAdminMixinOfParallax,ButtonActionMixin,NoSuccessMessag
             'all': ('css/admin_custom.css',)
         }
  
-
+    
     def get_actions(self, request):
         actions = super().get_actions(request)
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions   
-
+    
     def get_desktop_preview(self, obj):
         if obj.url and 'desktop' in obj.url:
             desktop_url = obj.url['desktop']
@@ -892,6 +960,12 @@ class AdminContactDetailsAdmin(ButtonActionMixin,NoSuccessMessageAdminMixin,admi
     
     def has_add_permission(self, request):
         return AdminContactDetails.objects.count() < 1
+
+    def changeform_view(self, request, object_id=None, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        # Only show the "Save" button, hide "Save and add another"
+        extra_context['show_save_and_add_another'] = False
+        return super().changeform_view(request, object_id, form_url, extra_context=extra_context)
     
     class Media:
         css = {
@@ -955,6 +1029,12 @@ class SettingAdmin(ButtonActionMixin,NoSuccessMessageAdminMixin,admin.ModelAdmin
 
     def has_add_permission(self, request):
         return Setting.objects.count() < 1
+    
+    def changeform_view(self, request, object_id=None, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        # Only show the "Save" button, hide "Save and add another"
+        extra_context['show_save_and_add_another'] = False
+        return super().changeform_view(request, object_id, form_url, extra_context=extra_context)
 
 
     list_display = [
@@ -975,7 +1055,8 @@ class SettingAdmin(ButtonActionMixin,NoSuccessMessageAdminMixin,admin.ModelAdmin
 
     def display_hide(self, obj):
         return obj.hide
-    display_name.short_description = 'Hide'
+    display_hide.short_description = 'Hide'
+    # 
 
     def display_copyright(self, obj):
         return obj.copyright
@@ -1035,6 +1116,12 @@ class CategoryAdmin(ButtonActionMixin,NoSuccessMessageAdminMixin,admin.ModelAdmi
     
     def has_add_permission(self, request):
         return Category.objects.count() < 1
+    
+    def changeform_view(self, request, object_id=None, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        # Only show the "Save" button, hide "Save and add another"
+        extra_context['show_save_and_add_another'] = False
+        return super().changeform_view(request, object_id, form_url, extra_context=extra_context)
 
     def display_subcategories(self, obj):
         return ", ".join(obj.subcategory_names or [])
@@ -1200,12 +1287,22 @@ class CategoryImageInline(admin.TabularInline):
 
 class HomeInteriorSubCategoryImageInline(NestedTabularInline):
     model = HomeInteriorSubCategoryImage
+    form = HomeInteriorSubCategoryImageForm
     extra = 1
 
     class Media:
         css = {
             'all': ('css/admin_custom.css',)
         }
+    # def image_preview(self, obj):
+    #     if obj.image and hasattr(obj.image, 'url'):
+    #         return format_html(
+    #             '<img src="{}" style="max-height: 100px; border: 1px solid #ccc;" />',
+    #             obj.image.url
+    #         )
+    #     return "No image uploaded"
+
+    # image_preview.short_description = 'Image Preview'
 
 
 class HomeInteriorSubCategoryInline(NestedStackedInline):
@@ -1231,6 +1328,7 @@ class HomeInteriorCategoryInline(NestedStackedInline):
 
 class HomeInteriorFeatureInline(NestedStackedInline):
     model = HomeInteriorFeature
+    form = HomeInteriorFeatureForm
     extra = 1
     class Media:
         css = {
@@ -1253,6 +1351,12 @@ class HomeInteriorAdmin(CommonAdminMixinOfHome,ButtonActionMixin,NoSuccessMessag
     
     def has_add_permission(self, request):
         return HomeInterior.objects.filter(type="Interior").count() < 1
+    
+    def changeform_view(self, request, object_id=None, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        # Only show the "Save" button, hide "Save and add another"
+        extra_context['show_save_and_add_another'] = False
+        return super().changeform_view(request, object_id, form_url, extra_context=extra_context)
     
 
     class Media:
@@ -1332,6 +1436,7 @@ class HomeInteriorAdmin(CommonAdminMixinOfHome,ButtonActionMixin,NoSuccessMessag
 
 class ExteriorCategoryImageInline(NestedStackedInline):
     model = ExteriorCategoryImage
+    form = ExteriorHomeCategoryForm
     extra = 1
 
     class Media:
@@ -1375,6 +1480,12 @@ class HomeExteriorAdmin(CommonAdminMixinOfHome,ButtonActionMixin,NoSuccessMessag
     
     def has_add_permission(self, request):
         return HomeExterior.objects.filter(type="Exterior").count() < 1
+    
+    def changeform_view(self, request, object_id=None, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        # Only show the "Save" button, hide "Save and add another"
+        extra_context['show_save_and_add_another'] = False
+        return super().changeform_view(request, object_id, form_url, extra_context=extra_context)
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -1509,6 +1620,12 @@ class PaintCalculatorAdmin(ButtonActionMixin,NoSuccessMessageAdminMixin,admin.Mo
     
     def has_add_permission(self, request):
         return PaintCalculator.objects.filter(type="PAINT_CALCULATOR").count() < 1
+    
+    def changeform_view(self, request, object_id=None, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        # Only show the "Save" button, hide "Save and add another"
+        extra_context['show_save_and_add_another'] = False
+        return super().changeform_view(request, object_id, form_url, extra_context=extra_context)
 
     def get_queryset(self, request):
         # Filter only entries of type PAINT_CALCULATOR
@@ -1600,6 +1717,12 @@ class ColourPaletteWithImagesAdmin(ButtonActionMixin,NoSuccessMessageAdminMixin,
     
     def has_add_permission(self, request):
         return ColourPaletteWithImages.objects.filter(type="color-palette-with-images").count() < 1
+    
+    def changeform_view(self, request, object_id=None, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        # Only show the "Save" button, hide "Save and add another"
+        extra_context['show_save_and_add_another'] = False
+        return super().changeform_view(request, object_id, form_url, extra_context=extra_context)
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -1676,6 +1799,12 @@ class MultiColorPaletteAdmin(ButtonActionMixin,NoSuccessMessageAdminMixin,admin.
  
     def has_add_permission(self, request):
         return MultiColorPalette.objects.filter(type="multi-color-palette").count() < 1
+    
+    def changeform_view(self, request, object_id=None, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        # Only show the "Save" button, hide "Save and add another"
+        extra_context['show_save_and_add_another'] = False
+        return super().changeform_view(request, object_id, form_url, extra_context=extra_context)
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)

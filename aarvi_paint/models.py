@@ -169,6 +169,8 @@ class ColourPaletteImage(models.Model):
             images = list(self.palette.images.values_list('image', flat=True))
             self.palette.url = {f"img{i+1}": image_url for i, image_url in enumerate(images)}
             self.palette.save()
+    def __str__(self):
+        return ""
 
     
 
@@ -182,6 +184,8 @@ class ColourPaletteWithImages(ColourPalette):
         self.type = 'color-palette-with-images'
         super().save(*args, **kwargs)
 
+    def __str__(self):
+        return ""
     
 
 
