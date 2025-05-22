@@ -23,17 +23,8 @@ from django.forms import formset_factory
 from urllib.parse import urlparse
 
 
-# ===================================================Home enterior=========================================================
+# ============================================================================================================
 
-
-
-
-class ColourPaletteForm(BaseImageForm):
-
-    class Meta:
-        description = forms.CharField(widget=CKEditorWidget())
-        model = ColourPalette
-        fields = ['title', 'description']
 
 class ParallaxForm(forms.ModelForm):
     desktop = forms.ImageField(required=False, label="Desktop Image",help_text='Upload an image (must be less than 10 MB)')
@@ -84,9 +75,6 @@ class ParallaxForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
-
-
-
 
 
 class BrochureForm(forms.ModelForm):
@@ -357,143 +345,85 @@ class ProductForm(BaseImageForm):
             instance.save()
         return instance
     
-class HomeForm(forms.ModelForm):
-    category_image_field = forms.ImageField(required=False, label="Category Image")
-    type_image_field = forms.ImageField(required=False, label="Type Image")
+# class HomeForm(forms.ModelForm):
+#     category_image_field = forms.ImageField(required=False, label="Category Image")
+#     type_image_field = forms.ImageField(required=False, label="Type Image")
 
-    class Meta:
-        model = Home
-        fields = [
-            'title',
-            # 'type',
-            # 'banners',
-            'category_name',
-            'subcategory_name',
-            'title_type',
-            'type_description',
-        ]
+#     class Meta:
+#         model = Home
+#         fields = [
+#             'title',
+#             # 'type',
+#             # 'banners',
+#             'category_name',
+#             'subcategory_name',
+#             'title_type',
+#             'type_description',
+#         ]
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
 
-        # Handle Category Image Preview
-        category_url = self.instance.category_images.get('image') if self.instance.category_images else None
-        if category_url:
-            self.fields['category_image_field'].help_text = mark_safe(
-                f'<br><strong>Category Image Preview:</strong><br>'
-                f'<img src="{category_url}" style="max-height: 100px;" /><br>'
-                f'<strong>URL:</strong> <a href="{category_url}" target="_blank">{category_url}</a>'
-            )
+#         # Handle Category Image Preview
+#         category_url = self.instance.category_images.get('image') if self.instance.category_images else None
+#         if category_url:
+#             self.fields['category_image_field'].help_text = mark_safe(
+#                 f'<br><strong>Category Image Preview:</strong><br>'
+#                 f'<img src="{category_url}" style="max-height: 100px;" /><br>'
+#                 f'<strong>URL:</strong> <a href="{category_url}" target="_blank">{category_url}</a>'
+#             )
 
-        # Handle Type Image Preview
-        type_url = self.instance.type_images.get('image') if self.instance.type_images else None
-        if type_url:
-            self.fields['type_image_field'].help_text = mark_safe(
-                f'<br><strong>Type Image Preview:</strong><br>'
-                f'<img src="{type_url}" style="max-height: 100px;" /><br>'
-                f'<strong>URL:</strong> <a href="{type_url}" target="_blank">{type_url}</a>'
-            )
+#         # Handle Type Image Preview
+#         type_url = self.instance.type_images.get('image') if self.instance.type_images else None
+#         if type_url:
+#             self.fields['type_image_field'].help_text = mark_safe(
+#                 f'<br><strong>Type Image Preview:</strong><br>'
+#                 f'<img src="{type_url}" style="max-height: 100px;" /><br>'
+#                 f'<strong>URL:</strong> <a href="{type_url}" target="_blank">{type_url}</a>'
+#             )
 
-    def save(self, commit=True):
-        instance = super().save(commit=False)
+#     def save(self, commit=True):
+#         instance = super().save(commit=False)
 
-        # Handle Category Image Upload or Delete
-        category_data = instance.category_images or {}
-        if self.cleaned_data.get('delete_category_image'):
-            category_data.pop('image', None)
-        if self.cleaned_data.get('category_image_field'):
-            path = default_storage.save(
-                f'uploads/{self.cleaned_data["category_image_field"].name}',
-                self.cleaned_data["category_image_field"]
-            )
-            category_data['image'] = default_storage.url(path)
-        instance.category_images = category_data
+#         # Handle Category Image Upload or Delete
+#         category_data = instance.category_images or {}
+#         if self.cleaned_data.get('delete_category_image'):
+#             category_data.pop('image', None)
+#         if self.cleaned_data.get('category_image_field'):
+#             path = default_storage.save(
+#                 f'uploads/{self.cleaned_data["category_image_field"].name}',
+#                 self.cleaned_data["category_image_field"]
+#             )
+#             category_data['image'] = default_storage.url(path)
+#         instance.category_images = category_data
 
-        # Handle Type Image Upload or Delete
-        type_data = instance.type_images or {}
-        if self.cleaned_data.get('delete_type_image'):
-            type_data.pop('image', None)
-        if self.cleaned_data.get('type_image_field'):
-            path = default_storage.save(
-                f'uploads/{self.cleaned_data["type_image_field"].name}',
-                self.cleaned_data["type_image_field"]
-            )
-            type_data['image'] = default_storage.url(path)
-        instance.type_images = type_data
+#         # Handle Type Image Upload or Delete
+#         type_data = instance.type_images or {}
+#         if self.cleaned_data.get('delete_type_image'):
+#             type_data.pop('image', None)
+#         if self.cleaned_data.get('type_image_field'):
+#             path = default_storage.save(
+#                 f'uploads/{self.cleaned_data["type_image_field"].name}',
+#                 self.cleaned_data["type_image_field"]
+#             )
+#             type_data['image'] = default_storage.url(path)
+#         instance.type_images = type_data
 
-        if commit:
-            instance.save()
-        return instance
-
-
-
-
-
-class BaseBannerForm(forms.ModelForm):
-    banner_image = forms.ImageField(
-        required=False,
-        help_text='Images should be less than 10 MB.'
-    )
-    # delete_image = forms.BooleanField(required=False, label='Delete banner Image')
-
-    class Meta:
-        model = Banner
-        fields = ['title', 'short_description']
-
-    def _init_(self, *args, **kwargs):
-        super()._init_(*args, **kwargs)
-
-        from django.utils.safestring import mark_safe  # ensure it's imported
-
-        url = self.instance.url or {}
-        banner_image_url = url.get('image')
-        # video_url = url.get('video')
-
-        if banner_image_url:
-            self.fields['banner_image'].help_text = mark_safe(
-                f'<br><strong>Banner Image Preview:</strong><br>'
-                f'<img src="{banner_image_url}" style="max-height: 100px;" /><br>'
-                f'<strong>URL:</strong> <a href="{banner_image_url}" target="_blank">{banner_image_url}</a>'
-            )
-        
-
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-
-        url_data = instance.url or {}
-
-        # Delete logic
-        # if self.cleaned_data.get('delete_image'):
-        #     url_data.pop('image', None)
-
-
-        # Upload logic
-        if self.cleaned_data.get('banner_image'):
-            path = default_storage.save(
-                f'banners/image/{self.cleaned_data["banner_image"].name}',
-                self.cleaned_data["banner_image"]
-            )
-            url_data['image'] = default_storage.url(path)
-
-        
-
-        instance.url = url_data
-
-        if commit:
-            instance.save()
-        return instance
+#         if commit:
+#             instance.save()
+#         return instance
 
 
 # ===============================================================================Snkalp=========================
 
-class BaseHomeInteriorForm(forms.ModelForm):
-    class Meta:
-        model = Home
-        fields = ['title', 'type_description']
+# class BaseHomeInteriorForm(forms.ModelForm):
+#     class Meta:
+#         model = Home
+#         fields = ['title', 'type_description']
 
-class HomeInteriorForm(BaseHomeInteriorForm):
-    class Meta(BaseHomeInteriorForm.Meta):
-        fields = ['title', 'type_description']
+# class HomeInteriorForm(BaseHomeInteriorForm):
+#     class Meta(BaseHomeInteriorForm.Meta):
+#         fields = ['title', 'type_description']
 
 #home exterior data
 class BaseHomeExteriordataForm(forms.ModelForm):
@@ -505,49 +435,6 @@ class HomeExteriordataForm(BaseHomeExteriordataForm):
     class Meta(BaseHomeExteriordataForm.Meta):
         fields = ['title', 'type_description']
 
-
-class BaseHomeInteriorDifferentRoomForm(forms.ModelForm):
-    image = forms.ImageField(required=False)
-    delete_image = forms.BooleanField(required=False, label="Delete current image")
-
-    class Meta:
-        model = Home
-        fields = ['title', 'type_description', 'image']
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        # Display image preview if exists
-        if self.instance and self.instance.category_images.get('image'):
-            image_url = self.instance.category_images['image']
-            self.fields['image'].help_text = mark_safe(
-                f'<img src="{image_url}" width="200" style="margin-top:10px;" /><br/>'
-                f'Upload a new image to replace the current one.'
-            )
-
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-
-        # Handle image deletion
-        if self.cleaned_data.get('delete_image'):
-            instance.category_images = {}
-
-        # Save new image if provided
-        image = self.cleaned_data.get('image')
-        if image:
-            image_url = default_storage.save(f'home/{image.name}', image)
-            full_url = default_storage.url(image_url)
-            instance.category_images = {'image': full_url}
-
-        if commit:
-            instance.save()
-        return instance
-
-
-
-class HomeInteriorDifferentRoomForm(BaseHomeInteriorDifferentRoomForm):
-    class Meta(BaseHomeInteriorDifferentRoomForm.Meta):
-        fields = ['title', 'type_description', 'image']
 
 # ==================================multiple image============================================
 # from django.forms.widgets import ClearableFileInput
@@ -741,6 +628,64 @@ class TestimonialAdminForm(forms.ModelForm):
         return instance
 
 
+
+# ========================================Banner Start===========================================
+class BaseBannerForm(forms.ModelForm):
+    banner_image = forms.ImageField(
+        required=False,
+        help_text='Images should be less than 10 MB.'
+    )
+    # delete_image = forms.BooleanField(required=False, label='Delete banner Image')
+
+    class Meta:
+        model = Banner
+        fields = ['title', 'short_description']
+
+    def _init_(self, *args, **kwargs):
+        super()._init_(*args, **kwargs)
+
+        from django.utils.safestring import mark_safe  # ensure it's imported
+
+        url = self.instance.url or {}
+        banner_image_url = url.get('image')
+        # video_url = url.get('video')
+
+        if banner_image_url:
+            self.fields['banner_image'].help_text = mark_safe(
+                f'<br><strong>Banner Image Preview:</strong><br>'
+                f'<img src="{banner_image_url}" style="max-height: 100px;" /><br>'
+                f'<strong>URL:</strong> <a href="{banner_image_url}" target="_blank">{banner_image_url}</a>'
+            )
+        
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+
+        url_data = instance.url or {}
+
+        # Delete logic
+        # if self.cleaned_data.get('delete_image'):
+        #     url_data.pop('image', None)
+
+
+        # Upload logic
+        if self.cleaned_data.get('banner_image'):
+            path = default_storage.save(
+                f'banners/image/{self.cleaned_data["banner_image"].name}',
+                self.cleaned_data["banner_image"]
+            )
+            url_data['image'] = default_storage.url(path)
+
+        
+
+        instance.url = url_data
+
+        if commit:
+            instance.save()
+        return instance
+
+
+
 class HomeInteriorBannerForm(BaseBannerForm):
     class Meta(BaseBannerForm.Meta):
         fields = ['title', 'short_description', 'banner_image']
@@ -779,56 +724,6 @@ class ContactUsBannerForm(BaseBannerForm):
     class Meta(BaseBannerForm.Meta):
         fields = ['title', 'short_description', 'banner_image']
 
-
-# class AboutUsBottomVideoBannerForm(forms.ModelForm):
-#     video_file = forms.FileField(
-#         required=False,
-#         label='Upload Video',
-#         help_text='Upload only MP4, WebM, or AVI format videos.'
-#     )
-
-#     class Meta:
-#         model = AboutUsBottomVideoBanner
-#         fields = ['video_file']
-
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         video_url = (self.instance.url or {}).get('video')
-
-#         # if video_url:
-#         #     self.fields['video_file'].help_text += mark_safe(
-#         #         f'<br><strong>Video Preview:</strong><br>'
-#         #         f'<video width="320" height="240" controls>'
-#         #         f'<source src="{video_url}" type="video/mp4">'
-#         #         f'Your browser does not support the video tag.'
-#         #         f'</video><br>'
-#         #         f'<strong>URL:</strong> <a href="{video_url}" target="_blank">{video_url}</a>'
-#         #     )
-
-#     def clean_video_file(self):
-#         video = self.cleaned_data.get('video_file')
-#         if video:
-#             valid_mime_types = ['video/mp4', 'video/avi', 'video/webm', 'video/quicktime']
-#             if video.content_type not in valid_mime_types:
-#                 raise forms.ValidationError('Unsupported video format.')
-#         return video
-
-#     def save(self, commit=True):
-#         instance = super().save(commit=False)
-
-#         if self.cleaned_data.get('video_file'):
-#             path = default_storage.save(
-#                 f'banners/video/{self.cleaned_data["video_file"].name}',
-#                 self.cleaned_data["video_file"]
-#             )
-#             # instance.url = {'video': default_storage.url(path)}
-
-#         if commit:
-#             instance.save()
-
-#         return instance
-
-
 class AboutUsBottomVideoBannerForm(forms.ModelForm):
     video_file = forms.FileField(
         required=False,
@@ -864,6 +759,10 @@ class AboutUsBottomVideoBannerForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
+
+
+# ===============================================Banner End===================================================
+
 
 class HomeInteriorForm(forms.ModelForm):
     category_name = forms.CharField(

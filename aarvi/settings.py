@@ -68,7 +68,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'ckeditor',
     'nested_admin',
-    'modeladmin_reorder',
+    # 'modeladmin_reorder',
+    # 'admin_reorder',
 
 ]
 
@@ -83,6 +84,7 @@ REST_FRAMEWORK = {
 
 
 MIDDLEWARE = [
+    # 'admin_reorder.middleware.ModelAdminReorder',
     'corsheaders.middleware.CorsMiddleware',  
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -210,21 +212,21 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 
-MODELADMIN_REORDER = [
-    {
-        'label': 'Banner Group',
-        'icon': 'fas fa-images',  # optional FontAwesome icon for the group
-        'models': [
-            'aarvi_paint.HomeBanner',
-            'aarvi_paint.GalleryBanner',
-            'aarvi_paint.PaintCalculatorBanner',
-            'aarvi_paint.ProductBanner',
-            'aarvi_paint.ContactUsBanner',
-            'aarvi_paint.ColorPalletsBanner',
-        ]
-    },
-    # You can add more app or model groups here if you want
-]
+# MODELADMIN_REORDER = [
+#     {
+#         'label': 'Banner Group',
+#         'icon': 'fas fa-images',  # optional FontAwesome icon for the group
+#         'models': [
+#             'aarvi_paint.HomeBanner',
+#             'aarvi_paint.GalleryBanner',
+#             'aarvi_paint.PaintCalculatorBanner',
+#             'aarvi_paint.ProductBanner',
+#             'aarvi_paint.ContactUsBanner',
+#             'aarvi_paint.ColorPalletsBanner',
+#         ]
+#     },
+#     # You can add more app or model groups here if you want
+# ]
 
 
 
@@ -245,22 +247,56 @@ JAZZMIN_SETTINGS = {
     "hide_models": [],
     "order_with_respect_to": [],
 
+   
     # Custom ordering of models
     "order_with_respect_to": [
         # This controls the order of *apps* and *models* inside apps
-        "aarvi_paint",  # Place this app first
-        "aarvi_paint.GalleryBanner",
-        "aarvi_paint.HomeBanner",
-        "aarvi_paint.HomeInteriorBanner",
-        "aarvi_paint.PaintCalculatorBanner",
-        "aarvi_paint.HomeExteriorBanner",
-        "aarvi_paint.HomeWaterproofingBanner",
-        "aarvi_paint.AboutUsTopBanner",
-        "aarvi_paint.AboutUsBottomVideoBanner",
-        "aarvi_paint.ColorPalletsBanner",
-        "aarvi_paint.ProductBanner",
-        "aarvi_paint.ContactUsBanner",  
-    ],
+        # 🖼️ Gallery & Banners (Grouped logically by page)
+    "aarvi_paint.GalleryBanner",
+    "aarvi_paint.HomeBanner",
+    "aarvi_paint.HomeInteriorBanner",
+    "aarvi_paint.HomeExteriorBanner",
+    "aarvi_paint.HomeWaterproofingBanner",
+    "aarvi_paint.PaintCalculatorBanner",
+    "aarvi_paint.AboutUsTopBanner",
+    "aarvi_paint.AboutUsBottomVideoBanner",
+    "aarvi_paint.ColorPalletsBanner",
+    "aarvi_paint.ProductBanner",
+    "aarvi_paint.ContactUsBanner",
+
+    # 🎨 Color Palettes
+    "aarvi_paint.ColourPaletteWithImages",
+    "aarvi_paint.MultiColorPalette",
+
+    # 🏠 Page-specific sections
+    "aarvi_paint.AboutUs",
+    "aarvi_paint.HomeInterior",
+    "aarvi_paint.HomeExterior",
+    "aarvi_paint.HomeWaterproof",
+
+    # 🧮 Calculators
+    "aarvi_paint.PaintCalculator",
+    "aarvi_paint.WaterCalculator",
+    
+    # 🛍️ Products
+    "aarvi_paint.Category",
+    "aarvi_paint.Product",
+    
+
+    # 📄 Brochures & Testimonials
+    "aarvi_paint.Brochure",
+    "aarvi_paint.Testimonial",
+    "aarvi_paint.Parallax",
+    "aarvi_paint.Inspiration",
+
+    # ⚙️ Settings and Admin Info
+    "aarvi_paint.AdminContactDetail",
+    "aarvi_paint.Setting",
+
+    "aarvi_paint.PaintBudgetCalculators",
+    "aarvi_paint.WaterProofCalculators",
+
+],
 
 
     # Group models under the 'Banners' section
